@@ -10,6 +10,7 @@ export type CategorySlug =
   | 'holz'
   | 'metall'
   | 'schrauben'
+  | 'laser'
   | 'generatoren';
 
 export interface NumberInput {

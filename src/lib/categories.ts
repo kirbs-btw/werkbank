@@ -60,6 +60,15 @@ export const CATEGORIES: Category[] = [
     accent: 'brand',
   },
   {
+    slug: 'laser',
+    name: 'Laser',
+    tagline: 'Kerf, Schnittzeit, -kosten & Gravurzeit berechnen.',
+    description:
+      'Laser-Rechner: Kerf-/Fugen-Kompensation, Schnittzeit und Schnittkosten, Gravurzeit und Material-Einstellwerte für CO₂- und Diodenlaser.',
+    icon: 'M12 2v5m0 10v5M2 12h5m10 0h5M12 9a3 3 0 100 6 3 3 0 000-6z',
+    accent: 'brand',
+  },
+  {
     slug: 'generatoren',
     name: 'Generatoren',
     tagline: 'Bohrbilder & Muster als SVG/DXF erzeugen.',

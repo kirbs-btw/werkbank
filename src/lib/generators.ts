@@ -26,6 +26,20 @@ export const GENERATORS: Generator[] = [
       'bolt circle generator',
     ],
   },
+  {
+    slug: 'zahnrad',
+    title: 'Zahnrad-Generator (Evolvente, SVG & DXF)',
+    shortTitle: 'Zahnrad',
+    description:
+      'Erzeuge ein Stirnrad mit Evolventenverzahnung aus Modul, Zähnezahl und Eingriffswinkel – mit allen Maßen und Export als SVG oder DXF.',
+    keywords: [
+      'zahnrad generator',
+      'zahnrad zeichnen dxf',
+      'evolventenverzahnung berechnen',
+      'stirnrad modul zähnezahl',
+      'gear generator dxf',
+    ],
+  },
 ];
 
 export const getGenerator = (slug: string): Generator | undefined =>

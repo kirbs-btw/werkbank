@@ -1,0 +1,214 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { getGenerator } from '../../lib/generators';
+import { breadcrumbLd } from '../../lib/schema';
+import { SITE } from '../../config/site';
+
+const gen = getGenerator('zahnrad')!;
+const path = '/generatoren/zahnrad';
+const crumbs = [
+  { name: 'Start', href: '/' },
+  { name: 'Generatoren', href: '/kategorie/generatoren' },
+  { name: gen.shortTitle ?? gen.title, href: path },
+];
+
+// SSR-Standardmaße (Defaults) für No-JS & geringe CLS
+const m = 2, z = 20, alphaDeg = 20;
+const d = m * z;
+const da = m * (z + 2);
+const df = m * (z - 2.5);
+const db = d * Math.cos((alphaDeg * Math.PI) / 180);
+const p = Math.PI * m;
+const h = 2.25 * m;
+const nf = (n: number, dig = 2) => n.toLocaleString('de-DE', { maximumFractionDigits: dig });
+
+const ld: object[] = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: gen.title,
+    url: new URL(path, SITE.url).href,
+    description: gen.description,
+    applicationCategory: 'DesignApplication',
+    operatingSystem: 'Web',
+    inLanguage: 'de-DE',
+    isAccessibleForFree: true,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+    publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+  },
+  breadcrumbLd(crumbs.map((c) => ({ name: c.name, path: c.href }))),
+];
+---
+
+<BaseLayout title="Zahnrad-Generator" description={gen.description} path={path} ogType="article" jsonLd={ld}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <Breadcrumbs items={crumbs} />
+    <header class="mt-4">
+      <h1 class="text-3xl font-extrabold tracking-tight text-zinc-900">Zahnrad-Generator</h1>
+      <p class="mt-2 text-lg text-zinc-600">{gen.description}</p>
+    </header>
+
+    <div class="mt-8 grid gap-6 md:grid-cols-2">
+      <form id="zr-form" class="space-y-4" onsubmit="return false">
+        <label class="block">
+          <span class="mb-1 flex items-center justify-between text-sm font-medium text-zinc-700"><span>Modul m</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+          <input id="zr-m" type="number" value="2" min="0.2" step="0.1" inputmode="decimal"
+            class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200" />
+        </label>
+        <label class="block">
+          <span class="mb-1 flex items-center justify-between text-sm font-medium text-zinc-700"><span>Zähnezahl z</span></span>
+          <input id="zr-z" type="number" value="20" min="4" max="200" step="1"
+            class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200" />
+        </label>
+        <label class="block">
+          <span class="mb-1 flex items-center justify-between text-sm font-medium text-zinc-700"><span>Eingriffswinkel α</span><span class="text-xs font-normal text-zinc-500">Grad</span></span>
+          <input id="zr-a" type="number" value="20" min="14.5" max="30" step="0.5"
+            class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200" />
+          <span class="mt-1 block text-xs text-zinc-500">Standard: 20°</span>
+        </label>
+        <label class="block">
+          <span class="mb-1 flex items-center justify-between text-sm font-medium text-zinc-700"><span>Bohrung Ø</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+          <input id="zr-bore" type="number" value="6" min="0" step="0.5" inputmode="decimal"
+            class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200" />
+        </label>
+        <div class="flex flex-wrap gap-2 pt-2">
+          <button id="zr-svg" type="button" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-500">SVG herunterladen</button>
+          <button id="zr-dxf" type="button" class="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100">DXF herunterladen</button>
+        </div>
+      </form>
+
+      <div>
+        <div class="flex h-[300px] items-center justify-center overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+          <div id="zr-preview" class="w-full" role="img" aria-label="Maßstabsgetreue Vorschau des Zahnrads"></div>
+        </div>
+        <div class="mt-3 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <h2 class="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">Maße</h2>
+          <div data-results aria-live="polite" aria-atomic="true">
+            <div class="flex items-baseline justify-between gap-4 border-b border-zinc-100 py-2.5 text-lg"><span class="font-semibold text-zinc-900">Teilkreis-Ø d</span><span class="whitespace-nowrap font-mono font-semibold text-brand-700"><span id="zr-d">{nf(d)}</span> <span class="text-sm font-sans text-zinc-500">mm</span></span></div>
+            <div class="flex items-baseline justify-between gap-4 border-b border-zinc-100 py-2.5"><span class="text-zinc-600">Kopfkreis-Ø dₐ</span><span class="whitespace-nowrap font-mono font-semibold text-zinc-900"><span id="zr-da">{nf(da)}</span> mm</span></div>
+            <div class="flex items-baseline justify-between gap-4 border-b border-zinc-100 py-2.5"><span class="text-zinc-600">Fußkreis-Ø d_f</span><span class="whitespace-nowrap font-mono font-semibold text-zinc-900"><span id="zr-df">{nf(df)}</span> mm</span></div>
+            <div class="flex items-baseline justify-between gap-4 border-b border-zinc-100 py-2.5"><span class="text-zinc-600">Grundkreis-Ø d_b</span><span class="whitespace-nowrap font-mono font-semibold text-zinc-900"><span id="zr-db">{nf(db)}</span> mm</span></div>
+            <div class="flex items-baseline justify-between gap-4 border-b border-zinc-100 py-2.5"><span class="text-zinc-600">Teilung p</span><span class="whitespace-nowrap font-mono font-semibold text-zinc-900"><span id="zr-p">{nf(p)}</span> mm</span></div>
+            <div class="flex items-baseline justify-between gap-4 py-2.5"><span class="text-zinc-600">Zahnhöhe h</span><span class="whitespace-nowrap font-mono font-semibold text-zinc-900"><span id="zr-h">{nf(h)}</span> mm</span></div>
+          </div>
+        </div>
+        <p class="mt-2 text-xs text-zinc-500">Maße rechnen live – keine Anmeldung, keine Daten verlassen deinen Browser.</p>
+      </div>
+    </div>
+
+    <section class="prose-werkbank mt-12 max-w-none">
+      <h2>So funktioniert der Zahnrad-Generator</h2>
+      <p>
+        Ein Stirnrad mit Evolventenverzahnung ist durch wenige Größen vollständig bestimmt: den <strong>Modul m</strong>
+        (Zahngröße), die <strong>Zähnezahl z</strong> und den <strong>Eingriffswinkel α</strong> (Norm: 20°). Aus diesen
+        ergeben sich Teilkreis (d = m · z), Kopfkreis (dₐ = m · (z + 2)), Fußkreis (d_f = m · (z − 2,5)) und Grundkreis
+        (d_b = d · cos α). Gib die Werte ein – Vorschau, Maße und der exportierbare Zahnflanken-Verlauf aktualisieren sich sofort.
+      </p>
+      <p>
+        Mit <strong>SVG herunterladen</strong> bekommst du die maßstabsgetreue Zahnradkontur (Millimeter) für Inkscape,
+        Laser-Software oder CAD; <strong>DXF herunterladen</strong> liefert die Kontur als Linienzug plus Bohrung – ideal
+        für CNC, Laser und Wasserstrahl. Zwei Zahnräder kämmen sauber, wenn sie denselben Modul und Eingriffswinkel haben.
+      </p>
+      <h3>Hinweis zur Verzahnung</h3>
+      <p>
+        Die Zahnflanke wird als echte Evolvente vom Grundkreis bis zum Kopfkreis berechnet; unterhalb des Grundkreises
+        läuft die Flanke radial in den Fußkreis. Bei sehr kleinen Zähnezahlen (unter 17) tritt fertigungsbedingt
+        Unterschnitt auf – für Tragfähigkeit dann Profilverschiebung vorsehen.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    const $ = (id: string) => document.getElementById(id);
+    const form = $('zr-form');
+    const preview = $('zr-preview');
+
+    function val(id: string, fb: number): number {
+      const el = document.getElementById(id) as HTMLInputElement | null;
+      if (!el) return fb;
+      const v = parseFloat(el.value.replace(',', '.'));
+      return Number.isFinite(v) ? v : fb;
+    }
+    const fmt = (n: number, dig = 2) => n.toLocaleString('de-DE', { maximumFractionDigits: dig });
+    const setText = (id: string, t: string) => { const el = document.getElementById(id); if (el) el.textContent = t; };
+    const inv = (a: number) => Math.tan(a) - a;
+
+    type P = { x: number; y: number };
+
+    function gear() {
+      const m = Math.max(0.2, val('zr-m', 2));
+      const z = Math.max(4, Math.min(200, Math.round(val('zr-z', 20))));
+      const alpha = Math.max(14.5, Math.min(30, val('zr-a', 20))) * Math.PI / 180;
+      const bore = Math.max(0, val('zr-bore', 6));
+      const r = (m * z) / 2;
+      const rb = r * Math.cos(alpha);
+      const ra = r + m;
+      const rf = Math.max(r - 1.25 * m, 0.1);
+      const halfTooth = Math.PI / (2 * z);
+      const STEPS = 7;
+      const flank = (rho: number, sign: number): P => {
+        const rr = Math.max(rho, rb);
+        const ar = Math.acos(Math.min(1, rb / rr));
+        const a = sign * (halfTooth + inv(alpha) - inv(ar));
+        return { x: rho * Math.cos(a), y: rho * Math.sin(a) };
+      };
+      const out: P[] = [];
+      for (let k = 0; k < z; k++) {
+        const rot = (k * 2 * Math.PI) / z;
+        const c = Math.cos(rot), s = Math.sin(rot);
+        const local: P[] = [];
+        for (let i = 0; i <= STEPS; i++) local.push(flank(rf + ((ra - rf) * i) / STEPS, +1));
+        for (let i = 0; i <= STEPS; i++) local.push(flank(ra - ((ra - rf) * i) / STEPS, -1));
+        for (const pt of local) out.push({ x: pt.x * c - pt.y * s, y: pt.x * s + pt.y * c });
+      }
+      return { pts: out, ra, bore, m, z };
+    }
+
+    function svg(g: ReturnType<typeof gear>): string {
+      const ext = g.ra + 2;
+      const size = (ext * 2).toFixed(2);
+      const poly = g.pts.map((p) => `${p.x.toFixed(3)},${(-p.y).toFixed(3)}`).join(' ');
+      const boreEl = g.bore > 0 ? `<circle cx="0" cy="0" r="${(g.bore / 2).toFixed(3)}" fill="none" stroke="#18181b" stroke-width="0.4"/>` : '';
+      return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${(-ext).toFixed(2)} ${(-ext).toFixed(2)} ${size} ${size}" width="100%" style="max-height:268px;height:auto" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><polygon points="${poly}" fill="#fff7ed" stroke="#ea580c" stroke-width="0.4"/>${boreEl}</svg>`;
+    }
+
+    function dxf(g: ReturnType<typeof gear>): string {
+      let s = '0\nSECTION\n2\nENTITIES\n';
+      const n = g.pts.length;
+      for (let i = 0; i < n; i++) {
+        const a = g.pts[i], b = g.pts[(i + 1) % n];
+        s += `0\nLINE\n8\nZahnrad\n10\n${a.x.toFixed(4)}\n20\n${a.y.toFixed(4)}\n11\n${b.x.toFixed(4)}\n21\n${b.y.toFixed(4)}\n`;
+      }
+      if (g.bore > 0) s += `0\nCIRCLE\n8\nBohrung\n10\n0\n20\n0\n40\n${(g.bore / 2).toFixed(4)}\n`;
+      s += '0\nENDSEC\n0\nEOF\n';
+      return s;
+    }
+
+    function download(filename: string, content: string, type: string): void {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function render(): void {
+      const m = Math.max(0.2, val('zr-m', 2));
+      const z = Math.max(4, Math.min(200, Math.round(val('zr-z', 20))));
+      const alpha = Math.max(14.5, Math.min(30, val('zr-a', 20))) * Math.PI / 180;
+      setText('zr-d', fmt(m * z));
+      setText('zr-da', fmt(m * (z + 2)));
+      setText('zr-df', fmt(m * (z - 2.5)));
+      setText('zr-db', fmt(m * z * Math.cos(alpha)));
+      setText('zr-p', fmt(Math.PI * m));
+      setText('zr-h', fmt(2.25 * m));
+      if (preview) preview.innerHTML = svg(gear());
+    }
+
+    form?.addEventListener('input', render);
+    $('zr-svg')?.addEventListener('click', () => download('zahnrad.svg', svg(gear()), 'image/svg+xml'));
+    $('zr-dxf')?.addEventListener('click', () => download('zahnrad.dxf', dxf(gear()), 'application/dxf'));
+    render();
+  </script>
+</BaseLayout>
