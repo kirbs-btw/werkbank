@@ -1,0 +1,22 @@
+---
+interface Props {
+  class?: string;
+  variant?: 'light' | 'dark';
+}
+const { class: className = '', variant = 'dark' } = Astro.props;
+const textColor = variant === 'light' ? 'text-white' : 'text-zinc-900';
+---
+
+<span class={`inline-flex items-center gap-2 ${className}`}>
+  <svg width="30" height="30" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+    <rect width="32" height="32" rx="7" fill="#ea580c"></rect>
+    <path
+      d="M7 21h18M9 21V13m14 8V13M9 13l3-3h8l3 3M9 13h14"
+      stroke="white"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"></path>
+    <circle cx="16" cy="9" r="1.6" fill="white"></circle>
+  </svg>
+  <span class={`text-lg font-extrabold tracking-tight ${textColor}`}>Werkbank</span>
+</span>

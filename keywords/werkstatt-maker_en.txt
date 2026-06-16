@@ -1,0 +1,29 @@
+feeds and speeds calculator
+cnc feeds and speeds calculator
+filament cost calculator
+3d printing cost calculator
+how much filament do i need
+filament weight calculator
+cut list optimizer
+cutting optimization calculator
+board foot calculator
+lumber weight calculator
+metal weight calculator
+steel weight calculator
+sheet metal weight calculator
+tap drill size chart
+tap drill calculator
+bolt torque calculator
+screw torque chart
+k factor calculator sheet metal
+bend allowance calculator
+steps per mm calculator
+stepper motor steps per mm calculator
+gear generator dxf
+involute gear generator
+finger joint box generator
+laser cut box generator
+gridfinity generator
+gridfinity bin generator
+living hinge generator
+living hinge pattern generator

@@ -1,0 +1,26 @@
+ohms law calculator
+resistor color code calculator
+led resistor calculator
+voltage divider calculator
+555 timer calculator
+rc filter calculator
+low pass filter calculator
+high pass filter calculator
+cutoff frequency calculator
+op amp gain calculator
+non inverting amplifier calculator
+pcb trace width calculator
+ipc-2221 calculator
+lc resonant frequency calculator
+rlc circuit calculator
+inductor calculator
+smd resistor code calculator
+dbm to watts calculator
+db calculator
+dipole antenna length calculator
+antenna length calculator
+capacitor charge calculator
+wavelength frequency calculator
+parallel resistor calculator
+ohms law triangle
+wire gauge ampacity calculator

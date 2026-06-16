@@ -1,0 +1,113 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ToolCard from '../components/ToolCard.astro';
+import { SITE } from '../config/site';
+import { CATEGORIES } from '../lib/categories';
+import { TOOLS, TOTAL_TOOLS, categoryCount } from '../lib/registry';
+import { GENERATORS } from '../lib/generators';
+import { websiteLd, organizationLd } from '../lib/schema';
+
+const popular = TOOLS.slice(0, 6);
+const totalCount = TOTAL_TOOLS + GENERATORS.length;
+---
+
+<BaseLayout
+  title={`${SITE.name} – ${SITE.tagline}`}
+  description={SITE.description}
+  path="/"
+  jsonLd={[websiteLd(), organizationLd()]}
+>
+  <section class="relative overflow-hidden bg-zinc-900 text-white">
+    <div class="blueprint-grid absolute inset-0 opacity-70"></div>
+    <div class="relative mx-auto max-w-6xl px-4 py-20 text-center sm:py-24">
+      <span class="inline-flex items-center rounded-full border border-zinc-700 bg-zinc-800/60 px-3 py-1 text-xs font-medium text-brand-300">
+        {totalCount}+ kostenlose Maker-Tools
+      </span>
+      <h1 class="mx-auto mt-5 max-w-3xl text-4xl font-extrabold tracking-tight sm:text-5xl">
+        Rechner & Generatoren für <span class="text-brand-500">Werkstatt & Maker</span>
+      </h1>
+      <p class="mx-auto mt-4 max-w-2xl text-lg text-zinc-300">
+        3D-Druck, CNC, Laser, Holz, Metall & Schrauben – präzise, schnell und ohne Anmeldung.
+        Jede Eingabe rechnet sofort.
+      </p>
+      <div class="mt-8 flex flex-wrap justify-center gap-3">
+        <a href="/rechner" class="rounded-lg bg-brand-600 px-5 py-3 font-semibold text-white transition hover:bg-brand-500">
+          Alle Rechner ansehen
+        </a>
+        <a href="#kategorien" class="rounded-lg border border-zinc-700 px-5 py-3 font-semibold text-zinc-200 transition hover:bg-zinc-800">
+          Kategorien entdecken
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="kategorien" class="mx-auto max-w-6xl px-4 py-16">
+    <h2 class="text-2xl font-bold tracking-tight">Kategorien</h2>
+    <p class="mt-1 text-zinc-500">Wähle deinen Bereich – jeder bündelt spezialisierte Rechner.</p>
+    <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        CATEGORIES.map((c) => (
+          <a
+            href={`/kategorie/${c.slug}`}
+            class="group rounded-xl border border-zinc-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md"
+          >
+            <div class="flex items-center gap-3">
+              <span class="flex h-11 w-11 items-center justify-center rounded-lg bg-brand-50 text-brand-700">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+                  <path d={c.icon} stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </span>
+              <div>
+                <h3 class="text-base font-semibold text-zinc-900 group-hover:text-brand-700">{c.name}</h3>
+                <span class="text-xs text-zinc-500">
+                  {c.slug === 'generatoren' ? `${GENERATORS.length} Generatoren` : `${categoryCount(c.slug)} Rechner`}
+                </span>
+              </div>
+            </div>
+            <p class="mt-3 text-sm text-zinc-500">{c.tagline}</p>
+          </a>
+        ))
+      }
+    </div>
+  </section>
+
+  {
+    popular.length > 0 && (
+      <section class="mx-auto max-w-6xl px-4 pb-16">
+        <div class="flex items-end justify-between">
+          <h2 class="text-2xl font-bold tracking-tight">Beliebte Rechner</h2>
+          <a href="/rechner" class="text-sm font-medium text-brand-700 hover:underline">
+            Alle ansehen →
+          </a>
+        </div>
+        <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {popular.map((t) => (
+            <ToolCard tool={t} />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  <section class="border-t border-zinc-200 bg-white">
+    <div class="prose-werkbank mx-auto max-w-3xl px-4 py-12">
+      <h2>Der Online-Werkzeugkasten für deine Werkstatt</h2>
+      <p>
+        {SITE.name} bündelt die Rechner, Tabellen und Generatoren, die Maker, Heimwerker und Profis im Alltag
+        wirklich brauchen – an einem Ort, kostenlos und ohne Anmeldung. Statt Formeln zu googeln oder in PDFs zu
+        blättern, gibst du deine Werte ein und bekommst sofort ein präzises Ergebnis.
+      </p>
+      <h3>Von 3D-Druck bis Metallbau</h3>
+      <p>
+        Berechne Filamentkosten und -gewicht für deinen 3D-Druck, ermittle Schnittdaten für die CNC-Fräse,
+        plane den Plattenzuschnitt mit minimalem Verschnitt, bestimme das Gewicht von Stahl-, Alu- und
+        Edelstahlteilen oder schlage das richtige Anzugsmoment und den Kernlochbohrer für dein Gewinde nach.
+      </p>
+      <h3>Präzise, transparent, offline-fähig</h3>
+      <p>
+        Alle Berechnungen laufen direkt in deinem Browser – deine Eingaben verlassen dein Gerät nicht. Zu jedem
+        Rechner findest du die verwendete Formel, eine kurze Anleitung und Antworten auf häufige Fragen.
+      </p>
+    </div>
+  </section>
+</BaseLayout>

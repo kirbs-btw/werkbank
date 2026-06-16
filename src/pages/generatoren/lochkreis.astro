@@ -1,0 +1,198 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { getGenerator } from '../../lib/generators';
+import { breadcrumbLd } from '../../lib/schema';
+import { SITE } from '../../config/site';
+
+const gen = getGenerator('lochkreis')!;
+const path = '/generatoren/lochkreis';
+const crumbs = [
+  { name: 'Start', href: '/' },
+  { name: 'Generatoren', href: '/kategorie/generatoren' },
+  { name: gen.shortTitle ?? gen.title, href: path },
+];
+const ld: object[] = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: gen.title,
+    url: new URL(path, SITE.url).href,
+    description: gen.description,
+    applicationCategory: 'DesignApplication',
+    operatingSystem: 'Web',
+    inLanguage: 'de-DE',
+    isAccessibleForFree: true,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+    publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+  },
+  breadcrumbLd(crumbs.map((c) => ({ name: c.name, path: c.href }))),
+];
+---
+
+<BaseLayout title="Lochkreis-Generator" description={gen.description} path={path} ogType="article" jsonLd={ld}>
+  <div class="mx-auto max-w-4xl px-4 py-8">
+    <Breadcrumbs items={crumbs} />
+    <header class="mt-4">
+      <h1 class="text-3xl font-extrabold tracking-tight text-zinc-900">Lochkreis-Generator</h1>
+      <p class="mt-2 text-lg text-zinc-600">{gen.description}</p>
+    </header>
+
+    <div class="mt-8 grid gap-6 md:grid-cols-2">
+      <form id="lk-form" class="space-y-4" onsubmit="return false">
+        <label class="block">
+          <span class="mb-1 block text-sm font-medium text-zinc-700">Lochkreis-Durchmesser (Teilkreis)</span>
+          <input id="lk-d" type="number" value="100" min="1" step="any" inputmode="decimal"
+            class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono shadow-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200" />
+          <span class="mt-1 block text-xs text-zinc-500">in mm</span>
+        </label>
+        <label class="block">
+          <span class="mb-1 block text-sm font-medium text-zinc-700">Anzahl Löcher</span>
+          <input id="lk-n" type="number" value="6" min="1" max="200" step="1"
+            class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono shadow-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200" />
+        </label>
+        <label class="block">
+          <span class="mb-1 block text-sm font-medium text-zinc-700">Startwinkel</span>
+          <input id="lk-start" type="number" value="0" step="any"
+            class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono shadow-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200" />
+          <span class="mt-1 block text-xs text-zinc-500">in Grad (0° = rechts, gegen den Uhrzeigersinn)</span>
+        </label>
+        <label class="block">
+          <span class="mb-1 block text-sm font-medium text-zinc-700">Bohrungsdurchmesser</span>
+          <input id="lk-hole" type="number" value="8" min="0.1" step="any" inputmode="decimal"
+            class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono shadow-sm outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200" />
+          <span class="mt-1 block text-xs text-zinc-500">in mm</span>
+        </label>
+
+        <div class="flex flex-wrap gap-2 pt-2">
+          <button id="lk-svg" type="button"
+            class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-500">SVG herunterladen</button>
+          <button id="lk-dxf" type="button"
+            class="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100">DXF herunterladen</button>
+        </div>
+      </form>
+
+      <div>
+        <div class="overflow-hidden rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+          <div id="lk-preview" class="aspect-square w-full" role="img" aria-label="Maßstabsgetreue Vorschau des Lochkreis-Bohrbilds"></div>
+        </div>
+        <div class="mt-3 max-h-56 min-h-56 overflow-auto rounded-lg border border-zinc-200">
+          <table class="w-full text-sm">
+            <thead class="sticky top-0 bg-zinc-100 text-zinc-500">
+              <tr><th class="px-3 py-2 text-left font-medium">#</th><th class="px-3 py-2 text-right font-medium">X (mm)</th><th class="px-3 py-2 text-right font-medium">Y (mm)</th><th class="px-3 py-2 text-right font-medium">Winkel</th></tr>
+            </thead>
+            <tbody id="lk-table" class="font-mono"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <section class="prose-werkbank mt-12 max-w-none">
+      <h2>So funktioniert der Lochkreis-Generator</h2>
+      <p>
+        Ein Lochkreis (Teilkreis) ist ein Bohrbild, bei dem mehrere Bohrungen gleichmäßig auf einem Kreis verteilt
+        sind – typisch für Flansche, Riemenscheiben, Adapterplatten oder Gehäusedeckel. Gib den
+        Teilkreisdurchmesser, die Anzahl der Löcher, den Startwinkel und den Bohrungsdurchmesser ein. Die Vorschau
+        und die Koordinatentabelle aktualisieren sich sofort.
+      </p>
+      <p>
+        Mit <strong>SVG herunterladen</strong> bekommst du eine maßstabsgetreue Vektordatei (Einheit Millimeter),
+        die du direkt in Laser-Software, Inkscape oder CAD importieren kannst. <strong>DXF herunterladen</strong>
+        liefert eine R12-DXF mit je einem Kreis pro Bohrung plus dem Teilkreis – ideal für CNC und Fräse.
+      </p>
+      <h3>Formel der Bohrungskoordinaten</h3>
+      <p>
+        Bei n Löchern, Teilkreisradius R = D/2 und Startwinkel α₀ liegt Loch i bei
+        X = R · cos(α₀ + i · 360°/n) und Y = R · sin(α₀ + i · 360°/n).
+      </p>
+    </section>
+  </div>
+
+  <script>
+    type Pt = { i: number; x: number; y: number; angle: number };
+
+    const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
+    const form = $('lk-form');
+    const preview = $('lk-preview');
+    const tbody = $('lk-table');
+
+    function val(id: string, fallback: number): number {
+      const el = $(id) as HTMLInputElement | null;
+      if (!el) return fallback;
+      const v = parseFloat(el.value.replace(',', '.'));
+      return Number.isFinite(v) ? v : fallback;
+    }
+
+    function points(): { D: number; R: number; n: number; hole: number; pts: Pt[] } {
+      const D = Math.max(0.1, val('lk-d', 100));
+      const n = Math.max(1, Math.round(val('lk-n', 6)));
+      const start = val('lk-start', 0);
+      const hole = Math.max(0.1, val('lk-hole', 8));
+      const R = D / 2;
+      const pts: Pt[] = [];
+      for (let i = 0; i < n; i++) {
+        const angle = start + (i * 360) / n;
+        const rad = (angle * Math.PI) / 180;
+        pts.push({ i: i + 1, x: R * Math.cos(rad), y: R * Math.sin(rad), angle });
+      }
+      return { D, R, n, hole, pts };
+    }
+
+    function fmt(n: number): string {
+      return n.toLocaleString('de-DE', { maximumFractionDigits: 2 });
+    }
+
+    function svg(): string {
+      const { R, hole, pts } = points();
+      const margin = hole + 10;
+      const ext = R + margin;
+      const size = (ext * 2).toFixed(2);
+      const holes = pts
+        .map((p) => `<circle cx="${p.x.toFixed(3)}" cy="${(-p.y).toFixed(3)}" r="${(hole / 2).toFixed(3)}" fill="none" stroke="#18181b" stroke-width="0.5"/>`)
+        .join('');
+      const center = `<path d="M -3 0 H 3 M 0 -3 V 3" stroke="#ea580c" stroke-width="0.5"/>`;
+      const pitch = `<circle cx="0" cy="0" r="${R.toFixed(3)}" fill="none" stroke="#a1a1aa" stroke-width="0.3" stroke-dasharray="2 2"/>`;
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}mm" height="${size}mm" viewBox="${(-ext).toFixed(2)} ${(-ext).toFixed(2)} ${size} ${size}">${pitch}${holes}${center}</svg>`;
+    }
+
+    function dxf(): string {
+      const { R, hole, pts } = points();
+      const r = hole / 2;
+      let s = '0\nSECTION\n2\nENTITIES\n';
+      s += `0\nCIRCLE\n8\nTeilkreis\n10\n0\n20\n0\n40\n${R}\n`;
+      for (const p of pts) {
+        s += `0\nCIRCLE\n8\nBohrungen\n10\n${p.x}\n20\n${p.y}\n40\n${r}\n`;
+      }
+      s += '0\nENDSEC\n0\nEOF\n';
+      return s;
+    }
+
+    function download(filename: string, content: string, type: string): void {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function render(): void {
+      if (preview) preview.innerHTML = svg();
+      if (tbody) {
+        const { pts } = points();
+        tbody.innerHTML = pts
+          .map(
+            (p) =>
+              `<tr class="border-t border-zinc-100"><td class="px-3 py-1.5 text-zinc-500">${p.i}</td><td class="px-3 py-1.5 text-right">${fmt(p.x)}</td><td class="px-3 py-1.5 text-right">${fmt(p.y)}</td><td class="px-3 py-1.5 text-right text-zinc-500">${fmt(p.angle)}°</td></tr>`,
+          )
+          .join('');
+      }
+    }
+
+    form?.addEventListener('input', render);
+    $('lk-svg')?.addEventListener('click', () => download('lochkreis.svg', svg(), 'image/svg+xml'));
+    $('lk-dxf')?.addEventListener('click', () => download('lochkreis.dxf', dxf(), 'application/dxf'));
+    render();
+  </script>
+</BaseLayout>

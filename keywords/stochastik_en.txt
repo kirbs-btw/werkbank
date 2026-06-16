@@ -1,0 +1,28 @@
+normal distribution calculator
+standard normal distribution calculator
+binomial distribution calculator
+binomial probability calculator
+z score calculator
+z table
+t table
+standard deviation calculator
+variance calculator
+expected value calculator
+confidence interval calculator
+p value calculator
+hypothesis test calculator
+bayes theorem calculator
+conditional probability calculator
+probability tree diagram generator
+box plot maker online
+box and whisker plot calculator
+galton board simulator
+central limit theorem simulation
+monty hall problem simulator
+dice roll simulator online
+coin flip simulator
+lottery odds calculator
+combination calculator nCr
+poisson distribution calculator
+quartile calculator
+sample size calculator

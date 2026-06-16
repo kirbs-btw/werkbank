@@ -1,0 +1,52 @@
+---
+import Logo from './Logo.astro';
+import { CATEGORIES } from '../lib/categories';
+import { SITE } from '../config/site';
+const year = new Date().getFullYear();
+---
+
+<footer class="mt-16 border-t border-zinc-800 bg-zinc-900 text-zinc-300">
+  <div class="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-2 md:grid-cols-4">
+    <div class="sm:col-span-2 md:col-span-1">
+      <Logo variant="light" />
+      <p class="mt-3 max-w-xs text-sm text-zinc-400">{SITE.tagline}.</p>
+    </div>
+
+    <div>
+      <h3 class="mb-3 text-sm font-semibold text-white">Kategorien</h3>
+      <ul class="space-y-2 text-sm">
+        {
+          CATEGORIES.map((c) => (
+            <li>
+              <a href={`/kategorie/${c.slug}`} class="text-zinc-400 transition hover:text-white">
+                {c.name}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="mb-3 text-sm font-semibold text-white">Werkbank</h3>
+      <ul class="space-y-2 text-sm">
+        <li><a href="/rechner" class="text-zinc-400 transition hover:text-white">Alle Rechner</a></li>
+        <li><a href="/ueber-uns" class="text-zinc-400 transition hover:text-white">Über uns</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="mb-3 text-sm font-semibold text-white">Rechtliches</h3>
+      <ul class="space-y-2 text-sm">
+        <li><a href="/impressum" class="text-zinc-400 transition hover:text-white">Impressum</a></li>
+        <li><a href="/datenschutz" class="text-zinc-400 transition hover:text-white">Datenschutz</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="border-t border-zinc-800">
+    <div class="mx-auto max-w-6xl px-4 py-5 text-xs text-zinc-400">
+      © {year} {SITE.name}. Alle Rechner ohne Gewähr – Angaben bitte vor sicherheitskritischer Nutzung prüfen.
+    </div>
+  </div>
+</footer>

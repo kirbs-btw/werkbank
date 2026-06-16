@@ -1,0 +1,105 @@
+---
+import type { Tool, ToolResult, InputValues } from '../lib/types';
+import { formatResult } from '../lib/format';
+
+interface Props {
+  tool: Tool;
+}
+const { tool } = Astro.props;
+
+const defaults: InputValues = Object.fromEntries(
+  tool.inputs.map((i) => [i.id, i.default]),
+);
+let initialResults: ToolResult[] = [];
+try {
+  initialResults = tool.compute(defaults);
+} catch {
+  initialResults = [];
+}
+---
+
+<div data-calc data-slug={tool.slug} class="grid gap-6 md:grid-cols-2">
+  <form data-calc-form class="space-y-4" onsubmit="return false">
+    {
+      tool.inputs.map((input) => (
+        <label class="block">
+          <span class="mb-1 flex items-center justify-between gap-2 text-sm font-medium text-zinc-700">
+            <span>{input.label}</span>
+            {input.unit && <span class="text-xs font-normal text-zinc-500">{input.unit}</span>}
+          </span>
+          {input.type === 'number' ? (
+            <input
+              data-input={input.id}
+              type="number"
+              value={input.default}
+              min={input.min}
+              max={input.max}
+              step={input.step ?? 'any'}
+              inputmode="decimal"
+              class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-zinc-900 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+            />
+          ) : (
+            <select
+              data-input={input.id}
+              class="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200"
+            >
+              {input.options.map((o) => (
+                <option value={o.value} selected={o.value === input.default}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          )}
+          {input.help && <span class="mt-1 block text-xs text-zinc-500">{input.help}</span>}
+        </label>
+      ))
+    }
+  </form>
+
+  <div>
+    <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+      <h2 class="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">Ergebnis</h2>
+      <div data-results aria-live="polite" aria-atomic="true">
+        {
+          initialResults.map((r) => {
+            const f = formatResult(r);
+            return (
+              <div
+                class:list={[
+                  'flex items-baseline justify-between gap-4 border-b border-zinc-100 py-3 last:border-0',
+                  r.primary && 'text-lg',
+                ]}
+              >
+                <span class={r.primary ? 'font-semibold text-zinc-900' : 'text-zinc-600'}>
+                  {r.label}
+                  {r.help && <span class="mt-0.5 block text-xs font-normal text-zinc-500">{r.help}</span>}
+                </span>
+                <span
+                  class:list={[
+                    'whitespace-nowrap font-mono font-semibold',
+                    r.primary ? 'text-brand-700' : 'text-zinc-900',
+                  ]}
+                >
+                  {f.value}
+                  {f.unit && <span class="ml-1 text-sm font-sans text-zinc-500">{f.unit}</span>}
+                </span>
+              </div>
+            );
+          })
+        }
+      </div>
+    </div>
+    {
+      tool.formula && (
+        <p class="mt-3 rounded-lg bg-zinc-100 px-3 py-2 font-mono text-xs text-zinc-500">
+          Formel: {tool.formula}
+        </p>
+      )
+    }
+    <p class="mt-2 text-xs text-zinc-500">Eingaben ändern sich live – keine Anmeldung, keine Daten verlassen deinen Browser.</p>
+  </div>
+</div>
+
+<script>
+  import '../scripts/calculator.ts';
+</script>
