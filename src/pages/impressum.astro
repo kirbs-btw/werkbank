@@ -5,44 +5,36 @@ import { SITE } from '../config/site';
 
 <BaseLayout
   title="Impressum"
-  description={`Impressum von ${SITE.name} – Anbieter Shade Technology.`}
+  description={`Impressum von ${SITE.name} – Anbieter Shade Technology UG (haftungsbeschränkt).`}
   path="/impressum"
   noindex={true}
 >
   <div class="prose-werkbank mx-auto max-w-3xl px-4 py-12">
     <h1 class="text-3xl font-extrabold tracking-tight">Impressum</h1>
-    <p class="rounded-lg border border-zinc-300 bg-zinc-100 px-4 py-3 text-sm text-zinc-600">
-      Betreiber von {SITE.name} ist <strong>Shade Technology</strong>. Die mit […] markierten Pflichtangaben
-      (Anschrift, Rechtsform, Vertretung, Register, USt-IdNr.) bitte vor dem Livegang ergänzen bzw. prüfen.
-    </p>
 
     <h2>Angaben gemäß § 5 DDG</h2>
     <p>
-      Shade Technology<br />
-      [Rechtsform, z. B. GmbH / UG (haftungsbeschränkt) / Einzelunternehmen]<br />
-      [Straße Hausnummer]<br />
-      [PLZ Ort]<br />
+      Shade Technology UG (haftungsbeschränkt)<br />
+      Friedhofstraße 16<br />
+      67273 Bobenheim am Berg<br />
       Deutschland
     </p>
 
     <h2>Vertreten durch</h2>
-    <p>[Vertretungsberechtigte Person, z. B. Geschäftsführer:in / Inhaber:in]</p>
+    <p>Geschäftsführer: Bastian Lipka</p>
 
     <h2>Kontakt</h2>
-    <p>E-Mail: {SITE.email}<br />[Telefon optional]</p>
+    <p>E-Mail: {SITE.email}</p>
 
     <h2>Registereintrag</h2>
     <p>
-      [Registergericht]<br />
-      [Registernummer, z. B. HRB …]<br />
-      <span class="text-zinc-500">(entfällt bei Einzelunternehmen ohne Handelsregistereintrag)</span>
+      Eintragung im Handelsregister<br />
+      Registergericht: Amtsgericht Ludwigshafen am Rhein<br />
+      Registernummer: HRB 70173
     </p>
 
-    <h2>Umsatzsteuer-Identifikationsnummer</h2>
-    <p>[USt-IdNr. gemäß § 27a UStG, falls vorhanden]</p>
-
     <h2>Verantwortlich für den Inhalt nach § 18 Abs. 2 MStV</h2>
-    <p>[Name], Anschrift wie oben.</p>
+    <p>Bastian Lipka, Anschrift wie oben.</p>
 
     <h2>EU-Streitschlichtung</h2>
     <p>
@@ -63,6 +55,10 @@ import { SITE } from '../config/site';
       Die durch den Betreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht.
       Vervielfältigung, Bearbeitung und Verwertung außerhalb der Grenzen des Urheberrechts bedürfen der schriftlichen
       Zustimmung des Betreibers.
+    </p>
+
+    <p class="mt-8 text-xs text-zinc-500">
+      Hinweis: Eine Umsatzsteuer-Identifikationsnummer nach § 27a UStG ergänzen wir hier, sobald vorhanden.
     </p>
   </div>
 </BaseLayout>
