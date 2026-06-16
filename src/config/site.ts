@@ -4,8 +4,8 @@
  */
 export const SITE = {
   name: 'Werkbank',
-  domain: 'werkbank.tools',
-  url: 'https://werkbank.tools',
+  domain: 'werkbank-rechner.de',
+  url: 'https://www.werkbank-rechner.de',
   // Claim / Tagline
   tagline: 'Rechner, Tabellen & Generatoren für Werkstatt & Maker',
   description:
@@ -16,7 +16,7 @@ export const SITE = {
   author: 'Werkbank',
   themeColor: '#ea580c',
   // Primäre Navigation (Kategorien werden automatisch ergänzt)
-  email: 'kontakt@werkbank.tools',
+  email: 'kontakt@werkbank-rechner.de',
 } as const;
 
 export const NAV_MAIN = [
