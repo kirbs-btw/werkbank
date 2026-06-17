@@ -3,6 +3,7 @@ import '../styles/global.css';
 import BaseHead from '../components/BaseHead.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import Analytics from '@vercel/analytics/astro';
 import { SITE } from '../config/site';
 
 interface Props {
@@ -34,14 +35,7 @@ const props = Astro.props;
     </main>
     <Footer />
 
-    <!-- Vercel Web Analytics (cookielos). Datensammlung aktiv, sobald im Vercel-Dashboard unter Analytics aktiviert. -->
-    <script is:inline>
-      window.va =
-        window.va ||
-        function () {
-          (window.vaq = window.vaq || []).push(arguments);
-        };
-    </script>
-    <script defer is:inline src="/_vercel/insights/script.js"></script>
+    <!-- Vercel Web Analytics (offizielle Astro-Integration, cookielos). Aktiv, sobald im Vercel-Dashboard aktiviert. -->
+    <Analytics />
   </body>
 </html>
