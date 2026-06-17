@@ -33,5 +33,15 @@ const props = Astro.props;
       <slot />
     </main>
     <Footer />
+
+    <!-- Vercel Web Analytics (cookielos). Datensammlung aktiv, sobald im Vercel-Dashboard unter Analytics aktiviert. -->
+    <script is:inline>
+      window.va =
+        window.va ||
+        function () {
+          (window.vaq = window.vaq || []).push(arguments);
+        };
+    </script>
+    <script defer is:inline src="/_vercel/insights/script.js"></script>
   </body>
 </html>
