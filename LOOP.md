@@ -25,8 +25,13 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
 1. **Sync:** `git pull --rebase origin main`. Bei unerwarteten Konflikten: stoppen, Log-Eintrag, nachfragen.
 2. **Gesundheitscheck:** Live-Seite erreichbar? Hat der letzte Deploy die vorige Änderung ausgeliefert
    (Stichprobe per `curl`)? Wenn nein → das zuerst fixen (das ist dann die Iteration).
-3. **Task wählen:** obersten offenen Punkt aus dem Backlog (P1 vor P2 vor P3). Passt er nicht mehr
-   (schon erledigt/obsolet), streichen mit Begründung und nächsten nehmen.
+3. **Task wählen** – in dieser Reihenfolge:
+   a) **Von Bastian gemeldete Fehler haben immer Vorrang** vor dem Backlog. Ein gemeldeter Fehler
+      ist die Iteration; anschließend Regressionstest ergänzen, damit er nicht wiederkommt.
+   b) Sonst: obersten offenen Punkt aus dem Backlog (P1 vor P2 vor P3). Passt er nicht mehr
+      (schon erledigt/obsolet), streichen mit Begründung und nächsten nehmen.
+   c) Liegen **OpenSEO-Daten** vor (siehe unten), schlagen sie die Backlog-Reihenfolge: Was real
+      Impressions/Klicks bringt oder wo ein Ranking abrutscht, kommt vor geplanten Neubauten.
 4. **Implementieren** nach den Prinzipien oben. Bei neuen Tools: Keywords/Titel/Description aus den
    passenden Zeilen in `keywords/*.txt` übernehmen, interne Links von 1–2 bestehenden Tools setzen.
 5. **Verifizieren:** `npm test` und `npm run build` müssen grün sein. Bei UI-Änderungen zusätzlich
@@ -53,6 +58,36 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
    - Google nutzt kein IndexNow, folgt aber der Sitemap (`/sitemap-index.xml`, wird bei jedem
      Build neu erzeugt). GSC-Einreichung bleibt manuell → siehe Entscheidungs-Log E4.
 
+## OpenSEO – datengetriebene Steuerung des Loops
+
+**Ziel:** Der Loop soll nicht nach Bauchgefühl und der Keyword-Recherche von 2026 priorisieren,
+sondern nach echten Daten. [OpenSEO](https://openseo.so/) ist eine MIT-lizenzierte, selbst-hostbare
+SEO-Plattform (Open-Source-Alternative zu Ahrefs/Semrush) mit einem **MCP-Server**, der Keyword-,
+Ranking-, Backlink- und Audit-Daten direkt an Claude Code liefert. Datenquelle im Hintergrund ist
+DataForSEO (Pay-per-Use) – deshalb ist die Einrichtung eine Kostenentscheidung, siehe **E5**.
+
+**Sobald der MCP-Server verbunden ist, gilt zusätzlich zum Ablauf oben:**
+
+- **Vor der Task-Wahl:** Rankings der zuletzt veröffentlichten Seiten abfragen. Seiten, die in den
+  Top 20 stehen und mit wenig Aufwand nach vorn kämen, schlagen jeden Neubau – ein Rechner auf
+  Position 12 bringt mehr als der zwanzigste neue Rechner ohne Sichtbarkeit.
+- **Bei neuen Tools:** Keyword-Recherche mit echtem Volumen und Intent-Klassifizierung statt der
+  Schätzungen aus `keywords/`. Titel, Description und H1 an der real suchenden Formulierung
+  ausrichten; die alte Recherche bleibt nur Ideenquelle.
+- **Nach jedem Deploy:** Site-Audit (Lighthouse-basiert) über die neue URL laufen lassen und
+  gefundene Probleme als P3-Punkte eintragen, statt sie zu ignorieren.
+- **Monatlich:** Backlink- und Sichtbarkeitsverlauf prüfen; auffällige Abstürze sofort untersuchen.
+- **AI-Sichtbarkeit:** OpenSEO verfolgt auch, ob die Seite in ChatGPT-Antworten und Google AI
+  Overviews auftaucht. Das ist für einen Rechner-Hub zunehmend relevanter als Position 3 –
+  entsprechende Lücken als eigene Backlog-Punkte aufnehmen.
+
+**Einrichtung (einmalig, siehe T8):** OpenSEO self-hosted aufsetzen oder Cloud nutzen,
+DataForSEO-Zugang hinterlegen, MCP-Server in `.mcp.json` eintragen. Danach hier vermerken, dass die
+Daten verfügbar sind, damit spätere Iterationen sie auch nutzen.
+
+**Wichtig:** Solange der MCP-Server *nicht* verbunden ist, diesen Abschnitt überspringen und nicht
+so tun, als lägen Daten vor. Keine Zahlen erfinden.
+
 ## Takt & Abbruch (für den `/loop`-Betrieb)
 
 - Nach erfolgreicher Iteration: nächste in **30–60 min** planen.
@@ -73,6 +108,11 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
 - [x] ~~**T5 Gridfinity-Bin-Generator**~~ → `/generatoren/gridfinity-generator` (2026-08-25)
 - [ ] **T6 Living-Hinge-Generator** (SVG/DXF-Muster für Laser).
 - [ ] **T7 Zuschnittoptimierung v2**: Schnittliste/Etiketten-Druck, mehrere Plattenformate gleichzeitig.
+- [ ] **T8 OpenSEO anbinden** (siehe Abschnitt oben): MCP-Server in `.mcp.json` eintragen, Zugang
+      testen, erste Ranking- und Keyword-Abfrage machen und das Ergebnis als neue P1/P2-Punkte
+      eintragen. **Blockiert durch E5** (DataForSEO kostet Geld) – vorher nichts installieren.
+- [ ] **T9 Gridfinity-Baseplate-Generator**: passende Grundplatten zu den Bins (Profil 2,15/1,8/0,7 mm,
+      Eckradius 4,0 mm, 4,65 mm hoch – Maße stehen bereits im Iterations-Log von Iteration 5).
 
 ### P2 – SEO
 
@@ -101,6 +141,10 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
 - [ ] **E2 Zweite Nische:** Garten ist laut Recherche Top-Kandidat – gleiche Domain oder Schwester-Domain?
 - [ ] **E3 EN-Version** (hreflang) für EN-lastige Cluster (Gridfinity, Living Hinge, Board Feet).
 - [ ] **E4 Google Search Console:** Zugang/Export für Claude → Backlog-Priorisierung nach echten Query-Daten.
+- [ ] **E5 OpenSEO + DataForSEO:** OpenSEO selbst ist MIT-lizenziert und kostenlos, die Daten dahinter
+      kommen von DataForSEO und werden pro Abfrage abgerechnet. Zu entscheiden: Budget je Monat,
+      self-hosted oder Cloud, und wer die Zugangsdaten hinterlegt. Ohne diese Entscheidung bleibt T8
+      blockiert und der Loop priorisiert weiter nach der Recherche in `keywords/`.
 
 ## Iterations-Log
 
@@ -158,6 +202,16 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
   *Hinweis für künftige Iterationen:* Die Browser-Session sprang während des Smoke-Tests auf
   `about:blank` und lieferte dadurch einmalig widersprüchliche Werte. Bei unplausiblen
   Browser-Messungen zuerst den Seitenzustand prüfen und gegen Node querrechnen, statt Code zu ändern.
+- **2026-08-25 · Iteration 6 (Fehlerbehebung + Prozess):** Von Bastian gemeldetes Darstellungsproblem
+  im Gridfinity-Generator behoben. Ursache: Die Vorschau zeichnete nur Umrisse ohne gefüllte
+  Seitenflächen und ohne Tiefensortierung – die geometrisch korrekt tiefer liegenden Fachböden
+  wirkten dadurch wie abgelöste Platten und ragten über die Vorderwand hinaus. Jetzt wird der Korpus
+  als gefüllte Silhouette (konvexe Hülle der projizierten Ober- und Unterkante) gezeichnet, von
+  hinten nach vorn sortiert, und das Bin-Innere per Clip-Pfad auf die Öffnung begrenzt.
+  Drei Regressionstests ergänzt (Clip-Pfad vorhanden, `<g>` geschlossen, gültige Vorschau für sechs
+  Konfigurationen). Außerdem: OpenSEO als datengetriebene Steuerung in den Prozess aufgenommen
+  (T8 + E5) und die Regel ergänzt, dass gemeldete Fehler den Backlog schlagen.
+  T6 (Living Hinge) verschoben; Geometrie-Library und 23 Tests sind bereits fertig und grün.
 
 ## Start-Prompt (Referenz)
 

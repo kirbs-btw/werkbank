@@ -457,7 +457,29 @@ const iso = (x: number, y: number, z: number): P2 => ({
   y: (x + y) * ISO_SIN - z,
 });
 
-/** Leichte Drahtvorschau aus Silhouetten-Schleifen (nicht aus allen Dreiecken). */
+/** Konvexe Hülle (Monotone Chain) – liefert die Silhouette des Körpers. */
+function convexHull(pts: P2[]): P2[] {
+  if (pts.length < 3) return pts;
+  const p = [...pts].sort((a, b) => a.x - b.x || a.y - b.y);
+  const cross = (o: P2, a: P2, b: P2) => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+  const build = (src: P2[]): P2[] => {
+    const out: P2[] = [];
+    for (const q of src) {
+      while (out.length >= 2 && cross(out[out.length - 2], out[out.length - 1], q) <= 0) out.pop();
+      out.push(q);
+    }
+    out.pop();
+    return out;
+  };
+  return [...build(p), ...build([...p].reverse())];
+}
+
+/**
+ * Isometrische Vorschau als flächiger Körper. Gezeichnet wird von hinten nach
+ * vorn (Malerverfahren): Füße, Silhouette des Korpus, Oberkante, Hohlraum,
+ * Fachböden, Trennwände. Ohne die gefüllte Silhouette wirken die tiefer
+ * liegenden Fachböden wie abgelöste Platten.
+ */
 export function previewSvg(spec: BinSpec): string {
   const seg = 3;
   const ux = Math.max(1, Math.round(spec.unitsX));
@@ -474,8 +496,8 @@ export function previewSvg(spec: BinSpec): string {
 
   const shapes: string[] = [];
   const pts: P2[] = [];
-  const poly = (loop: P2[], z: number, style: string) => {
-    const p = loop.map((q) => iso(q.x, q.y, z));
+  const project = (loop: P2[], z: number) => loop.map((q) => iso(q.x, q.y, z));
+  const draw = (p: P2[], style: string) => {
     pts.push(...p);
     shapes.push(
       `<polygon points="${p.map((q) => `${q.x.toFixed(2)},${q.y.toFixed(2)}`).join(' ')}" ${style} vector-effect="non-scaling-stroke"/>`,
@@ -483,57 +505,73 @@ export function previewSvg(spec: BinSpec): string {
   };
 
   const S = {
-    body: 'fill="#ffedd5" fill-opacity="0.75" stroke="#c2410c" stroke-width="1.4"',
-    edge: 'fill="none" stroke="#ea580c" stroke-width="0.9"',
-    foot: 'fill="none" stroke="#a1a1aa" stroke-width="0.7" stroke-dasharray="3 2"',
-    comp: 'fill="#fff7ed" stroke="#9a3412" stroke-width="0.8"',
+    foot: 'fill="#f4f4f5" stroke="#a1a1aa" stroke-width="0.7"',
+    side: 'fill="#fdba74" stroke="#c2410c" stroke-width="1.2" stroke-linejoin="round"',
+    top: 'fill="#ffedd5" stroke="#c2410c" stroke-width="1.2" stroke-linejoin="round"',
+    cavity: 'fill="#c2764a" stroke="#9a3412" stroke-width="0.8"',
+    floor: 'fill="#fff7ed" stroke="#9a3412" stroke-width="0.7"',
+    divider: 'fill="#fed7aa" stroke="#9a3412" stroke-width="0.7"',
   };
 
+  // 1. Füße (ganz hinten/unten)
   const padW = GF.GRID - GF.CLEARANCE;
   for (let gy = 0; gy < uy; gy++) {
     for (let gx = 0; gx < ux; gx++) {
       const cx = -W / 2 + padW / 2 + gx * GF.GRID;
       const cy = -D / 2 + padW / 2 + gy * GF.GRID;
-      poly(
-        roundedRect(cx, cy, padW - 2 * GF.BASE_INSET, padW - 2 * GF.BASE_INSET, GF.CORNER_R - GF.BASE_INSET, seg),
-        0,
-        S.foot,
-      );
+      const footLoop = roundedRect(cx, cy, padW - 2 * GF.BASE_INSET, padW - 2 * GF.BASE_INSET, GF.CORNER_R - GF.BASE_INSET, seg);
+      draw(convexHull([...project(footLoop, 0), ...project(footLoop, GF.BASE_HEIGHT)]), S.foot);
     }
   }
 
+  // 2. Korpus als gefüllte Silhouette – erst dadurch wirkt der Bin räumlich
   const outer = roundedRect(0, 0, W, D, GF.CORNER_R, seg);
-  poly(outer, GF.BASE_HEIGHT, S.edge);
-  poly(outer, topZ, S.body);
-  poly(roundedRect(0, 0, W - 2 * wall, D - 2 * wall, Math.max(GF.CORNER_R - wall, 0.1), seg), topZ, S.edge);
+  draw(convexHull([...project(outer, GF.BASE_HEIGHT), ...project(outer, topZ)]), S.side);
 
+  // 3. Oberkante
+  draw(project(outer, topZ), S.top);
+
+  // 4. Hohlraum als Öffnung
+  const innerTop = roundedRect(0, 0, W - 2 * wall, D - 2 * wall, Math.max(GF.CORNER_R - wall, 0.1), seg);
+  const openingPts = project(innerTop, topZ);
+  draw(openingPts, S.cavity);
+
+  // Alles Weitere liegt im Bin und ist nur durch die Öffnung sichtbar –
+  // ohne diese Begrenzung ragen die tiefer liegenden Böden über die Vorderwand hinaus.
+  shapes.push(
+    `<clipPath id="gf-opening"><polygon points="${openingPts.map((q) => `${q.x.toFixed(2)},${q.y.toFixed(2)}`).join(' ')}"/></clipPath><g clip-path="url(#gf-opening)">`,
+  );
+
+  // 5. Fachböden (tiefer, daher nach dem Hohlraum)
   const innerW = W - 2 * wall;
   const innerD = D - 2 * wall;
   const compW = (innerW - (nx - 1) * wall) / nx;
   const compD = (innerD - (ny - 1) * wall) / ny;
   const floorTop = GF.BASE_HEIGHT + floor;
+  const rectAt = (x0: number, y0: number, w: number, d: number): P2[] => [
+    { x: x0, y: y0 },
+    { x: x0 + w, y: y0 },
+    { x: x0 + w, y: y0 + d },
+    { x: x0, y: y0 + d },
+  ];
   for (let i = 0; i < nx; i++) {
     for (let j = 0; j < ny; j++) {
       const x0 = -innerW / 2 + i * (compW + wall);
       const y0 = -innerD / 2 + j * (compD + wall);
-      const rect: P2[] = [
-        { x: x0, y: y0 },
-        { x: x0 + compW, y: y0 },
-        { x: x0 + compW, y: y0 + compD },
-        { x: x0, y: y0 + compD },
-      ];
-      poly(rect, floorTop, S.comp);
+      draw(project(rectAt(x0, y0, compW, compD), floorTop), S.floor);
     }
   }
 
-  const verticals = ([[1, 1], [-1, 1], [-1, -1], [1, -1]] as const)
-    .map(([sx, sy]) => {
-      const a = iso((sx * W) / 2, (sy * D) / 2, GF.BASE_HEIGHT);
-      const b = iso((sx * W) / 2, (sy * D) / 2, topZ);
-      pts.push(a, b);
-      return `M ${a.x.toFixed(2)},${a.y.toFixed(2)} L ${b.x.toFixed(2)},${b.y.toFixed(2)}`;
-    })
-    .join(' ');
+  // 6. Trennwände (Oberkante liegt höher als die Böden)
+  for (let i = 1; i < nx; i++) {
+    const x0 = -innerW / 2 + i * compW + (i - 1) * wall;
+    draw(project(rectAt(x0, -innerD / 2, wall, innerD), bodyH), S.divider);
+  }
+  for (let j = 1; j < ny; j++) {
+    const y0 = -innerD / 2 + j * compD + (j - 1) * wall;
+    draw(project(rectAt(-innerW / 2, y0, innerW, wall), bodyH), S.divider);
+  }
+  shapes.push('</g>');
 
   const pad = 6;
   const minX = Math.min(...pts.map((p) => p.x)) - pad;
@@ -541,5 +579,5 @@ export function previewSvg(spec: BinSpec): string {
   const minY = Math.min(...pts.map((p) => p.y)) - pad;
   const maxY = Math.max(...pts.map((p) => p.y)) + pad;
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${minX.toFixed(1)} ${minY.toFixed(1)} ${(maxX - minX).toFixed(1)} ${(maxY - minY).toFixed(1)}" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Isometrische Vorschau des Gridfinity-Bins">${shapes.join('')}<path d="${verticals}" ${S.edge} vector-effect="non-scaling-stroke"/></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${minX.toFixed(1)} ${minY.toFixed(1)} ${(maxX - minX).toFixed(1)} ${(maxY - minY).toFixed(1)}" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Isometrische Vorschau des Gridfinity-Bins">${shapes.join('')}</svg>`;
 }

@@ -195,7 +195,44 @@ describe('STL & Vorschau', () => {
     const svg = previewSvg(spec({ unitsX: 2, compartmentsX: 2, lip: true }));
     expect(svg).toContain('<svg');
     expect(svg).toContain('viewBox');
-    // 2 Füße + Außenkontur (2×) + Innenkontur + 2 Fächer
+    // 2 Füße + Korpus + Oberkante + Hohlraum + 2 Fachböden + 1 Trennwand
     expect((svg.match(/<polygon/g) ?? []).length).toBeGreaterThanOrEqual(7);
+  });
+
+  it('begrenzt das Bin-Innere auf die Öffnung', () => {
+    // Ohne diese Begrenzung ragen die tiefer liegenden Fachböden über die Vorderwand hinaus
+    const svg = previewSvg(spec({ compartmentsX: 2 }));
+    expect(svg).toContain('<clipPath id="gf-opening"');
+    expect(svg).toContain('clip-path="url(#gf-opening)"');
+    expect(svg.indexOf('<clipPath')).toBeLessThan(svg.indexOf('clip-path="url('));
+    // Die Gruppe wird auch wieder geschlossen
+    expect((svg.match(/<g /g) ?? []).length).toBe((svg.match(/<\/g>/g) ?? []).length);
+  });
+
+  it('liefert für jede Konfiguration eine gültige, vollständige Vorschau', () => {
+    const varianten: Partial<BinSpec>[] = [
+      {},
+      { lip: false },
+      { compartmentsX: 3, compartmentsY: 2 },
+      { unitsX: 5, unitsY: 4, unitsZ: 2 },
+      { unitsZ: 12 },
+      { wall: 4, floor: 6 },
+    ];
+    let letzteAnzahl = 0;
+    for (const v of varianten) {
+      const svg = previewSvg(spec(v));
+      const vb = svg.match(/viewBox="([^"]+)"/)?.[1].split(' ').map(Number) ?? [];
+      expect(vb, JSON.stringify(v)).toHaveLength(4);
+      expect(vb.every(Number.isFinite), JSON.stringify(v)).toBe(true);
+      expect(vb[2], JSON.stringify(v)).toBeGreaterThan(0);
+      expect(vb[3], JSON.stringify(v)).toBeGreaterThan(0);
+      expect(svg).not.toContain('NaN');
+      letzteAnzahl = (svg.match(/<polygon/g) ?? []).length;
+      expect(letzteAnzahl).toBeGreaterThan(3);
+    }
+    // Mehr Fächer ergeben mehr Flächen in der Vorschau
+    const wenig = (previewSvg(spec({ compartmentsX: 1 })).match(/<polygon/g) ?? []).length;
+    const viel = (previewSvg(spec({ compartmentsX: 4 })).match(/<polygon/g) ?? []).length;
+    expect(viel).toBeGreaterThan(wenig);
   });
 });
