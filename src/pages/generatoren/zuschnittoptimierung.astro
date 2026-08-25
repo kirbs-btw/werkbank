@@ -1,0 +1,494 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { getGenerator } from '../../lib/generators';
+import { breadcrumbLd, faqLd } from '../../lib/schema';
+import { SITE } from '../../config/site';
+import { optimize, sheetSvg, type CutPart, type SheetSpec } from '../../lib/cutlist';
+
+const gen = getGenerator('zuschnittoptimierung')!;
+const path = '/generatoren/zuschnittoptimierung';
+const crumbs = [
+  { name: 'Start', href: '/' },
+  { name: 'Generatoren', href: '/kategorie/generatoren' },
+  { name: gen.shortTitle ?? gen.title, href: path },
+];
+
+const FAQ = [
+  {
+    q: 'Wie funktioniert die Zuschnittoptimierung?',
+    a: 'Der Optimierer probiert viele Anordnungs-Strategien durch und wählt den Schnittplan mit den wenigsten Platten und dem geringsten Verschnitt. Alle Schnitte sind durchgehende Guillotine-Schnitte – der Plan lässt sich also mit Plattensäge, Tisch- oder Handkreissäge real umsetzen.',
+  },
+  {
+    q: 'Welche Sägeblattbreite (Schnittfuge) trage ich ein?',
+    a: 'Die Schnittfuge ist das Material, das jeder Sägeschnitt wegnimmt. Übliche Werte: 2–3 mm bei Hand- und Tauchkreissägen, 3–5 mm bei Tisch- und Formatkreissägen. Im Zweifel am Sägeblatt nachmessen (Schnittbreite, nicht Stammblattdicke).',
+  },
+  {
+    q: 'Wie berücksichtige ich die Maserrichtung?',
+    a: 'Entferne bei den betroffenen Teilen das Häkchen „drehbar“. Dann bleibt die Teil-Länge immer parallel zur Plattenlänge – bei Dekor- und Echtholzplatten läuft die Maserung so bei allen Teilen in dieselbe Richtung.',
+  },
+  {
+    q: 'Welche Plattenmaße sind üblich?',
+    a: 'Gängige Formate: Spanplatte roh/beschichtet 2800 × 2070 mm, MDF und Multiplex 2500 × 1250 mm, große Formate 3050 × 1220 mm. Im Baumarkt-Zuschnitt sind auch 2650 × 2070 mm verbreitet. Einfach das Maß deiner Platte eintragen.',
+  },
+  {
+    q: 'Werden meine Daten gespeichert oder hochgeladen?',
+    a: 'Nein. Die Optimierung läuft komplett in deinem Browser, nichts verlässt dein Gerät. Deine Teileliste wird nur lokal im Browser gemerkt, damit sie beim nächsten Besuch wieder da ist.',
+  },
+  {
+    q: 'Was kostet die Zuschnittoptimierung?',
+    a: 'Nichts. Unbegrenzt viele Teile und Platten, Drucken und SVG-Export sind komplett kostenlos und ohne Anmeldung – Funktionen, die in vielen Zuschnittprogrammen nur in der Bezahlversion stecken.',
+  },
+];
+
+const ld: object[] = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: gen.title,
+    url: new URL(path, SITE.url).href,
+    description: gen.description,
+    applicationCategory: 'DesignApplication',
+    operatingSystem: 'Web',
+    inLanguage: 'de-DE',
+    isAccessibleForFree: true,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+    publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+  },
+  breadcrumbLd(crumbs.map((c) => ({ name: c.name, path: c.href }))),
+  faqLd(FAQ),
+];
+
+// SSR-Beispiel (Schrank-Korpus) – sofort sichtbares Ergebnis ohne JS, kein Layout-Sprung.
+const DEFAULT_SHEET: SheetSpec = { length: 2800, width: 2070, kerf: 4, trim: 0 };
+const DEFAULT_PARTS: CutPart[] = [
+  { length: 2000, width: 600, qty: 2, label: 'Seitenwand', rotatable: true },
+  { length: 964, width: 600, qty: 2, label: 'Deckel/Boden', rotatable: true },
+  { length: 960, width: 560, qty: 4, label: 'Einlegeboden', rotatable: true },
+  { length: 964, width: 100, qty: 1, label: 'Sockelblende', rotatable: true },
+];
+const initial = optimize(DEFAULT_PARTS, DEFAULT_SHEET);
+
+const nf = (n: number, dig = 1) => n.toLocaleString('de-DE', { maximumFractionDigits: dig });
+const dim = (n: number) => String(Math.round(n * 10) / 10).replace('.', ',');
+const offcutText = (offcuts: { length: number; width: number }[]) => {
+  if (offcuts.length === 0) return '';
+  const shown = offcuts.slice(0, 4).map((o) => `${dim(o.length)} × ${dim(o.width)}`);
+  const more = offcuts.length > 4 ? ` (+${offcuts.length - 4} weitere)` : '';
+  return `Nutzbare Reste: ${shown.join(', ')} mm${more}`;
+};
+
+const inputCls =
+  'w-full min-w-16 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 font-mono text-sm text-zinc-900 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200';
+const sheetInputCls =
+  'w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-zinc-900 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200';
+---
+
+<BaseLayout
+  title="Zuschnittoptimierung online – Plattenzuschnitt mit Schnittplan"
+  description={gen.description}
+  path={path}
+  ogType="article"
+  jsonLd={ld}
+>
+  <div class="mx-auto max-w-5xl px-4 py-8">
+    <div data-no-print>
+      <Breadcrumbs items={crumbs} />
+    </div>
+
+    <header class="mt-4">
+      <h1 class="text-3xl font-extrabold tracking-tight text-zinc-900">Zuschnittoptimierung</h1>
+      <p class="mt-2 text-lg text-zinc-600" data-no-print>
+        Plattenmaß und Teileliste eingeben – der Optimierer verteilt deine Zuschnitte mit minimalem
+        Verschnitt auf so wenige Platten wie möglich und erstellt den fertigen Schnittplan.
+      </p>
+    </header>
+
+    <section data-no-print class="mt-8 grid gap-6 lg:grid-cols-[300px_1fr]">
+      <div>
+        <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Platte</h2>
+          <div class="mt-3 space-y-4">
+            <label class="block">
+              <span class="mb-1 flex items-center justify-between text-sm font-medium text-zinc-700"><span>Plattenlänge</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="zs-len" type="number" value="2800" min="1" step="any" inputmode="decimal" class={sheetInputCls} />
+            </label>
+            <label class="block">
+              <span class="mb-1 flex items-center justify-between text-sm font-medium text-zinc-700"><span>Plattenbreite</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="zs-wid" type="number" value="2070" min="1" step="any" inputmode="decimal" class={sheetInputCls} />
+            </label>
+            <label class="block">
+              <span class="mb-1 flex items-center justify-between text-sm font-medium text-zinc-700"><span>Sägeblattbreite</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="zs-kerf" type="number" value="4" min="0" step="0.1" inputmode="decimal" class={sheetInputCls} />
+              <span class="mt-1 block text-xs text-zinc-500">Schnittfuge – geht bei jedem Schnitt verloren</span>
+            </label>
+            <label class="block">
+              <span class="mb-1 flex items-center justify-between text-sm font-medium text-zinc-700"><span>Randbeschnitt</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="zs-trim" type="number" value="0" min="0" step="1" inputmode="decimal" class={sheetInputCls} />
+              <span class="mt-1 block text-xs text-zinc-500">Rundum abschneiden, z. B. bei beschädigten Kanten</span>
+            </label>
+          </div>
+          <div class="mt-5 flex flex-col gap-2">
+            <button id="zs-print" type="button" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-500">Schnittplan drucken</button>
+            <button id="zs-svg" type="button" class="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100">SVG herunterladen</button>
+            <button id="zs-reset" type="button" class="rounded-lg px-4 py-2 text-sm font-medium text-zinc-500 transition hover:bg-zinc-100 hover:text-zinc-700">Zurücksetzen</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+        <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Teileliste</h2>
+        <div class="mt-3 overflow-x-auto">
+          <table class="w-full min-w-[540px] text-sm">
+            <thead>
+              <tr class="text-left text-xs uppercase tracking-wide text-zinc-500">
+                <th class="pb-2 pr-2 font-medium">Länge (mm)</th>
+                <th class="pb-2 pr-2 font-medium">Breite (mm)</th>
+                <th class="w-20 pb-2 pr-2 font-medium">Anzahl</th>
+                <th class="pb-2 pr-2 font-medium">Bezeichnung</th>
+                <th class="w-16 pb-2 pr-2 text-center font-medium" title="Teil darf um 90° gedreht werden (keine Maserrichtung)">drehbar</th>
+                <th class="w-8 pb-2"><span class="sr-only">Entfernen</span></th>
+              </tr>
+            </thead>
+            <tbody id="zs-parts">
+              {
+                DEFAULT_PARTS.map((p) => (
+                  <tr class="border-t border-zinc-100">
+                    <td class="py-1.5 pr-2"><input data-f="l" type="number" value={p.length} min="1" step="any" inputmode="decimal" aria-label="Länge in mm" class={inputCls} /></td>
+                    <td class="py-1.5 pr-2"><input data-f="w" type="number" value={p.width} min="1" step="any" inputmode="decimal" aria-label="Breite in mm" class={inputCls} /></td>
+                    <td class="py-1.5 pr-2"><input data-f="qty" type="number" value={p.qty} min="1" max="999" step="1" aria-label="Anzahl" class={inputCls} /></td>
+                    <td class="py-1.5 pr-2"><input data-f="label" type="text" value={p.label} placeholder="optional" aria-label="Bezeichnung" class={inputCls.replace('font-mono ', '')} /></td>
+                    <td class="py-1.5 pr-2 text-center"><input data-f="rot" type="checkbox" checked={p.rotatable} aria-label="Drehen erlaubt" class="h-4 w-4 accent-brand-600" /></td>
+                    <td class="py-1.5 text-right"><button data-del type="button" aria-label="Zeile entfernen" class="px-1 text-lg leading-none text-zinc-400 transition hover:text-red-600">×</button></td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+        <button id="zs-add" type="button" class="mt-3 rounded-lg border border-dashed border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-600 transition hover:border-brand-400 hover:text-brand-700">+ Teil hinzufügen</button>
+      </div>
+    </section>
+
+    <template id="zs-row-tpl">
+      <tr class="border-t border-zinc-100">
+        <td class="py-1.5 pr-2"><input data-f="l" type="number" value="600" min="1" step="any" inputmode="decimal" aria-label="Länge in mm" class={inputCls} /></td>
+        <td class="py-1.5 pr-2"><input data-f="w" type="number" value="400" min="1" step="any" inputmode="decimal" aria-label="Breite in mm" class={inputCls} /></td>
+        <td class="py-1.5 pr-2"><input data-f="qty" type="number" value="1" min="1" max="999" step="1" aria-label="Anzahl" class={inputCls} /></td>
+        <td class="py-1.5 pr-2"><input data-f="label" type="text" value="" placeholder="optional" aria-label="Bezeichnung" class={inputCls.replace('font-mono ', '')} /></td>
+        <td class="py-1.5 pr-2 text-center"><input data-f="rot" type="checkbox" checked aria-label="Drehen erlaubt" class="h-4 w-4 accent-brand-600" /></td>
+        <td class="py-1.5 text-right"><button data-del type="button" aria-label="Zeile entfernen" class="px-1 text-lg leading-none text-zinc-400 transition hover:text-red-600">×</button></td>
+      </tr>
+    </template>
+
+    <section class="mt-8" aria-live="polite">
+      <div class="grid grid-cols-3 gap-3 sm:gap-5">
+        <div class="rounded-xl border border-zinc-200 bg-white p-4 text-center shadow-sm">
+          <div id="zs-sum-sheets" class="font-mono text-2xl font-extrabold text-brand-700">{initial.sheets.length}</div>
+          <div class="mt-0.5 text-xs font-medium uppercase tracking-wide text-zinc-500">Platten benötigt</div>
+        </div>
+        <div class="rounded-xl border border-zinc-200 bg-white p-4 text-center shadow-sm">
+          <div id="zs-sum-waste" class="font-mono text-2xl font-extrabold text-zinc-900">{nf(initial.wastePercent)} %</div>
+          <div class="mt-0.5 text-xs font-medium uppercase tracking-wide text-zinc-500">Verschnitt</div>
+        </div>
+        <div class="rounded-xl border border-zinc-200 bg-white p-4 text-center shadow-sm">
+          <div id="zs-sum-parts" class="font-mono text-2xl font-extrabold text-zinc-900">{initial.placedParts} / {initial.requestedParts}</div>
+          <div class="mt-0.5 text-xs font-medium uppercase tracking-wide text-zinc-500">Teile platziert</div>
+        </div>
+      </div>
+
+      <div id="zs-warn" hidden class="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"></div>
+
+      <div id="zs-plans" class="mt-6 space-y-6">
+        {
+          initial.sheets.map((sh, i) => (
+            <figure class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+              <figcaption class="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 text-sm">
+                <span class="font-semibold text-zinc-900">Platte {i + 1} von {initial.sheets.length}</span>
+                <span class="text-zinc-500">belegt {nf(100 - sh.wastePercent)} % · Verschnitt {nf(sh.wastePercent)} %</span>
+              </figcaption>
+              <div set:html={sheetSvg(sh, DEFAULT_SHEET)} />
+              {sh.offcuts.length > 0 && <p class="mt-2 text-xs text-zinc-500">{offcutText(sh.offcuts)}</p>}
+            </figure>
+          ))
+        }
+      </div>
+      <p class="mt-3 text-xs text-zinc-500" data-no-print>
+        Eingaben rechnen live – deine Teileliste bleibt nur in deinem Browser gespeichert, nichts wird hochgeladen.
+      </p>
+    </section>
+
+    <section class="prose-werkbank mt-12 max-w-none" data-no-print>
+      <h2>So funktioniert die Zuschnittoptimierung</h2>
+      <p>
+        Wer Möbel, Regale oder Werkstatteinrichtung baut, steht immer vor derselben Frage: Wie verteile ich meine
+        Zuschnitte so auf die Platte, dass möglichst wenig Verschnitt entsteht – und wie viele Platten brauche ich
+        überhaupt? Genau das löst diese <strong>Zuschnittoptimierung</strong>: Du gibst das Plattenmaß und deine
+        Teileliste ein, der Optimierer probiert im Hintergrund viele Anordnungs-Strategien durch und zeigt dir den
+        besten <strong>Schnittplan</strong> – kostenlos und ohne Anmeldung, direkt im Browser.
+      </p>
+      <p>
+        Der Plan verwendet ausschließlich durchgehende <strong>Guillotine-Schnitte</strong>, wie sie eine
+        Plattensäge, Tischkreissäge oder Handkreissäge mit Führungsschiene ausführt. Die eingestellte
+        <strong>Sägeblattbreite</strong> (Schnittfuge) wird bei jedem Schnitt abgezogen – der Plan stimmt also auch
+        in der Praxis, nicht nur auf dem Papier. Mit dem <strong>Randbeschnitt</strong> planst du beschädigte oder
+        unmaßhaltige Plattenkanten gleich mit ein. Verwertbare Reststücke listet der Plan je Platte auf – ideal für
+        die Restekiste oder das nächste Projekt.
+      </p>
+      <h3>Maserrichtung &amp; drehbare Teile</h3>
+      <p>
+        Standardmäßig darf der Optimierer Teile um 90° drehen, um Platz zu sparen. Bei Platten mit Dekor oder
+        sichtbarer Maserung (Echtholz, Leimholz, dekorbeschichtete Spanplatte) entfernst du bei den Sichtteilen das
+        Häkchen <strong>drehbar</strong> – dann bleibt die Teil-Länge parallel zur Plattenlänge und die Maserung
+        läuft bei allen Teilen in dieselbe Richtung.
+      </p>
+      <h3>Gängige Plattenformate</h3>
+      <ul>
+        <li><strong>2800 × 2070 mm</strong> – Spanplatte roh und melaminbeschichtet (Standardformat)</li>
+        <li><strong>2500 × 1250 mm</strong> – MDF, Multiplex, Siebdruckplatte</li>
+        <li><strong>3050 × 1220 mm</strong> – Großformat MDF/HDF</li>
+        <li><strong>2650 × 2070 mm</strong> – häufiges Baumarkt-Zuschnittformat</li>
+        <li><strong>2440 × 1220 mm</strong> – OSB und Sperrholz (8 × 4 Fuß)</li>
+      </ul>
+      <p>
+        Tipp: Erst hier optimieren, dann mit der gedruckten Liste zum Plattenzuschnitt im Baumarkt oder Holzhandel –
+        so bestellst du die richtige Plattenanzahl und sparst dir teure Fehlschnitte.
+      </p>
+    </section>
+
+    <section class="mt-10" data-no-print>
+      <h2 class="text-2xl font-bold tracking-tight text-zinc-900">Häufige Fragen</h2>
+      <div class="mt-4 space-y-3">
+        {
+          FAQ.map((f) => (
+            <details class="rounded-lg border border-zinc-200 bg-white p-4">
+              <summary class="cursor-pointer font-medium text-zinc-800">{f.q}</summary>
+              <p class="mt-2 text-zinc-600">{f.a}</p>
+            </details>
+          ))
+        }
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<style is:global>
+  @media print {
+    header,
+    footer,
+    [data-no-print] {
+      display: none !important;
+    }
+    body {
+      background: #fff !important;
+    }
+    #zs-plans figure {
+      break-inside: avoid;
+      box-shadow: none;
+    }
+  }
+</style>
+
+<script>
+  import { optimize, sheetSvg, combinedSvg, type CutPart, type SheetSpec, type CutlistResult } from '../../lib/cutlist';
+
+  const STORAGE_KEY = 'werkbank-zuschnitt-v1';
+  const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
+  const tbody = $('zs-parts');
+  const plansEl = $('zs-plans');
+  const warnEl = $('zs-warn');
+  const tpl = $('zs-row-tpl') as HTMLTemplateElement | null;
+
+  const nf = (n: number, dig = 1) => n.toLocaleString('de-DE', { maximumFractionDigits: dig });
+  const dimf = (n: number) => String(Math.round(n * 10) / 10).replace('.', ',');
+  const esc = (s: string) =>
+    s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+
+  function val(id: string, fallback: number, min = 0): number {
+    const el = $(id) as HTMLInputElement | null;
+    if (!el) return fallback;
+    const v = parseFloat(el.value.replace(',', '.'));
+    return Number.isFinite(v) ? Math.max(min, v) : fallback;
+  }
+
+  function readSpec(): SheetSpec {
+    return {
+      length: val('zs-len', 2800, 1),
+      width: val('zs-wid', 2070, 1),
+      kerf: val('zs-kerf', 4, 0),
+      trim: val('zs-trim', 0, 0),
+    };
+  }
+
+  function rowInput(row: Element, f: string): HTMLInputElement | null {
+    return row.querySelector<HTMLInputElement>(`[data-f="${f}"]`);
+  }
+
+  function readParts(): CutPart[] {
+    if (!tbody) return [];
+    return Array.from(tbody.querySelectorAll('tr')).map((row) => {
+      const num = (f: string) => {
+        const el = rowInput(row, f);
+        const v = el ? parseFloat(el.value.replace(',', '.')) : NaN;
+        return Number.isFinite(v) ? v : 0;
+      };
+      return {
+        length: num('l'),
+        width: num('w'),
+        qty: Math.max(0, Math.round(num('qty'))),
+        label: rowInput(row, 'label')?.value ?? '',
+        rotatable: rowInput(row, 'rot')?.checked ?? true,
+      };
+    });
+  }
+
+  function addRow(part?: CutPart, focus = true): void {
+    if (!tbody || !tpl) return;
+    const row = (tpl.content.firstElementChild as HTMLTableRowElement).cloneNode(true) as HTMLTableRowElement;
+    if (part) {
+      const set = (f: string, v: string) => {
+        const el = rowInput(row, f);
+        if (el) el.value = v;
+      };
+      set('l', String(part.length));
+      set('w', String(part.width));
+      set('qty', String(part.qty));
+      set('label', part.label ?? '');
+      const rot = rowInput(row, 'rot');
+      if (rot) rot.checked = part.rotatable !== false;
+    }
+    tbody.appendChild(row);
+    if (focus) rowInput(row, 'l')?.focus();
+  }
+
+  function save(spec: SheetSpec, parts: CutPart[]): void {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ v: 1, sheet: spec, parts }));
+    } catch {
+      /* Speicher voll / privater Modus – Optimierung funktioniert trotzdem. */
+    }
+  }
+
+  function restore(): boolean {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw || !tbody) return false;
+      const st = JSON.parse(raw);
+      if (!st || !Array.isArray(st.parts) || st.parts.length === 0 || !st.sheet) return false;
+      const setInput = (id: string, v: unknown) => {
+        const el = $(id) as HTMLInputElement | null;
+        if (el && typeof v === 'number' && Number.isFinite(v)) el.value = String(v);
+      };
+      setInput('zs-len', st.sheet.length);
+      setInput('zs-wid', st.sheet.width);
+      setInput('zs-kerf', st.sheet.kerf);
+      setInput('zs-trim', st.sheet.trim);
+      tbody.innerHTML = '';
+      for (const p of st.parts) {
+        if (typeof p?.length === 'number' && typeof p?.width === 'number') addRow(p, false);
+      }
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  const offcutText = (offcuts: { length: number; width: number }[]) => {
+    if (offcuts.length === 0) return '';
+    const shown = offcuts.slice(0, 4).map((o) => `${dimf(o.length)} × ${dimf(o.width)}`);
+    const more = offcuts.length > 4 ? ` (+${offcuts.length - 4} weitere)` : '';
+    return `Nutzbare Reste: ${shown.join(', ')} mm${more}`;
+  };
+
+  let lastResult: CutlistResult | null = null;
+  let lastSpec: SheetSpec | null = null;
+
+  function render(): void {
+    const spec = readSpec();
+    const parts = readParts();
+    const res = optimize(parts, spec);
+    lastResult = res;
+    lastSpec = spec;
+
+    const setText = (id: string, t: string) => {
+      const el = $(id);
+      if (el) el.textContent = t;
+    };
+    setText('zs-sum-sheets', String(res.sheets.length));
+    setText('zs-sum-waste', `${nf(res.wastePercent)} %`);
+    setText('zs-sum-parts', `${res.placedParts} / ${res.requestedParts}`);
+
+    if (warnEl) {
+      const warnings: string[] = [];
+      for (const u of res.unplaceable) {
+        const name = u.label ? `${esc(u.label)}: ` : '';
+        warnings.push(
+          `Zu groß für die Platte: ${name}${dimf(u.length)} × ${dimf(u.width)} mm (${u.qty}×) – Plattenmaß prüfen oder Teil teilen.`,
+        );
+      }
+      if (res.truncated) warnings.push('Sehr große Teileliste – es wurden die ersten 2000 Teile eingeplant.');
+      warnEl.hidden = warnings.length === 0;
+      warnEl.innerHTML = warnings.map((w) => `<p>${w}</p>`).join('');
+    }
+
+    if (plansEl) {
+      if (res.sheets.length === 0) {
+        plansEl.innerHTML =
+          '<p class="rounded-lg border border-dashed border-zinc-300 p-8 text-center text-zinc-500">Füge Teile mit Maßen hinzu, um den Schnittplan zu sehen.</p>';
+      } else {
+        plansEl.innerHTML = res.sheets
+          .map((sh, i) => {
+            const rest = sh.offcuts.length > 0 ? `<p class="mt-2 text-xs text-zinc-500">${offcutText(sh.offcuts)}</p>` : '';
+            return `<figure class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm"><figcaption class="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 text-sm"><span class="font-semibold text-zinc-900">Platte ${i + 1} von ${res.sheets.length}</span><span class="text-zinc-500">belegt ${nf(100 - sh.wastePercent)} % · Verschnitt ${nf(sh.wastePercent)} %</span></figcaption><div>${sheetSvg(sh, spec)}</div>${rest}</figure>`;
+          })
+          .join('');
+      }
+    }
+    save(spec, parts);
+  }
+
+  let raf = 0;
+  const schedule = (): void => {
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(render);
+  };
+
+  function download(filename: string, content: string, type: string): void {
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  for (const id of ['zs-len', 'zs-wid', 'zs-kerf', 'zs-trim']) $(id)?.addEventListener('input', schedule);
+  tbody?.addEventListener('input', schedule);
+  tbody?.addEventListener('click', (e) => {
+    const btn = (e.target as HTMLElement).closest('[data-del]');
+    if (btn) {
+      btn.closest('tr')?.remove();
+      schedule();
+    }
+  });
+  $('zs-add')?.addEventListener('click', () => {
+    addRow();
+    schedule();
+  });
+  $('zs-print')?.addEventListener('click', () => window.print());
+  $('zs-svg')?.addEventListener('click', () => {
+    if (lastResult && lastSpec) download('schnittplan.svg', combinedSvg(lastResult, lastSpec), 'image/svg+xml');
+  });
+  $('zs-reset')?.addEventListener('click', () => {
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* ignorieren */
+    }
+    location.reload();
+  });
+
+  restore();
+  render();
+</script>

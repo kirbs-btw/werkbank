@@ -13,6 +13,23 @@ export interface Generator {
 
 export const GENERATORS: Generator[] = [
   {
+    slug: 'zuschnittoptimierung',
+    title: 'Zuschnittoptimierung – Plattenzuschnitt & Schnittplan',
+    shortTitle: 'Zuschnittoptimierung',
+    description:
+      'Optimiere deinen Plattenzuschnitt kostenlos: Teileliste eingeben, Verschnitt minimieren und den fertigen Schnittplan drucken oder als SVG speichern – unbegrenzt viele Teile, ohne Anmeldung.',
+    keywords: [
+      'zuschnittoptimierung online',
+      'zuschnittoptimierung kostenlos',
+      'plattenzuschnitt rechner',
+      'verschnittoptimierung online',
+      'schnittplan erstellen online',
+      'sägeplan optimierung kostenlos',
+      'plattenaufteilung rechner',
+      'cutlist optimizer deutsch',
+    ],
+  },
+  {
     slug: 'lochkreis',
     title: 'Lochkreis-Generator (SVG & DXF)',
     shortTitle: 'Lochkreis',

@@ -3,6 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
 import { TOOLS } from '../../lib/registry';
 import { CATEGORIES } from '../../lib/categories';
+import { GENERATORS } from '../../lib/generators';
 
 const path = '/rechner';
 const crumbs = [
@@ -33,10 +34,11 @@ const crumbs = [
       {
         CATEGORIES.map((c) => {
           const list = TOOLS.filter((t) => t.category === c.slug);
-          return list.length > 0 ? (
+          const gens = c.slug === 'generatoren' ? GENERATORS : [];
+          return list.length > 0 || gens.length > 0 ? (
             <section data-cat-section>
               <h2 class="text-xl font-bold tracking-tight text-zinc-900">
-                {c.name} <span class="text-sm font-normal text-zinc-500">({list.length})</span>
+                {c.name} <span class="text-sm font-normal text-zinc-500">({list.length + gens.length})</span>
               </h2>
               <div class="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {list.map((t) => (
@@ -47,6 +49,16 @@ const crumbs = [
                     class="block rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md"
                   >
                     <span class="font-medium text-zinc-800">{t.title}</span>
+                  </a>
+                ))}
+                {gens.map((g) => (
+                  <a
+                    href={`/generatoren/${g.slug}`}
+                    data-tool
+                    data-text={`${g.title} ${g.keywords.join(' ')}`.toLowerCase()}
+                    class="block rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm shadow-sm transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-md"
+                  >
+                    <span class="font-medium text-zinc-800">{g.title}</span>
                   </a>
                 ))}
               </div>

@@ -45,7 +45,7 @@ export const tool: Tool = {
     ];
   },
   intro:
-    'Ob Unterboden, Dachschalung, Trockenbauwand oder Möbelkorpus – dieser Rechner sagt dir, wie viele Holzwerkstoffplatten du für eine bestimmte Fläche brauchst. Du gibst die zu deckende Fläche, das Plattenformat (z. B. 1,25 × 2,50 m) und einen Verschnitt-Zuschlag für Anpassungen und Reste ein. Das Ergebnis wird auf ganze Platten aufgerundet und zeigt zugleich, wie viel Restfläche übrig bleibt, damit du nicht zu knapp bestellst.',
+    'Ob Unterboden, Dachschalung, Trockenbauwand oder Möbelkorpus – dieser Rechner sagt dir, wie viele Holzwerkstoffplatten du für eine bestimmte Fläche brauchst. Du gibst die zu deckende Fläche, das Plattenformat (z. B. 1,25 × 2,50 m) und einen Verschnitt-Zuschlag für Anpassungen und Reste ein. Das Ergebnis wird auf ganze Platten aufgerundet und zeigt zugleich, wie viel Restfläche übrig bleibt, damit du nicht zu knapp bestellst. Wenn du statt einer Fläche eine konkrete Teileliste zuschneiden willst, erstellt dir die <a href="/generatoren/zuschnittoptimierung">Zuschnittoptimierung</a> den passenden Schnittplan mit minimalem Verschnitt.',
   howto: [
     'Die zu beplankende oder zu beplattende Fläche in Quadratmeter eintragen.',
     'Plattenformat des gewählten Werkstoffs (Breite × Länge) angeben.',

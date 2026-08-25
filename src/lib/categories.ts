@@ -71,9 +71,9 @@ export const CATEGORIES: Category[] = [
   {
     slug: 'generatoren',
     name: 'Generatoren',
-    tagline: 'Bohrbilder & Muster als SVG/DXF erzeugen.',
+    tagline: 'Schnittpläne, Bohrbilder & Zahnräder erzeugen.',
     description:
-      'Parametrische Generatoren: erzeuge Lochkreis-Bohrbilder als druck- und laserfertige SVG/DXF-Dateien für CNC, Laser und Fräse.',
+      'Parametrische Generatoren: optimiere deinen Plattenzuschnitt mit Schnittplan und erzeuge Lochkreis-Bohrbilder oder Zahnräder als druck- und laserfertige SVG/DXF-Dateien.',
     icon: 'M12 3a9 9 0 100 18 9 9 0 000-18zm0 5a4 4 0 100 8 4 4 0 000-8z',
     accent: 'brand',
   },

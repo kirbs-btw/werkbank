@@ -35,6 +35,8 @@ export const tool: Tool = {
       { label: 'Benötigte Stangen', value: stangen, unit: 'Stk', digits: 0, primary: true },
     ];
   },
+  intro:
+    'Dieser Rechner beantwortet die eindimensionale Zuschnittfrage: Wie viele Teile fester Länge bekomme ich aus einer Stange, Leiste oder einem Brett – und wie viele Rohlinge muss ich kaufen? Die Sägeblattbreite (Schnittfuge) wird dabei pro Schnitt abgezogen. Für ganze Platten mit Teilen in Länge <em>und</em> Breite nutzt du besser die <a href="/generatoren/zuschnittoptimierung">Zuschnittoptimierung mit Schnittplan</a> – sie verteilt beliebig viele Teile mit minimalem Verschnitt auf deine Platten.',
   howto: [
     'Länge eines einzelnen Teils und die benötigte Stückzahl eintragen.',
     'Länge der gekauften Stange oder des Bretts angeben.',
