@@ -36,9 +36,10 @@ export const tool: Tool = {
   faq: [
     {
       q: 'Woher bekomme ich vc und fz?',
-      a: 'Schnittgeschwindigkeit vc und Zahnvorschub fz hängen von Material und Werkzeug ab und stehen in den Schnittdaten-Tabellen des Fräser-Herstellers.',
+      a: 'Schnittgeschwindigkeit vc und Zahnvorschub fz hängen von Material und Werkzeug ab und stehen in den Schnittdaten-Tabellen des Fräser-Herstellers. Wenn du keine Tabelle zur Hand hast, liefert dir der Schnittdaten-Rechner mit Material-Datenbank passende Richtwerte für Werkstoff und Werkzeug.',
     },
   ],
+  related: ['schnittdaten-rechner', 'schnittgeschwindigkeit', 'vorschub-fraesen'],
   updated: '2026-06-15',
   examples: [
     {

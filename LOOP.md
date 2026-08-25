@@ -67,9 +67,7 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
 ### P1 – Neue Tools (je 1 pro Iteration, „kostet woanders Geld" zuerst)
 
 - [x] ~~**T1 Fingerzinken-Box-Generator** (SVG/DXF)~~ → `/generatoren/fingerzinken-box` (2026-08-25)
-- [ ] **T2 Schnittdaten-Rechner mit Material-Datenbank** (Feeds & Speeds Pro): Material × Werkzeug
-      → vc/fz-Empfehlung + Drehzahl/Vorschub. Pendant zu HSMAdvisor/FSWizard (kostenpflichtig).
-      Keywords: „schnittdaten rechner", „schnittdaten aluminium fräsen".
+- [x] ~~**T2 Schnittdaten-Rechner mit Material-Datenbank**~~ → `/rechner/schnittdaten-rechner` (2026-08-25)
 - [ ] **T3 STL-Analyse im Browser**: Datei-Upload (bleibt lokal) → Volumen, Gewicht, Materialkosten
       je Material. Keyword: „stl volumen filament rechner".
 - [ ] **T4 DXF ⇄ SVG Konverter** (clientseitig, Linien/Polylinien/Kreise/Bögen).
@@ -114,6 +112,14 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
   Anordnung auf Arbeitsflächenbreite. Test deckte zwei echte Geometriefehler auf (Diagonale statt
   Eckpunkt, wenn an einer Ecke zwei Ausklinkungen zusammentreffen) – behoben vor dem Push.
   Interner Link aus `kerf-kompensation`. IndexNow-Ping: 4 URLs.
+- **2026-08-25 · Iteration 2 (T2):** Schnittdaten-Rechner mit Material-Datenbank live
+  (`/rechner/schnittdaten-rechner`): 19 Werkstoffe × 4 Werkzeugmaterialien (`src/lib/schnittdaten.ts`)
+  mit 21 Tests, Spanausdünnungs-Ausgleich (gedeckelt auf 2,5×), Kienzle-kc, Leistungsbedarf,
+  Warnungen bei ungeeigneten Kombinationen. Richtwerte-Tabelle wird aus der Datenbank generiert
+  (bleibt automatisch synchron, zusätzlich indexierbarer Tabellen-Content). Formeln bewusst
+  identisch zu `mittlere-spanungsdicke` und `spindelleistung-fraesen`. Tabellen-Styles in
+  `global.css` ergänzt. Interne Links aus `drehzahl-vorschub` und `schnittgeschwindigkeit`.
+  IndexNow-Ping: 4 URLs.
 
 ## Start-Prompt (Referenz)
 

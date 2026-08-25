@@ -38,14 +38,14 @@ export const tool: Tool = {
   faq: [
     {
       q: 'Welche Schnittgeschwindigkeit ist richtig?',
-      a: 'Das hängt von Werkstoff und Schneidstoff ab. Stahl mit HSS liegt z. B. bei ca. 20-40 m/min, Aluminium mit Hartmetall oft über 300 m/min. Genaue Werte stehen in den Schnittdaten-Tabellen.',
+      a: 'Das hängt von Werkstoff und Schneidstoff ab. Stahl mit HSS liegt z. B. bei ca. 20-40 m/min, Aluminium mit Hartmetall oft über 300 m/min. Konkrete Richtwerte für deine Kombination liefert der Schnittdaten-Rechner mit Material-Datenbank.',
     },
     {
       q: 'Warum durch 1000 teilen?',
       a: 'Der Durchmesser steht in Millimetern, vc wird aber in Meter pro Minute angegeben. Die Division durch 1000 rechnet von mm in m um.',
     },
   ],
-  related: ['drehzahl-vorschub', 'bohrer-drehzahl', 'vorschub-drehen'],
+  related: ['schnittdaten-rechner', 'drehzahl-vorschub', 'bohrer-drehzahl', 'vorschub-drehen'],
   updated: '2026-06-15',
   examples: [
     {

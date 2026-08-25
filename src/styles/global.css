@@ -84,3 +84,44 @@ summary:focus-visible {
   text-decoration: underline;
   text-underline-offset: 2px;
 }
+
+/* Datentabellen im Fließtext: horizontal scrollbar, damit die Seite nie seitlich scrollt. */
+.prose-werkbank .tabelle-scroll {
+  overflow-x: auto;
+  margin-bottom: 0.75rem;
+  border: 1px solid #e4e4e7;
+  border-radius: 0.5rem;
+  background: #fff;
+}
+.prose-werkbank :where(table) {
+  width: 100%;
+  min-width: 34rem;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+.prose-werkbank :where(thead) {
+  background: #f4f4f5;
+}
+.prose-werkbank :where(th) {
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: #3f3f46;
+  white-space: nowrap;
+}
+.prose-werkbank :where(td) {
+  padding: 0.5rem 0.75rem;
+  border-top: 1px solid #f4f4f5;
+  color: #52525b;
+}
+.prose-werkbank :where(tbody tr:hover) {
+  background: #fafafa;
+}
+.prose-werkbank :where(td:not(:first-child)) {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.prose-werkbank .tabelle-fussnote {
+  font-size: 0.8125rem;
+  color: #71717a;
+}
