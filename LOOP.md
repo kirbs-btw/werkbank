@@ -68,8 +68,7 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
 
 - [x] ~~**T1 Fingerzinken-Box-Generator** (SVG/DXF)~~ → `/generatoren/fingerzinken-box` (2026-08-25)
 - [x] ~~**T2 Schnittdaten-Rechner mit Material-Datenbank**~~ → `/rechner/schnittdaten-rechner` (2026-08-25)
-- [ ] **T3 STL-Analyse im Browser**: Datei-Upload (bleibt lokal) → Volumen, Gewicht, Materialkosten
-      je Material. Keyword: „stl volumen filament rechner".
+- [x] ~~**T3 STL-Analyse im Browser**~~ → `/generatoren/stl-analyse` (2026-08-25)
 - [ ] **T4 DXF ⇄ SVG Konverter** (clientseitig, Linien/Polylinien/Kreise/Bögen).
       Online-Konverter sind ad-verseucht oder kostenpflichtig.
 - [ ] **T5 Gridfinity-Bin-Generator** (STL-Export im Browser). Achtung Recherche-Hinweis:
@@ -91,6 +90,12 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
 - [ ] **Q1 `npm run check` komplett grün:** vite-Typkonflikt in `astro.config.mjs` beheben.
 - [ ] **Q2 Interner Link-Check** über `dist/` (Script, findet 404s/Waisen).
 - [ ] **Q3 A11y-Durchgang** der Kernseiten (Labels, Fokusreihenfolge, Kontraste).
+- [ ] **Q4 Umlaute reparieren:** ~20 Tool-Dateien nutzen transliterierte Umlaute im sichtbaren Text
+      („Schaetze", „Fuellgrad", „beruecksichtigt"). Betrifft Titel, Beschreibungen, FAQ und teils
+      Ergebnis-Labels → schlechte Optik und schwächeres Keyword-Matching. Gefunden in Iteration 3;
+      `modell-gewicht.ts` ist bereits bereinigt. Liste: `grep -lE "Schaetz|Fuell|Naeher|beruecksicht|
+      Waende|Groesse|Laenge|Hoehe|koennen|muessen" src/tools/*/*.ts`. Achtung: Ergebnis-Labels werden
+      in `examples` per Label gematcht – beide Stellen gemeinsam ändern.
 
 ### Entscheidungs-Log (braucht Bastian – Loop setzt das NICHT um)
 
@@ -120,6 +125,14 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
   identisch zu `mittlere-spanungsdicke` und `spindelleistung-fraesen`. Tabellen-Styles in
   `global.css` ergänzt. Interne Links aus `drehzahl-vorschub` und `schnittgeschwindigkeit`.
   IndexNow-Ping: 4 URLs.
+- **2026-08-25 · Iteration 3 (T3):** STL-Analyse live (`/generatoren/stl-analyse`): STL-Parser für
+  binär und ASCII (`src/lib/stl.ts`) mit 26 Tests, exaktes Volumen über Tetraeder-Summe, Oberfläche,
+  Abmessungen, Dichtheitsprüfung über Kantenzählung, Erkennung invertierter Normalen und entarteter
+  Dreiecke. Dazu Material-/Kostenschätzung (19 Werkstoffe), Filamentlänge und Bauraum-Prüfung mit
+  90°-Drehung. Datei bleibt im Browser – das ist der Unterschied zu den Upload-Diensten.
+  Verifiziert mit generierten Test-Würfeln (Soll 8 cm³ / 24 cm² exakt getroffen, kaputtes Netz
+  meldet 3 offene Kanten). Interner Link aus `modell-gewicht`, dessen Umlaute dabei repariert
+  wurden → Rest als Q4 im Backlog. IndexNow-Ping: 4 URLs.
 
 ## Start-Prompt (Referenz)
 

@@ -13,6 +13,23 @@ export interface Generator {
 
 export const GENERATORS: Generator[] = [
   {
+    slug: 'stl-analyse',
+    title: 'STL-Analyse – Volumen, Gewicht & Druckkosten',
+    shortTitle: 'STL-Analyse',
+    description:
+      'STL-Datei per Drag & Drop analysieren: Volumen, Oberfläche, Abmessungen, Materialbedarf, Gewicht und Druckkosten – inklusive Dichtheitsprüfung. Die Datei bleibt in deinem Browser.',
+    keywords: [
+      'stl volumen filament rechner',
+      'stl datei analysieren online',
+      'stl volumen berechnen',
+      'stl gewicht berechnen',
+      '3d druck kosten aus stl',
+      'stl viewer volumen kostenlos',
+      'stl wasserdicht prüfen',
+      'filament verbrauch stl',
+    ],
+  },
+  {
     slug: 'fingerzinken-box',
     title: 'Fingerzinken-Box-Generator (Kiste als SVG & DXF)',
     shortTitle: 'Fingerzinken-Box',

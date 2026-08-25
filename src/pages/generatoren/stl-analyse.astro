@@ -1,0 +1,461 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { getGenerator } from '../../lib/generators';
+import { breadcrumbLd, faqLd } from '../../lib/schema';
+import { SITE } from '../../config/site';
+import { STL_MATERIALS } from '../../lib/stl';
+
+const gen = getGenerator('stl-analyse')!;
+const path = '/generatoren/stl-analyse';
+const crumbs = [
+  { name: 'Start', href: '/' },
+  { name: 'Generatoren', href: '/kategorie/generatoren' },
+  { name: gen.shortTitle ?? gen.title, href: path },
+];
+
+const FAQ = [
+  {
+    q: 'Wird meine STL-Datei hochgeladen?',
+    a: 'Nein. Die Datei wird ausschließlich in deinem Browser gelesen und ausgewertet – sie verlässt dein Gerät zu keinem Zeitpunkt und landet auf keinem Server. Das ist der Unterschied zu den meisten Online-STL-Analysen, die deine Konstruktion erst hochladen müssen.',
+  },
+  {
+    q: 'Wie genau ist die Filament- und Kostenschätzung?',
+    a: 'Das Volumen des Modells wird exakt aus dem Netz berechnet. Der Materialbedarf ist dagegen eine Näherung: Die Schale wird als Oberfläche mal Wandstärke gerechnet, der Rest anteilig mit dem Füllgrad. Für eine schnelle Kalkulation reicht das gut; die exakte Zahl liefert am Ende immer der Slicer, weil er zusätzlich Stützen, Brim und Verfahrwege kennt.',
+  },
+  {
+    q: 'Was bedeutet „nicht wasserdicht"?',
+    a: 'Ein sauberes Netz ist geschlossen – jede Kante verbindet genau zwei Dreiecke. Fehlen Dreiecke oder überlappen sich Flächen, entstehen Löcher, und das berechnete Volumen stimmt nicht mehr zuverlässig. Der Slicer meckert dann oft ebenfalls. Reparieren kannst du solche Dateien mit Netfabb, Meshmixer, PrusaSlicer (Reparaturfunktion) oder Blender.',
+  },
+  {
+    q: 'Warum weicht das Gewicht vom Slicer ab?',
+    a: 'Der Slicer rechnet mit der tatsächlichen Wandanzahl, Deck- und Bodenschichten sowie dem realen Füllmuster – und addiert Stützstrukturen. Diese Analyse kennt nur die Geometrie. Als Faustregel liegt die Schätzung meist innerhalb von zehn bis zwanzig Prozent, sofern Wandstärke und Füllgrad realistisch eingestellt sind.',
+  },
+  {
+    q: 'Welche STL-Formate werden unterstützt?',
+    a: 'Beide: binäres STL (der Normalfall aus CAD und Slicer) und ASCII-STL. Das Format wird automatisch erkannt – auch der klassische Sonderfall, dass eine Binärdatei im Kopf mit dem Wort „solid" beginnt und deshalb von manchen Programmen falsch eingelesen wird.',
+  },
+  {
+    q: 'Kann ich damit auch Frästeile oder Guss kalkulieren?',
+    a: 'Ja. Wähle statt Filament einfach Aluminium, Stahl, Messing oder Holz aus der Werkstoffliste, setze die Wandstärke auf 0 und rechne massiv. Dann bekommst du Rohteilgewicht und Materialkosten – praktisch für Angebote und für die Frage, ob das Teil auf die Maschine passt.',
+  },
+];
+
+const ld: object[] = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: gen.title,
+    url: new URL(path, SITE.url).href,
+    description: gen.description,
+    applicationCategory: 'DesignApplication',
+    operatingSystem: 'Web',
+    inLanguage: 'de-DE',
+    isAccessibleForFree: true,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+    publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+  },
+  breadcrumbLd(crumbs.map((c) => ({ name: c.name, path: c.href }))),
+  faqLd(FAQ),
+];
+
+const GROUPS: { id: string; label: string }[] = [
+  { id: 'druck', label: 'Filament (FDM)' },
+  { id: 'resin', label: 'Resin (SLA/DLP)' },
+  { id: 'metall', label: 'Metall' },
+  { id: 'sonstige', label: 'Sonstige' },
+];
+
+const nf = (n: number, dig = 2) => n.toLocaleString('de-DE', { maximumFractionDigits: dig });
+const inputCls =
+  'w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-zinc-900 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200';
+const rowCls = 'flex items-baseline justify-between gap-4 border-b border-zinc-100 py-2.5 last:border-0';
+const labelCls = 'mb-1 flex items-center justify-between text-sm font-medium text-zinc-700';
+---
+
+<BaseLayout
+  title="STL-Analyse online – Volumen, Gewicht & Druckkosten"
+  description={gen.description}
+  path={path}
+  ogType="article"
+  jsonLd={ld}
+>
+  <div class="mx-auto max-w-5xl px-4 py-8">
+    <Breadcrumbs items={crumbs} />
+
+    <header class="mt-4">
+      <h1 class="text-3xl font-extrabold tracking-tight text-zinc-900">STL-Analyse</h1>
+      <p class="mt-2 text-lg text-zinc-600">
+        STL-Datei hierher ziehen und sofort Volumen, Oberfläche, Abmessungen, Materialbedarf,
+        Gewicht und Kosten sehen – samt Prüfung, ob das Netz geschlossen ist.
+      </p>
+    </header>
+
+    <div
+      id="stl-drop"
+      class="mt-8 rounded-xl border-2 border-dashed border-zinc-300 bg-white p-8 text-center transition"
+    >
+      <svg class="mx-auto h-10 w-10 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M12 16V4m0 0L8 8m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+      <p class="mt-3 font-medium text-zinc-800">STL-Datei hier ablegen</p>
+      <p class="mt-1 text-sm text-zinc-500">oder</p>
+      <label class="mt-3 inline-block cursor-pointer rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-500">
+        Datei auswählen
+        <input id="stl-file" type="file" accept=".stl,model/stl,application/sla" class="sr-only" />
+      </label>
+      <p class="mt-3 text-xs text-zinc-500">
+        Binär und ASCII · bis 100 MB · <strong>Die Datei bleibt in deinem Browser</strong> und wird nicht hochgeladen.
+      </p>
+    </div>
+
+    <p id="stl-status" hidden class="mt-4 rounded-lg border px-4 py-3 text-sm"></p>
+
+    <div id="stl-result" hidden class="mt-6 grid gap-6 lg:grid-cols-[300px_1fr]">
+      <form id="stl-form" class="space-y-4" onsubmit="return false">
+        <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Modell</h2>
+          <div class="mt-3 space-y-4">
+            <label class="block">
+              <span class={labelCls}><span>Skalierung</span><span class="text-xs font-normal text-zinc-500">%</span></span>
+              <input id="stl-scale" type="number" value="100" min="1" step="1" inputmode="decimal" class={inputCls} />
+            </label>
+            <fieldset>
+              <legend class="mb-1 text-sm font-medium text-zinc-700">Bauraum (X × Y × Z)</legend>
+              <div class="grid grid-cols-3 gap-2">
+                <input id="stl-bx" type="number" value="220" min="1" step="10" aria-label="Bauraum X in mm" class={inputCls} />
+                <input id="stl-by" type="number" value="220" min="1" step="10" aria-label="Bauraum Y in mm" class={inputCls} />
+                <input id="stl-bz" type="number" value="250" min="1" step="10" aria-label="Bauraum Z in mm" class={inputCls} />
+              </div>
+              <span class="mt-1 block text-xs text-zinc-500">in mm – für die Passt-es-Prüfung</span>
+            </fieldset>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Material & Kosten</h2>
+          <div class="mt-3 space-y-4">
+            <label class="block">
+              <span class="mb-1 block text-sm font-medium text-zinc-700">Werkstoff</span>
+              <select id="stl-material" class={inputCls}>
+                {
+                  GROUPS.map((g) => (
+                    <optgroup label={g.label}>
+                      {STL_MATERIALS.filter((m) => m.group === g.id).map((m) => (
+                        <option value={m.id} selected={m.id === 'pla'} data-density={m.density} data-price={m.price}>
+                          {m.label} ({nf(m.density)} g/cm³)
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))
+                }
+              </select>
+            </label>
+            <label class="block">
+              <span class={labelCls}><span>Dichte</span><span class="text-xs font-normal text-zinc-500">g/cm³</span></span>
+              <input id="stl-density" type="number" value="1.24" min="0.01" step="0.01" inputmode="decimal" class={inputCls} />
+            </label>
+            <label class="block">
+              <span class={labelCls}><span>Materialpreis</span><span class="text-xs font-normal text-zinc-500">€/kg</span></span>
+              <input id="stl-price" type="number" value="20" min="0" step="0.5" inputmode="decimal" class={inputCls} />
+            </label>
+            <label class="block">
+              <span class={labelCls}><span>Wandstärke</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="stl-wall" type="number" value="1.2" min="0" step="0.1" inputmode="decimal" class={inputCls} />
+              <span class="mt-1 block text-xs text-zinc-500">0 = massiv rechnen (Fräsen, Guss)</span>
+            </label>
+            <label class="block">
+              <span class={labelCls}><span>Füllgrad</span><span class="text-xs font-normal text-zinc-500">%</span></span>
+              <input id="stl-infill" type="number" value="20" min="0" max="100" step="5" inputmode="decimal" class={inputCls} />
+            </label>
+          </div>
+        </div>
+      </form>
+
+      <div>
+        <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Ergebnis</h2>
+            <span id="stl-filename" class="max-w-full truncate text-xs text-zinc-500"></span>
+          </div>
+          <div id="stl-mesh" class="mt-3 flex flex-wrap gap-2"></div>
+          <div class="mt-3" aria-live="polite" aria-atomic="true">
+            <div class={rowCls + ' text-lg'}>
+              <span class="font-semibold text-zinc-900">Volumen</span>
+              <span id="stl-volume" class="whitespace-nowrap font-mono font-semibold text-brand-700">–</span>
+            </div>
+            <div class={rowCls}>
+              <span class="text-zinc-600">Abmessungen (X × Y × Z)</span>
+              <span id="stl-size" class="whitespace-nowrap font-mono font-semibold text-zinc-900">–</span>
+            </div>
+            <div class={rowCls}>
+              <span class="text-zinc-600">Oberfläche</span>
+              <span id="stl-area" class="whitespace-nowrap font-mono font-semibold text-zinc-900">–</span>
+            </div>
+            <div class={rowCls}>
+              <span class="text-zinc-600">Materialbedarf <span id="stl-material-hint" class="block text-xs font-normal text-zinc-500"></span></span>
+              <span id="stl-need" class="whitespace-nowrap font-mono font-semibold text-zinc-900">–</span>
+            </div>
+            <div class={rowCls + ' text-lg'}>
+              <span class="font-semibold text-zinc-900">Gewicht</span>
+              <span id="stl-weight" class="whitespace-nowrap font-mono font-semibold text-brand-700">–</span>
+            </div>
+            <div class={rowCls}>
+              <span class="text-zinc-600">Filamentlänge <span class="block text-xs font-normal text-zinc-500">bei 1,75 mm</span></span>
+              <span id="stl-length" class="whitespace-nowrap font-mono font-semibold text-zinc-900">–</span>
+            </div>
+            <div class={rowCls + ' text-lg'}>
+              <span class="font-semibold text-zinc-900">Materialkosten</span>
+              <span id="stl-cost" class="whitespace-nowrap font-mono font-semibold text-brand-700">–</span>
+            </div>
+            <div class={rowCls}>
+              <span class="text-zinc-600">Bauraum</span>
+              <span id="stl-fit" class="whitespace-nowrap font-mono font-semibold text-zinc-900">–</span>
+            </div>
+          </div>
+        </div>
+        <p class="mt-2 text-xs text-zinc-500">
+          Volumen und Abmessungen sind exakt aus dem Netz gerechnet. Der Materialbedarf ist eine
+          Näherung aus Schale und Füllgrad – der Slicer bleibt die genauere Quelle.
+        </p>
+      </div>
+    </div>
+
+    <section class="prose-werkbank mt-12 max-w-none">
+      <h2>Was die STL-Analyse dir sagt</h2>
+      <p>
+        Eine STL-Datei enthält nur ein Netz aus Dreiecken – keine Angaben zu Volumen, Gewicht oder
+        Kosten. Genau das rechnet dieses Werkzeug aus: Es liest die Datei direkt in deinem Browser,
+        summiert das <strong>Volumen</strong> über alle Dreiecke, misst <strong>Oberfläche</strong> und
+        <strong>Abmessungen</strong> und schätzt daraus Materialbedarf, Gewicht und Preis. Damit
+        beantwortest du in Sekunden die Fragen, die vor jedem Druck oder Angebot stehen: Wie viel
+        Filament geht drauf? Was kostet das Teil? Passt es überhaupt auf mein Druckbett?
+      </p>
+      <h3>Deine Datei bleibt bei dir</h3>
+      <p>
+        Die meisten Online-Analysen für STL-Dateien laden dein Modell auf einen fremden Server. Hier
+        passiert das nicht: Die Datei wird lokal gelesen und nach dem Schließen des Tabs vergessen.
+        Für Auftragsarbeiten, NDA-Projekte oder einfach eigene Konstruktionen ist das der
+        entscheidende Unterschied – und der Grund, warum die Analyse auch ohne Internetverbindung
+        weiterläuft, sobald die Seite geladen ist.
+      </p>
+      <h3>Dichtheitsprüfung: stimmt das Volumen überhaupt?</h3>
+      <p>
+        Ein Volumen lässt sich nur dann zuverlässig berechnen, wenn das Netz <strong>geschlossen</strong>
+        ist. Deshalb prüft die Analyse jede Kante: In einem sauberen Modell verbindet jede Kante
+        genau zwei Dreiecke. Fehlen Flächen, meldet das Werkzeug offene Kanten – dann ist das Volumen
+        nur ein Näherungswert und der Slicer wird das Modell vermutlich ebenfalls bemängeln.
+        Zusätzlich erkennt die Analyse nach innen gedrehte Normalen und entartete Dreiecke ohne
+        Fläche, die typischen Überbleibsel schlechter Exporte.
+      </p>
+      <h3>Von der Schätzung zum belastbaren Preis</h3>
+      <p>
+        Für die Kalkulation gehört zum Material noch die Maschinenzeit. Wenn du einen Verkaufspreis
+        brauchst, rechne mit dem Ergebnis hier weiter: Die
+        <a href="/rechner/druckpreis-kalkulation">Druckpreis-Kalkulation</a> verbindet Materialkosten
+        mit Druckzeit und Aufschlag, der
+        <a href="/rechner/maschinenstundensatz-3d-druck">Maschinenstundensatz</a> liefert den passenden
+        Stundensatz, und die <a href="/rechner/filament-kosten">Filamentkosten</a> zeigen den
+        Materialanteil samt Strom. Für Frästeile passt der
+        <a href="/rechner/materialkosten-je-teil">Materialkosten-je-Teil-Rechner</a>.
+      </p>
+    </section>
+
+    <section class="mt-10">
+      <h2 class="text-2xl font-bold tracking-tight text-zinc-900">Häufige Fragen</h2>
+      <div class="mt-4 space-y-3">
+        {
+          FAQ.map((f) => (
+            <details class="rounded-lg border border-zinc-200 bg-white p-4">
+              <summary class="cursor-pointer font-medium text-zinc-800">{f.q}</summary>
+              <p class="mt-2 text-zinc-600">{f.a}</p>
+            </details>
+          ))
+        }
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<script>
+  import {
+    analyzeStl,
+    estimateCost,
+    fitsBuildVolume,
+    filamentLength,
+    StlError,
+    type StlStats,
+  } from '../../lib/stl';
+
+  const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
+  const drop = $('stl-drop');
+  const fileInput = $('stl-file') as HTMLInputElement | null;
+  const statusEl = $('stl-status');
+  const resultEl = $('stl-result');
+  const form = $('stl-form');
+
+  const nf = (n: number, dig = 2) => n.toLocaleString('de-DE', { maximumFractionDigits: dig });
+  const esc = (s: string) =>
+    s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+
+  function val(id: string, fallback: number, min = 0): number {
+    const el = $(id) as HTMLInputElement | null;
+    if (!el) return fallback;
+    const v = parseFloat(el.value.replace(',', '.'));
+    return Number.isFinite(v) ? Math.max(min, v) : fallback;
+  }
+
+  const setText = (id: string, t: string) => {
+    const el = $(id);
+    if (el) el.textContent = t;
+  };
+
+  function status(kind: 'info' | 'error' | 'warn' | 'ok', html: string): void {
+    if (!statusEl) return;
+    const styles = {
+      info: 'border-zinc-200 bg-zinc-50 text-zinc-700',
+      ok: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+      warn: 'border-amber-200 bg-amber-50 text-amber-900',
+      error: 'border-red-200 bg-red-50 text-red-800',
+    };
+    statusEl.hidden = false;
+    statusEl.className = `mt-4 rounded-lg border px-4 py-3 text-sm ${styles[kind]}`;
+    statusEl.innerHTML = html;
+  }
+
+  let stats: StlStats | null = null;
+
+  const badge = (text: string, tone: 'ok' | 'warn' | 'neutral') => {
+    const tones = {
+      ok: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+      warn: 'border-amber-200 bg-amber-50 text-amber-900',
+      neutral: 'border-zinc-200 bg-zinc-100 text-zinc-600',
+    };
+    return `<span class="rounded-full border px-2.5 py-0.5 text-xs font-medium ${tones[tone]}">${text}</span>`;
+  };
+
+  function renderMeshInfo(s: StlStats): void {
+    const parts = [
+      badge(`${s.format === 'binary' ? 'Binär' : 'ASCII'}-STL`, 'neutral'),
+      badge(`${nf(s.triangles, 0)} Dreiecke`, 'neutral'),
+    ];
+    if (s.watertight === true) parts.push(badge('geschlossen', 'ok'));
+    else if (s.watertight === false) parts.push(badge(`${nf(s.openEdges, 0)} offene Kanten`, 'warn'));
+    else parts.push(badge('Dichtheit nicht geprüft (sehr großes Netz)', 'neutral'));
+    if (s.inverted) parts.push(badge('Normalen nach innen', 'warn'));
+    if (s.degenerate > 0) parts.push(badge(`${nf(s.degenerate, 0)} entartete Dreiecke`, 'warn'));
+    const el = $('stl-mesh');
+    if (el) el.innerHTML = parts.join(' ');
+  }
+
+  function update(): void {
+    if (!stats) return;
+    const scale = val('stl-scale', 100, 1);
+    const density = val('stl-density', 1.24, 0.01);
+    const price = val('stl-price', 20, 0);
+    const wall = val('stl-wall', 1.2, 0);
+    const infill = Math.min(val('stl-infill', 20, 0), 100);
+
+    const c = estimateCost({
+      volume: stats.volume,
+      area: stats.area,
+      scale,
+      density,
+      price,
+      wall,
+      infill,
+    });
+    const f = scale / 100;
+    const size: [number, number, number] = [
+      stats.size[0] * f,
+      stats.size[1] * f,
+      stats.size[2] * f,
+    ];
+    const fit = fitsBuildVolume(size, [val('stl-bx', 220, 1), val('stl-by', 220, 1), val('stl-bz', 250, 1)]);
+
+    setText('stl-volume', `${nf(c.volumeCm3)} cm³`);
+    setText('stl-size', `${nf(size[0], 1)} × ${nf(size[1], 1)} × ${nf(size[2], 1)} mm`);
+    setText('stl-area', `${nf(c.areaCm2)} cm²`);
+    setText('stl-need', `${nf(c.materialCm3)} cm³`);
+    setText('stl-weight', `${nf(c.weight, 1)} g`);
+    setText('stl-length', `${nf(filamentLength(c.materialCm3, 1.75), 2)} m`);
+    setText('stl-cost', `${nf(c.cost)} €`);
+    setText(
+      'stl-material-hint',
+      wall > 0
+        ? `Schale ${nf(c.shellCm3)} cm³ + Füllung ${nf(c.infillCm3)} cm³ · massiv wären ${nf(c.solidWeight, 1)} g`
+        : 'massiv gerechnet',
+    );
+    setText(
+      'stl-fit',
+      fit.fitsAsIs ? 'passt' : fit.fits ? 'passt gedreht' : `${nf(fit.overshoot, 1)} mm zu groß`,
+    );
+    const fitEl = $('stl-fit');
+    if (fitEl) {
+      fitEl.className = `whitespace-nowrap font-mono font-semibold ${
+        fit.fits ? (fit.fitsAsIs ? 'text-emerald-700' : 'text-amber-700') : 'text-red-700'
+      }`;
+    }
+  }
+
+  async function handle(file: File): Promise<void> {
+    status('info', `<strong>${esc(file.name)}</strong> wird analysiert …`);
+    try {
+      const buffer = await file.arrayBuffer();
+      const s = analyzeStl(buffer);
+      stats = s;
+      renderMeshInfo(s);
+      setText('stl-filename', `${file.name} · ${nf(file.size / 1024 / 1024, 2)} MB`);
+      if (resultEl) resultEl.hidden = false;
+      update();
+      if (s.watertight === false) {
+        status(
+          'warn',
+          `Das Netz ist nicht geschlossen (${nf(s.openEdges, 0)} offene Kanten). Volumen und Gewicht sind deshalb nur Näherungswerte – Datei am besten vorher reparieren.`,
+        );
+      } else if (s.inverted) {
+        status('warn', 'Die Flächennormalen zeigen nach innen. Volumen stimmt, der Slicer könnte das Modell aber falsch interpretieren.');
+      } else {
+        status('ok', `<strong>${esc(file.name)}</strong> analysiert – Netz ist geschlossen.`);
+      }
+    } catch (err) {
+      stats = null;
+      if (resultEl) resultEl.hidden = true;
+      const msg = err instanceof StlError ? err.message : 'Die Datei konnte nicht gelesen werden.';
+      status('error', esc(msg));
+    }
+  }
+
+  function pick(files: FileList | null): void {
+    const file = files?.[0];
+    if (file) void handle(file);
+  }
+
+  fileInput?.addEventListener('change', () => pick(fileInput.files));
+
+  const dropActive = 'border-brand-400 bg-brand-50';
+  drop?.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    drop.classList.add(...dropActive.split(' '));
+  });
+  drop?.addEventListener('dragleave', () => drop.classList.remove(...dropActive.split(' ')));
+  drop?.addEventListener('drop', (e) => {
+    e.preventDefault();
+    drop.classList.remove(...dropActive.split(' '));
+    pick((e as DragEvent).dataTransfer?.files ?? null);
+  });
+
+  // Werkstoffwahl setzt Dichte und Preis vor – beide bleiben frei editierbar.
+  $('stl-material')?.addEventListener('change', (e) => {
+    const sel = e.target as HTMLSelectElement;
+    const opt = sel.selectedOptions[0];
+    const d = $('stl-density') as HTMLInputElement | null;
+    const p = $('stl-price') as HTMLInputElement | null;
+    if (d && opt?.dataset.density) d.value = opt.dataset.density;
+    if (p && opt?.dataset.price) p.value = opt.dataset.price;
+    update();
+  });
+
+  form?.addEventListener('input', update);
+  form?.addEventListener('change', update);
+</script>
