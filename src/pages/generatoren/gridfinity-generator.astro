@@ -1,0 +1,344 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { getGenerator } from '../../lib/generators';
+import { breadcrumbLd, faqLd } from '../../lib/schema';
+import { SITE } from '../../config/site';
+import { buildBin, previewSvg, GF, type BinSpec } from '../../lib/gridfinity';
+
+const gen = getGenerator('gridfinity-generator')!;
+const path = '/generatoren/gridfinity-generator';
+const crumbs = [
+  { name: 'Start', href: '/' },
+  { name: 'Generatoren', href: '/kategorie/generatoren' },
+  { name: gen.shortTitle ?? gen.title, href: path },
+];
+
+const FAQ = [
+  {
+    q: 'Was ist Gridfinity?',
+    a: 'Gridfinity ist ein offenes, modulares Ordnungssystem für Werkstatt und Schreibtisch, erfunden von Zack Freedman. Alles baut auf einem Raster aus 42 × 42 mm großen Feldern auf: Grundplatten nehmen Bins auf, Bins rasten formschlüssig ein und lassen sich stapeln. Weil das System offen ist, passen Teile verschiedener Konstrukteure zusammen – solange sie sich an die Maße halten.',
+  },
+  {
+    q: 'Passen die erzeugten Bins auf jede Grundplatte?',
+    a: 'Ja, sofern die Grundplatte selbst der Spezifikation folgt. Der Generator setzt die maßgeblichen Werte exakt um: 42 mm Raster, 0,5 mm Spiel (0,25 mm je Seite), das dreistufige Fußprofil aus 0,8 mm Fase, 1,8 mm Gerade und 2,15 mm Fase auf 4,75 mm Gesamthöhe sowie den Eckradius von 3,75 mm. Bins über mehrere Rasterfelder bekommen – wie in der Spezifikation vorgesehen – je Feld einen eigenen Fuß im 42-mm-Abstand.',
+  },
+  {
+    q: 'Wofür ist der Stapelrand?',
+    a: 'Der Stapelrand ist eine 4,4 mm hohe Lippe am oberen Bin-Rand, deren Innenseite das Fußprofil spiegelt. Dadurch rastet ein zweiter Bin oben sauber ein. Wichtig: Die Lippe zählt nicht zur Nennhöhe – ein 1×1×3-Bin ist 21 mm hoch, mit Stapelrand 25,4 mm. Wer den Bin nur in eine Schublade legt oder lange Werkzeuge senkrecht einstellt, braucht die Lippe nicht.',
+  },
+  {
+    q: 'Welche Magnete passen in die Bohrungen?',
+    a: 'Die Standardgröße im Gridfinity-Umfeld sind Rundmagnete mit 6 mm Durchmesser und 2 mm Höhe. Die Bohrung ist mit 6,5 mm bewusst etwas größer, damit der Magnet ohne Nacharbeit hineingeht und sich einkleben lässt. Zusätzlich kannst du Schraubenbohrungen mit 3 mm für M3 erzeugen – nützlich bei magnetischen Grundplatten, wenn du keine Magnete einsetzen willst.',
+  },
+  {
+    q: 'Welche Wand- und Bodenstärke ist sinnvoll?',
+    a: 'Bewährt haben sich 1,2 mm Wand und 1,2 mm Boden: Das entspricht bei 0,4 mm Düse genau drei Linien und druckt sich ohne Lücken. Für schwere Inhalte wie Schrauben oder Werkzeug darfst du auf 1,6 bis 2 mm gehen. Dünner als 0,8 mm solltest du nicht werden, weil die Zinken am Fuß sonst zu schwach werden.',
+  },
+  {
+    q: 'Wie drucke ich die Bins am besten?',
+    a: 'Aufrecht drucken, ohne Stützen – das Fußprofil ist so gestaltet, dass alle Überhänge bei 45° liegen und selbsttragend sind. Üblich sind 0,2 mm Schichthöhe, 3 Perimeter und 10 bis 15 % Füllung. Ein guter erster Test ist ein einzelner 1×1-Bin: Passt der in deine Grundplatte, passen auch alle größeren.',
+  },
+  {
+    q: 'Wird das Modell auf einen Server geladen?',
+    a: 'Nein. Das Netz wird komplett in deinem Browser berechnet und als STL gespeichert – es verlässt dein Gerät nicht. Anders als bei Online-Generatoren gibt es damit weder Warteschlange noch Begrenzung der Downloads.',
+  },
+];
+
+const ld: object[] = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: gen.title,
+    url: new URL(path, SITE.url).href,
+    description: gen.description,
+    applicationCategory: 'DesignApplication',
+    operatingSystem: 'Web',
+    inLanguage: 'de-DE',
+    isAccessibleForFree: true,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+    publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+  },
+  breadcrumbLd(crumbs.map((c) => ({ name: c.name, path: c.href }))),
+  faqLd(FAQ),
+];
+
+// SSR-Standardbin – sofort sichtbar ohne JS
+const DEFAULT: BinSpec = {
+  unitsX: 2,
+  unitsY: 1,
+  unitsZ: 3,
+  wall: 1.2,
+  floor: 1.2,
+  compartmentsX: 2,
+  compartmentsY: 1,
+  lip: true,
+  holes: 'magnet',
+  segments: 8,
+};
+const initial = buildBin(DEFAULT);
+
+const nf = (n: number, dig = 1) => n.toLocaleString('de-DE', { maximumFractionDigits: dig });
+const inputCls =
+  'w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-zinc-900 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200';
+const rowCls = 'flex items-baseline justify-between gap-4 border-b border-zinc-100 py-2.5 last:border-0';
+const labelCls = 'mb-1 flex items-center justify-between text-sm font-medium text-zinc-700';
+---
+
+<BaseLayout
+  title="Gridfinity-Generator – Bins als STL erzeugen"
+  description={gen.description}
+  path={path}
+  ogType="article"
+  jsonLd={ld}
+>
+  <div class="mx-auto max-w-5xl px-4 py-8">
+    <Breadcrumbs items={crumbs} />
+
+    <header class="mt-4">
+      <h1 class="text-3xl font-extrabold tracking-tight text-zinc-900">Gridfinity-Generator</h1>
+      <p class="mt-2 text-lg text-zinc-600">
+        Rastergröße, Höhe und Fächer wählen – der Generator baut daraus einen maßhaltigen
+        Gridfinity-Bin nach Spezifikation und gibt ihn als druckfertiges STL aus.
+      </p>
+    </header>
+
+    <div class="mt-8 grid gap-6 lg:grid-cols-[300px_1fr]">
+      <form id="gf-form" class="space-y-4" onsubmit="return false">
+        <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Größe</h2>
+          <div class="mt-3 space-y-4">
+            <fieldset>
+              <legend class="mb-1 text-sm font-medium text-zinc-700">Rasterfelder (X × Y)</legend>
+              <div class="grid grid-cols-2 gap-2">
+                <input id="gf-ux" type="number" value="2" min="1" max="12" step="1" aria-label="Rasterfelder in X" class={inputCls} />
+                <input id="gf-uy" type="number" value="1" min="1" max="12" step="1" aria-label="Rasterfelder in Y" class={inputCls} />
+              </div>
+              <span class="mt-1 block text-xs text-zinc-500">je 42 mm</span>
+            </fieldset>
+            <label class="block">
+              <span class={labelCls}><span>Höheneinheiten</span><span class="text-xs font-normal text-zinc-500">à 7 mm</span></span>
+              <input id="gf-uz" type="number" value="3" min="1" max="30" step="1" class={inputCls} />
+            </label>
+            <fieldset>
+              <legend class="mb-1 text-sm font-medium text-zinc-700">Fächer (X × Y)</legend>
+              <div class="grid grid-cols-2 gap-2">
+                <input id="gf-cx" type="number" value="2" min="1" max="12" step="1" aria-label="Fächer in X" class={inputCls} />
+                <input id="gf-cy" type="number" value="1" min="1" max="12" step="1" aria-label="Fächer in Y" class={inputCls} />
+              </div>
+            </fieldset>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Ausführung</h2>
+          <div class="mt-3 space-y-4">
+            <label class="block">
+              <span class={labelCls}><span>Wandstärke</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="gf-wall" type="number" value="1.2" min="0.4" max="6" step="0.1" inputmode="decimal" class={inputCls} />
+            </label>
+            <label class="block">
+              <span class={labelCls}><span>Bodenstärke</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="gf-floor" type="number" value="1.2" min="0.4" max="10" step="0.1" inputmode="decimal" class={inputCls} />
+            </label>
+            <label class="flex items-center gap-2">
+              <input id="gf-lip" type="checkbox" checked class="h-4 w-4 accent-brand-600" />
+              <span class="text-sm font-medium text-zinc-700">Stapelrand (+4,4 mm)</span>
+            </label>
+            <label class="block">
+              <span class="mb-1 block text-sm font-medium text-zinc-700">Bohrungen im Fuß</span>
+              <select id="gf-holes" class={inputCls}>
+                <option value="keine">keine</option>
+                <option value="magnet" selected>Magnete Ø6 × 2 mm</option>
+                <option value="magnet-schraube">Magnete + M3-Schrauben</option>
+              </select>
+            </label>
+          </div>
+          <button id="gf-stl" type="button" class="mt-5 w-full rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-500">
+            STL herunterladen
+          </button>
+        </div>
+      </form>
+
+      <div>
+        <div id="gf-warn" hidden class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"></div>
+
+        <figure class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+          <figcaption class="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Vorschau</span>
+            <span id="gf-name" class="font-mono text-xs text-zinc-500">{DEFAULT.unitsX}×{DEFAULT.unitsY}×{DEFAULT.unitsZ}</span>
+          </figcaption>
+          <div id="gf-preview" class="h-72 w-full" set:html={previewSvg(DEFAULT)} />
+        </figure>
+
+        <div class="mt-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <h2 class="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">Maße & Material</h2>
+          <div aria-live="polite" aria-atomic="true">
+            <div class={rowCls + ' text-lg'}>
+              <span class="font-semibold text-zinc-900">Außenmaß</span>
+              <span id="gf-size" class="whitespace-nowrap font-mono font-semibold text-brand-700">{nf(initial.stats.size[0])} × {nf(initial.stats.size[1])} × {nf(initial.stats.size[2])} mm</span>
+            </div>
+            <div class={rowCls}>
+              <span class="text-zinc-600">Nennhöhe <span class="block text-xs font-normal text-zinc-500">ohne Stapelrand</span></span>
+              <span id="gf-body" class="whitespace-nowrap font-mono font-semibold text-zinc-900">{nf(initial.stats.bodyHeight)} mm</span>
+            </div>
+            <div class={rowCls}>
+              <span class="text-zinc-600">Fach innen</span>
+              <span id="gf-comp" class="whitespace-nowrap font-mono font-semibold text-zinc-900">{nf(initial.stats.compartment[0])} × {nf(initial.stats.compartment[1])} × {nf(initial.stats.compartment[2])} mm</span>
+            </div>
+            <div class={rowCls + ' text-lg'}>
+              <span class="font-semibold text-zinc-900">Fassungsvermögen</span>
+              <span id="gf-cap" class="whitespace-nowrap font-mono font-semibold text-brand-700">{nf(initial.stats.capacityMl)} ml</span>
+            </div>
+            <div class={rowCls}>
+              <span class="text-zinc-600">Materialbedarf <span class="block text-xs font-normal text-zinc-500">massiv gerechnet, PLA</span></span>
+              <span id="gf-mat" class="whitespace-nowrap font-mono font-semibold text-zinc-900">{nf(initial.stats.volumeCm3, 2)} cm³ · {nf(initial.stats.volumeCm3 * 1.24)} g</span>
+            </div>
+            <div class={rowCls}>
+              <span class="text-zinc-600">Dreiecke</span>
+              <span id="gf-tris" class="whitespace-nowrap font-mono font-semibold text-zinc-900">{initial.stats.triangles.toLocaleString('de-DE')}</span>
+            </div>
+          </div>
+        </div>
+        <p class="mt-2 text-xs text-zinc-500">
+          Alles wird in deinem Browser berechnet – das Modell verlässt dein Gerät nicht.
+        </p>
+      </div>
+    </div>
+
+    <section class="prose-werkbank mt-12 max-w-none">
+      <h2>Gridfinity in Kürze</h2>
+      <p>
+        <strong>Gridfinity</strong> ist ein offenes Ordnungssystem von Zack Freedman, das auf einem
+        Raster aus <strong>42 × 42 mm</strong> großen Feldern basiert. Grundplatten nehmen Bins auf,
+        Bins rasten formschlüssig ein, lassen sich stapeln und beliebig umsortieren. Die Höhe wächst
+        in Einheiten von <strong>7 mm</strong> – deshalb passen Bins unterschiedlicher Höhe immer
+        wieder auf dieselbe Ebene. Weil das System offen ist, passen Teile verschiedener
+        Konstrukteure zusammen, solange die Maße stimmen.
+      </p>
+      <h3>Welche Maße dieser Generator umsetzt</h3>
+      <ul>
+        <li><strong>Grundfläche:</strong> Felder × 42 mm minus 0,5 mm Spiel – ein 1×1-Bin misst also 41,5 mm.</li>
+        <li><strong>Fußprofil:</strong> von unten 0,8 mm Fase, 1,8 mm gerade, 2,15 mm Fase – zusammen 4,75 mm hoch bei 2,95 mm Versatz.</li>
+        <li><strong>Eckradius:</strong> 3,75 mm auf voller Breite, entsprechend 1,6 mm und 0,8 mm an den schmaleren Profilstufen.</li>
+        <li><strong>Stapelrand:</strong> 4,4 mm hoch, Innenseite als Spiegelbild des Fußprofils – zählt nicht zur Nennhöhe.</li>
+        <li><strong>Bohrungen:</strong> Ø6,5 mm und 2 mm tief für Magnete Ø6 × 2 mm, Mitte 4,8 mm von der Fußkante; optional Ø3 mm für M3.</li>
+        <li><strong>Mehrere Felder:</strong> je Rasterfeld ein eigener Fuß im 42-mm-Abstand, damit der Bin auch über mehrere Felder sauber einrastet.</li>
+      </ul>
+      <h3>Erst testen, dann in Serie drucken</h3>
+      <p>
+        So sorgfältig die Maße auch umgesetzt sind – Drucker, Material und Düse haben Einfluss auf
+        die Passung. Drucke deshalb zuerst einen einzelnen <strong>1×1-Bin</strong> und probiere ihn
+        in deiner Grundplatte aus. Sitzt er zu stramm, hilft meist eine leichte Korrektur der
+        Extrusionsbreite oder des Horizontal-Ausgleichs im Slicer. Passt er, kannst du beruhigt eine
+        ganze Schublade voll drucken. Gedruckt wird aufrecht und ohne Stützen: Alle Überhänge am Fuß
+        liegen bei 45° und tragen sich selbst.
+      </p>
+      <h3>Weiterrechnen</h3>
+      <p>
+        Wie viel Filament und Geld ein Satz Bins kostet, sagt dir die
+        <a href="/generatoren/stl-analyse">STL-Analyse</a> – dort kannst du die eben erzeugte Datei
+        gleich gegenprüfen, inklusive Dichtheitstest. Für die Kalkulation passen die
+        <a href="/rechner/filament-kosten">Filamentkosten</a>, die
+        <a href="/rechner/druckpreis-kalkulation">Druckpreis-Kalkulation</a> und der
+        <a href="/rechner/modell-gewicht">Modellgewicht-Rechner</a>.
+      </p>
+    </section>
+
+    <section class="mt-10">
+      <h2 class="text-2xl font-bold tracking-tight text-zinc-900">Häufige Fragen</h2>
+      <div class="mt-4 space-y-3">
+        {
+          FAQ.map((f) => (
+            <details class="rounded-lg border border-zinc-200 bg-white p-4">
+              <summary class="cursor-pointer font-medium text-zinc-800">{f.q}</summary>
+              <p class="mt-2 text-zinc-600">{f.a}</p>
+            </details>
+          ))
+        }
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<script>
+  import { buildBin, toStl, previewSvg, type BinSpec } from '../../lib/gridfinity';
+
+  const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
+  const form = $('gf-form');
+  const preview = $('gf-preview');
+  const warnEl = $('gf-warn');
+
+  const nf = (n: number, dig = 1) => n.toLocaleString('de-DE', { maximumFractionDigits: dig });
+  const esc = (s: string) =>
+    s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+
+  function val(id: string, fallback: number, min: number, max: number): number {
+    const el = $(id) as HTMLInputElement | null;
+    if (!el) return fallback;
+    const v = parseFloat(el.value.replace(',', '.'));
+    return Number.isFinite(v) ? Math.min(Math.max(v, min), max) : fallback;
+  }
+  const setText = (id: string, t: string) => {
+    const el = $(id);
+    if (el) el.textContent = t;
+  };
+
+  function readSpec(): BinSpec {
+    const holes = ($('gf-holes') as HTMLSelectElement | null)?.value;
+    return {
+      unitsX: val('gf-ux', 2, 1, 12),
+      unitsY: val('gf-uy', 1, 1, 12),
+      unitsZ: val('gf-uz', 3, 1, 30),
+      wall: val('gf-wall', 1.2, 0.4, 6),
+      floor: val('gf-floor', 1.2, 0.4, 10),
+      compartmentsX: val('gf-cx', 1, 1, 12),
+      compartmentsY: val('gf-cy', 1, 1, 12),
+      lip: ($('gf-lip') as HTMLInputElement | null)?.checked ?? true,
+      holes: holes === 'keine' || holes === 'magnet-schraube' ? holes : 'magnet',
+      segments: 8,
+    };
+  }
+
+  let current: BinSpec | null = null;
+
+  function render(): void {
+    const spec = readSpec();
+    current = spec;
+    const { stats } = buildBin(spec);
+
+    if (preview) preview.innerHTML = previewSvg(spec);
+    setText('gf-name', `${Math.round(spec.unitsX)}×${Math.round(spec.unitsY)}×${Math.round(spec.unitsZ)}`);
+    setText('gf-size', `${nf(stats.size[0])} × ${nf(stats.size[1])} × ${nf(stats.size[2])} mm`);
+    setText('gf-body', `${nf(stats.bodyHeight)} mm`);
+    setText(
+      'gf-comp',
+      `${nf(stats.compartment[0])} × ${nf(stats.compartment[1])} × ${nf(stats.compartment[2])} mm`,
+    );
+    setText('gf-cap', `${nf(stats.capacityMl)} ml`);
+    setText('gf-mat', `${nf(stats.volumeCm3, 2)} cm³ · ${nf(stats.volumeCm3 * 1.24)} g`);
+    setText('gf-tris', stats.triangles.toLocaleString('de-DE'));
+
+    if (warnEl) {
+      warnEl.hidden = stats.warnings.length === 0;
+      warnEl.innerHTML = stats.warnings.map((w) => `<p>${esc(w)}</p>`).join('');
+    }
+  }
+
+  form?.addEventListener('input', render);
+  form?.addEventListener('change', render);
+
+  $('gf-stl')?.addEventListener('click', () => {
+    if (!current) return;
+    const { triangles } = buildBin({ ...current, segments: 16 });
+    const blob = new Blob([toStl(triangles)], { type: 'model/stl' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `gridfinity-${Math.round(current.unitsX)}x${Math.round(current.unitsY)}x${Math.round(current.unitsZ)}.stl`;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  render();
+</script>

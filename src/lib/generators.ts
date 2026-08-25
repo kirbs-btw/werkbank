@@ -13,6 +13,22 @@ export interface Generator {
 
 export const GENERATORS: Generator[] = [
   {
+    slug: 'gridfinity-generator',
+    title: 'Gridfinity-Generator (Bins als STL)',
+    shortTitle: 'Gridfinity',
+    description:
+      'Erzeuge maßhaltige Gridfinity-Bins als druckfertiges STL: Rastergröße, Höhe, Fächer, Stapelrand und Magnetbohrungen frei wählbar – nach offizieller Spezifikation, direkt im Browser.',
+    keywords: [
+      'gridfinity generator',
+      'gridfinity bin generator stl',
+      'gridfinity box erstellen',
+      'gridfinity einsatz generator',
+      'gridfinity stl online',
+      'gridfinity bin mit fächern',
+      'gridfinity maße spezifikation',
+    ],
+  },
+  {
     slug: 'dxf-svg-konverter',
     title: 'DXF ⇄ SVG Konverter',
     shortTitle: 'DXF ⇄ SVG',

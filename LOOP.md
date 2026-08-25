@@ -70,8 +70,7 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
 - [x] ~~**T2 Schnittdaten-Rechner mit Material-Datenbank**~~ → `/rechner/schnittdaten-rechner` (2026-08-25)
 - [x] ~~**T3 STL-Analyse im Browser**~~ → `/generatoren/stl-analyse` (2026-08-25)
 - [x] ~~**T4 DXF ⇄ SVG Konverter**~~ → `/generatoren/dxf-svg-konverter` (2026-08-25)
-- [ ] **T5 Gridfinity-Bin-Generator** (STL-Export im Browser). Achtung Recherche-Hinweis:
-      DE-Nutzer suchen englisch → Seite DE mit EN-Keywords.
+- [x] ~~**T5 Gridfinity-Bin-Generator**~~ → `/generatoren/gridfinity-generator` (2026-08-25)
 - [ ] **T6 Living-Hinge-Generator** (SVG/DXF-Muster für Laser).
 - [ ] **T7 Zuschnittoptimierung v2**: Schnittliste/Etiketten-Druck, mehrere Plattenformate gleichzeitig.
 
@@ -143,6 +142,22 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
   das nicht auf (beide Varianten sind 10 × 10 mm) – nötig war die Prüfung eines Bogen-Mittelpunkts.
   Verifiziert im Browser mit einer DXF-Testzeichnung und einem Inkscape-typischen SVG mit
   verschachtelten Gruppen (Sollmaß 68 × 45 mm exakt getroffen). IndexNow-Ping: 4 URLs.
+- **2026-08-25 · Iteration 5 (T5):** Gridfinity-Generator live (`/generatoren/gridfinity-generator`):
+  erzeugt druckfertige STL-Bins (`src/lib/gridfinity.ts`) mit 21 Tests. Maße **vorab am Quelldokument
+  verifiziert** statt aus dem Gedächtnis – dabei zeigte sich, dass der Eckradius 3,75 mm beträgt
+  (nicht 4,0 mm) und dass Mehrfeld-Bins je Rasterfeld einen eigenen Fuß im 42-mm-Raster brauchen.
+  Umgesetzt: Fußprofil 0,8/1,8/2,15 mm, Stapelrand 4,4 mm, Magnet Ø6,5 × 2 mm und M3, Fächer,
+  Wand/Boden. Netz aus mehreren geschlossenen Körpern mit 0,01 mm Überlappung, damit keine
+  deckungsgleichen Flächen entstehen; Fußunterseite mit Bohrungen ohne T-Stöße über eine
+  Winkel-Zuordnung vernetzt.
+  **Zwei Normalen-Bugs gefunden, die die Dichtheitsprüfung allein nicht sieht:** Innenwand und
+  Trennwand-Quader waren invertiert (1×1×6-Bin meldete 91 cm³ Material bei 72 cm³ Hüllvolumen).
+  Erst die Volumenprüfung deckte das auf – Dichtheits- UND Volumentests sind beide nötig.
+  Prüfung nutzt den STL-Analyzer aus Iteration 3 auf dem eigenen Netz. IndexNow-Ping: 4 URLs.
+
+  *Hinweis für künftige Iterationen:* Die Browser-Session sprang während des Smoke-Tests auf
+  `about:blank` und lieferte dadurch einmalig widersprüchliche Werte. Bei unplausiblen
+  Browser-Messungen zuerst den Seitenzustand prüfen und gegen Node querrechnen, statt Code zu ändern.
 
 ## Start-Prompt (Referenz)
 
