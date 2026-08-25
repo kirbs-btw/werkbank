@@ -69,8 +69,7 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
 - [x] ~~**T1 Fingerzinken-Box-Generator** (SVG/DXF)~~ → `/generatoren/fingerzinken-box` (2026-08-25)
 - [x] ~~**T2 Schnittdaten-Rechner mit Material-Datenbank**~~ → `/rechner/schnittdaten-rechner` (2026-08-25)
 - [x] ~~**T3 STL-Analyse im Browser**~~ → `/generatoren/stl-analyse` (2026-08-25)
-- [ ] **T4 DXF ⇄ SVG Konverter** (clientseitig, Linien/Polylinien/Kreise/Bögen).
-      Online-Konverter sind ad-verseucht oder kostenpflichtig.
+- [x] ~~**T4 DXF ⇄ SVG Konverter**~~ → `/generatoren/dxf-svg-konverter` (2026-08-25)
 - [ ] **T5 Gridfinity-Bin-Generator** (STL-Export im Browser). Achtung Recherche-Hinweis:
       DE-Nutzer suchen englisch → Seite DE mit EN-Keywords.
 - [ ] **T6 Living-Hinge-Generator** (SVG/DXF-Muster für Laser).
@@ -133,6 +132,17 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
   Verifiziert mit generierten Test-Würfeln (Soll 8 cm³ / 24 cm² exakt getroffen, kaputtes Netz
   meldet 3 offene Kanten). Interner Link aus `modell-gewicht`, dessen Umlaute dabei repariert
   wurden → Rest als Q4 im Backlog. IndexNow-Ping: 4 URLs.
+- **2026-08-25 · Iteration 4 (T4):** DXF ⇄ SVG Konverter live (`/generatoren/dxf-svg-konverter`):
+  DOM-freier Parser/Writer für beide Formate (`src/lib/dxfsvg.ts`) mit 40 Tests. DXF-Seite liest
+  LINE, LWPOLYLINE inkl. Bulge-Bögen, POLYLINE/VERTEX, CIRCLE, ARC, ELLIPSE und schreibt R12
+  (AC1009) mit Header, Layertabelle und POLYLINE/VERTEX. SVG-Seite liest line/polyline/polygon/
+  rect/circle/ellipse/path mit verschachtelten Transformationen, viewBox- und Einheiten-Umrechnung
+  nach mm; Bézier- und Bogenbefehle werden aufgelöst, Kreise bleiben Kreise.
+  **Der Round-Trip-Test hat einen echten Vorzeichenfehler gefunden:** Durch die y-Spiegelung dreht
+  sich die Bogenrichtung um, das SVG-sweep-Flag muss 0 statt 1 sein. Die Bounding-Box allein deckt
+  das nicht auf (beide Varianten sind 10 × 10 mm) – nötig war die Prüfung eines Bogen-Mittelpunkts.
+  Verifiziert im Browser mit einer DXF-Testzeichnung und einem Inkscape-typischen SVG mit
+  verschachtelten Gruppen (Sollmaß 68 × 45 mm exakt getroffen). IndexNow-Ping: 4 URLs.
 
 ## Start-Prompt (Referenz)
 

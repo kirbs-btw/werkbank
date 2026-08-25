@@ -13,6 +13,22 @@ export interface Generator {
 
 export const GENERATORS: Generator[] = [
   {
+    slug: 'dxf-svg-konverter',
+    title: 'DXF ⇄ SVG Konverter',
+    shortTitle: 'DXF ⇄ SVG',
+    description:
+      'DXF in SVG umwandeln oder SVG in DXF konvertieren – maßhaltig in Millimeter, mit Bögen, Kreisen und Layern. Die Datei bleibt in deinem Browser.',
+    keywords: [
+      'dxf in svg umwandeln',
+      'svg in dxf konvertieren',
+      'dxf konverter online kostenlos',
+      'svg zu dxf laser',
+      'dxf svg converter deutsch',
+      'dxf datei öffnen online',
+      'vektor konverter cnc',
+    ],
+  },
+  {
     slug: 'stl-analyse',
     title: 'STL-Analyse – Volumen, Gewicht & Druckkosten',
     shortTitle: 'STL-Analyse',

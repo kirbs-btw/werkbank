@@ -1,0 +1,405 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { getGenerator } from '../../lib/generators';
+import { breadcrumbLd, faqLd } from '../../lib/schema';
+import { SITE } from '../../config/site';
+
+const gen = getGenerator('dxf-svg-konverter')!;
+const path = '/generatoren/dxf-svg-konverter';
+const crumbs = [
+  { name: 'Start', href: '/' },
+  { name: 'Generatoren', href: '/kategorie/generatoren' },
+  { name: gen.shortTitle ?? gen.title, href: path },
+];
+
+const FAQ = [
+  {
+    q: 'Wird meine Zeichnung hochgeladen?',
+    a: 'Nein. Die Datei wird ausschließlich in deinem Browser gelesen und umgewandelt. Sie landet auf keinem Server, und die Umwandlung funktioniert auch offline, sobald die Seite geladen ist. Genau darin unterscheidet sich der Konverter von den üblichen Konvertier-Diensten, die deine Datei erst hochladen und oft nur eine begrenzte Zahl kostenloser Umwandlungen erlauben.',
+  },
+  {
+    q: 'Welche Elemente werden umgewandelt?',
+    a: 'Aus DXF: LINE, LWPOLYLINE (auch mit Bogensegmenten über Bulge-Werte), die ältere POLYLINE mit VERTEX, CIRCLE, ARC und ELLIPSE. Aus SVG: line, polyline, polygon, rect, circle, ellipse und path. Kurven im Pfad – also Bézier- und Bogenbefehle – werden in feine Polylinien aufgelöst, weil DXF R12 keine Bézierkurven kennt. Kreise und Ellipsen bleiben dagegen echte Kreise und Ellipsen.',
+  },
+  {
+    q: 'Stimmen die Maße hinterher?',
+    a: 'Ja, sofern die Ausgangsdatei eine Größenangabe hat. DXF wird als Millimeter interpretiert, das ist im Maker- und CAD-Umfeld der Normalfall. Bei SVG werden Breite und viewBox ausgewertet: Steht dort etwa width="200mm" bei einer viewBox über 100 Einheiten, entspricht eine Einheit zwei Millimetern. Fehlt eine physische Größenangabe, wird eine Benutzereinheit als ein Millimeter gewertet – über den Skalierungsfaktor lässt sich das korrigieren.',
+  },
+  {
+    q: 'Warum ist die Ausgabe DXF R12 und nicht neuer?',
+    a: 'R12 (AC1009) ist das Format, das praktisch jede CAM-, Laser- und CNC-Software zuverlässig liest – gerade ältere Steuerungen und Zuschnittprogramme. Neuere DXF-Varianten bringen für einfache Konturen keinen Vorteil, aber deutlich mehr Kompatibilitätsprobleme. Deshalb werden Konturen als POLYLINE mit VERTEX geschrieben und Ellipsen in Polylinien aufgelöst, da R12 keine ELLIPSE kennt.',
+  },
+  {
+    q: 'Mein SVG aus Inkscape kommt verschoben oder zu groß an – woran liegt das?',
+    a: 'Inkscape verschachtelt Zeichnungen oft in Gruppen mit eigenen Transformationen und arbeitet je nach Dokumenteinstellung mit Pixeln statt Millimetern. Gruppen-Transformationen – auch mehrfach verschachtelte – werden korrekt mitgerechnet. Bleibt die Größe trotzdem falsch, hat das Dokument keine saubere Millimeter-Angabe: Dann einfach den Skalierungsfaktor anpassen, die Maße werden live neu berechnet.',
+  },
+  {
+    q: 'Was passiert mit Text, Bildern und Splines?',
+    a: 'Text und eingebettete Bilder lassen sich nicht in Schnittkonturen übersetzen und werden übersprungen; du siehst in der Auswertung, wie viele Elemente das betrifft. Willst du Text schneiden, wandle ihn im Zeichenprogramm vorher in Pfade um. DXF-SPLINE-Kurven werden ebenfalls gezählt, aber nicht konvertiert – exportiere sie aus dem CAD als Polylinien.',
+  },
+];
+
+const ld: object[] = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: gen.title,
+    url: new URL(path, SITE.url).href,
+    description: gen.description,
+    applicationCategory: 'DesignApplication',
+    operatingSystem: 'Web',
+    inLanguage: 'de-DE',
+    isAccessibleForFree: true,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+    publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+  },
+  breadcrumbLd(crumbs.map((c) => ({ name: c.name, path: c.href }))),
+  faqLd(FAQ),
+];
+
+const inputCls =
+  'w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-zinc-900 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200';
+const rowCls = 'flex items-baseline justify-between gap-4 border-b border-zinc-100 py-2.5 last:border-0';
+const labelCls = 'mb-1 flex items-center justify-between text-sm font-medium text-zinc-700';
+---
+
+<BaseLayout
+  title="DXF ⇄ SVG Konverter – maßhaltig und ohne Upload"
+  description={gen.description}
+  path={path}
+  ogType="article"
+  jsonLd={ld}
+>
+  <div class="mx-auto max-w-5xl px-4 py-8">
+    <Breadcrumbs items={crumbs} />
+
+    <header class="mt-4">
+      <h1 class="text-3xl font-extrabold tracking-tight text-zinc-900">DXF ⇄ SVG Konverter</h1>
+      <p class="mt-2 text-lg text-zinc-600">
+        Datei ablegen – die Richtung erkennt der Konverter selbst. DXF wird zu maßhaltigem SVG,
+        SVG zu DXF R12 für Laser und CNC. Bögen, Kreise und Layer bleiben erhalten.
+      </p>
+    </header>
+
+    <div
+      id="cv-drop"
+      class="mt-8 rounded-xl border-2 border-dashed border-zinc-300 bg-white p-8 text-center transition"
+    >
+      <svg class="mx-auto h-10 w-10 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M8 7h8m0 0l-3-3m3 3l-3 3M16 17H8m0 0l3 3m-3-3l3-3" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+      <p class="mt-3 font-medium text-zinc-800">DXF- oder SVG-Datei hier ablegen</p>
+      <p class="mt-1 text-sm text-zinc-500">oder</p>
+      <label class="mt-3 inline-block cursor-pointer rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-500">
+        Datei auswählen
+        <input id="cv-file" type="file" accept=".dxf,.svg,image/svg+xml" class="sr-only" />
+      </label>
+      <p class="mt-3 text-xs text-zinc-500">
+        Richtung wird automatisch erkannt · <strong>Die Datei bleibt in deinem Browser</strong> und wird nicht hochgeladen.
+      </p>
+    </div>
+
+    <p id="cv-status" hidden class="mt-4 rounded-lg border px-4 py-3 text-sm"></p>
+
+    <div id="cv-result" hidden class="mt-6 grid gap-6 lg:grid-cols-[300px_1fr]">
+      <form id="cv-form" class="space-y-4" onsubmit="return false">
+        <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Einstellungen</h2>
+          <div class="mt-3 space-y-4">
+            <label class="block" id="cv-scale-wrap">
+              <span class={labelCls}><span>Skalierung</span><span class="text-xs font-normal text-zinc-500">×</span></span>
+              <input id="cv-scale" type="number" value="1" min="0.001" step="0.1" inputmode="decimal" class={inputCls} />
+              <span class="mt-1 block text-xs text-zinc-500">Korrigiert falsche Einheiten der Quelldatei</span>
+            </label>
+            <label class="block" id="cv-margin-wrap">
+              <span class={labelCls}><span>Rand</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="cv-margin" type="number" value="2" min="0" step="1" inputmode="decimal" class={inputCls} />
+            </label>
+            <label class="block" id="cv-stroke-wrap">
+              <span class={labelCls}><span>Strichstärke</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="cv-stroke" type="number" value="0.1" min="0.01" step="0.05" inputmode="decimal" class={inputCls} />
+              <span class="mt-1 block text-xs text-zinc-500">Haarlinie für Laser: 0,01–0,1 mm</span>
+            </label>
+          </div>
+          <button id="cv-download" type="button" class="mt-5 w-full rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-500">
+            Herunterladen
+          </button>
+        </div>
+      </form>
+
+      <div>
+        <figure class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+          <figcaption class="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Vorschau</span>
+            <span id="cv-direction" class="rounded-full border border-brand-200 bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-800"></span>
+          </figcaption>
+          <div id="cv-preview" class="h-72 w-full"></div>
+        </figure>
+
+        <div class="mt-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Auswertung</h2>
+            <span id="cv-filename" class="max-w-full truncate text-xs text-zinc-500"></span>
+          </div>
+          <div class="mt-3" aria-live="polite" aria-atomic="true">
+            <div class={rowCls + ' text-lg'}>
+              <span class="font-semibold text-zinc-900">Größe</span>
+              <span id="cv-size" class="whitespace-nowrap font-mono font-semibold text-brand-700">–</span>
+            </div>
+            <div class={rowCls}>
+              <span class="text-zinc-600">Elemente</span>
+              <span id="cv-count" class="whitespace-nowrap font-mono font-semibold text-zinc-900">–</span>
+            </div>
+            <div class={rowCls}>
+              <span class="text-zinc-600">Aufbau</span>
+              <span id="cv-kinds" class="whitespace-nowrap text-right font-mono text-sm text-zinc-900">–</span>
+            </div>
+            <div class={rowCls}>
+              <span class="text-zinc-600">Layer</span>
+              <span id="cv-layers" class="max-w-[60%] truncate text-right font-mono text-sm text-zinc-900">–</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="prose-werkbank mt-12 max-w-none">
+      <h2>DXF und SVG – zwei Welten, dieselbe Kontur</h2>
+      <p>
+        <strong>DXF</strong> ist die Sprache der CAD- und CNC-Welt: Fusion 360, LibreCAD und
+        praktisch jede CAM-Software sprechen sie. <strong>SVG</strong> dagegen kommt aus dem
+        Grafikbereich und ist das Format von Inkscape, Illustrator und den meisten Lasercuttern für
+        Hobby und Werkstatt. Wer zwischen beiden Welten arbeitet, braucht ständig eine Umwandlung –
+        und landet meist bei Diensten, die erst einen Upload verlangen, Wasserzeichen setzen oder
+        nach drei Dateien Geld sehen wollen. Dieser Konverter läuft komplett in deinem Browser,
+        unbegrenzt und kostenlos.
+      </p>
+      <h3>Warum Maßhaltigkeit die eigentliche Hürde ist</h3>
+      <p>
+        Die meisten misslungenen Umwandlungen scheitern nicht an der Geometrie, sondern an
+        <strong>Einheiten und Koordinatensystemen</strong>. DXF zählt die y-Achse nach oben, SVG nach
+        unten – wird das ignoriert, kommt die Zeichnung gespiegelt an. Und SVG kennt Pixel,
+        Millimeter, Zoll und Punkte gleichzeitig: Ein Dokument mit 96 Pixeln pro Zoll ergibt völlig
+        andere Maße als eines, das direkt in Millimetern rechnet. Der Konverter wertet deshalb
+        Breite und viewBox aus, rechnet konsequent in Millimeter um und dreht die y-Achse korrekt.
+        Für Sonderfälle gibt es den Skalierungsfaktor, der live nachjustiert.
+      </p>
+      <h3>Bögen bleiben Bögen</h3>
+      <p>
+        Viele Konverter zerlegen jeden Bogen in hunderte kurze Geraden. Das bläht die Datei auf und
+        führt an der Maschine zu ruckeligen Bewegungen und sichtbaren Kanten. Hier bleiben
+        <strong>Kreise, Bögen und Ellipsen</strong> echte Kurven: DXF-Bogensegmente in Polylinien –
+        also die typischen Bulge-Werte – werden in exakte Bögen übersetzt, und in Gegenrichtung
+        wird aus einem SVG-Kreis wieder eine echte CIRCLE-Entität. Nur das, was DXF R12 tatsächlich
+        nicht kennt – Bézierkurven aus SVG-Pfaden und Ellipsen – wird in feine Polylinien aufgelöst.
+      </p>
+      <h3>Was danach kommt</h3>
+      <p>
+        Passend weiter geht es mit der <a href="/rechner/kerf-kompensation">Kerf-Kompensation</a>,
+        damit die konvertierte Kontur nach dem Schnitt auf Maß ist, mit der
+        <a href="/rechner/laser-schnittzeit">Laser-Schnittzeit</a> für die Kalkulation und mit der
+        <a href="/generatoren/zuschnittoptimierung">Zuschnittoptimierung</a>, wenn mehrere Teile auf
+        eine Platte sollen. Fertige Konturen erzeugen dir der
+        <a href="/generatoren/lochkreis">Lochkreis-Generator</a>, der
+        <a href="/generatoren/zahnrad">Zahnrad-Generator</a> und der
+        <a href="/generatoren/fingerzinken-box">Fingerzinken-Box-Generator</a> – alle direkt als SVG und DXF.
+      </p>
+    </section>
+
+    <section class="mt-10">
+      <h2 class="text-2xl font-bold tracking-tight text-zinc-900">Häufige Fragen</h2>
+      <div class="mt-4 space-y-3">
+        {
+          FAQ.map((f) => (
+            <details class="rounded-lg border border-zinc-200 bg-white p-4">
+              <summary class="cursor-pointer font-medium text-zinc-800">{f.q}</summary>
+              <p class="mt-2 text-zinc-600">{f.a}</p>
+            </details>
+          ))
+        }
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<script>
+  import {
+    parseDxf,
+    parseSvg,
+    writeDxf,
+    writeSvg,
+    detectFormat,
+    entityStats,
+    ConvertError,
+    type Drawing,
+    type FileFormat,
+  } from '../../lib/dxfsvg';
+
+  const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
+  const drop = $('cv-drop');
+  const fileInput = $('cv-file') as HTMLInputElement | null;
+  const statusEl = $('cv-status');
+  const resultEl = $('cv-result');
+  const form = $('cv-form');
+  const preview = $('cv-preview');
+
+  const nf = (n: number, dig = 1) => n.toLocaleString('de-DE', { maximumFractionDigits: dig });
+  const esc = (s: string) =>
+    s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+
+  function val(id: string, fallback: number, min = 0): number {
+    const el = $(id) as HTMLInputElement | null;
+    if (!el) return fallback;
+    const v = parseFloat(el.value.replace(',', '.'));
+    return Number.isFinite(v) ? Math.max(min, v) : fallback;
+  }
+  const setText = (id: string, t: string) => {
+    const el = $(id);
+    if (el) el.textContent = t;
+  };
+
+  function status(kind: 'info' | 'error' | 'warn' | 'ok', html: string): void {
+    if (!statusEl) return;
+    const styles = {
+      info: 'border-zinc-200 bg-zinc-50 text-zinc-700',
+      ok: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+      warn: 'border-amber-200 bg-amber-50 text-amber-900',
+      error: 'border-red-200 bg-red-50 text-red-800',
+    };
+    statusEl.hidden = false;
+    statusEl.className = `mt-4 rounded-lg border px-4 py-3 text-sm ${styles[kind]}`;
+    statusEl.innerHTML = html;
+  }
+
+  const KIND_LABELS: Record<string, string> = {
+    polyline: 'Konturen',
+    circle: 'Kreise',
+    arc: 'Bögen',
+    ellipse: 'Ellipsen',
+  };
+
+  let source: { text: string; name: string; from: FileFormat } | null = null;
+  let drawing: Drawing | null = null;
+
+  function render(): void {
+    if (!source) return;
+    const scale = val('cv-scale', 1, 0.001);
+    try {
+      drawing = source.from === 'dxf' ? parseDxf(source.text) : parseSvg(source.text, { scale });
+    } catch (err) {
+      drawing = null;
+      if (resultEl) resultEl.hidden = true;
+      status('error', esc(err instanceof ConvertError ? err.message : 'Die Datei konnte nicht gelesen werden.'));
+      return;
+    }
+
+    const d = drawing;
+    const w = d.bounds.maxX - d.bounds.minX;
+    const h = d.bounds.maxY - d.bounds.minY;
+    const stats = entityStats(d);
+    const layers = Array.from(new Set(d.entities.map((e) => e.layer || '0')));
+
+    setText('cv-direction', source.from === 'dxf' ? 'DXF → SVG' : 'SVG → DXF');
+    setText('cv-size', `${nf(w)} × ${nf(h)} mm`);
+    setText('cv-count', `${d.entities.length}`);
+    setText(
+      'cv-kinds',
+      Object.entries(stats)
+        .map(([k, v]) => `${v} ${KIND_LABELS[k] ?? k}`)
+        .join(' · '),
+    );
+    setText('cv-layers', layers.join(', '));
+
+    if (preview) {
+      preview.innerHTML = writeSvg(d, {
+        margin: val('cv-margin', 2, 0),
+        strokeWidth: 1,
+        stroke: '#c2410c',
+        responsive: true,
+      });
+    }
+
+    const skipped = Object.entries(d.skipped);
+    if (skipped.length > 0) {
+      status(
+        'warn',
+        `Umgewandelt – aber ${skipped
+          .map(([k, v]) => `${v}× <strong>${esc(k)}</strong>`)
+          .join(', ')} konnte nicht übernommen werden (Text, Bilder und Splines lassen sich nicht in Schnittkonturen übersetzen).`,
+      );
+    } else {
+      status('ok', `<strong>${esc(source.name)}</strong> umgewandelt – ${d.entities.length} Elemente, ${nf(w)} × ${nf(h)} mm.`);
+    }
+  }
+
+  function output(): { data: string; name: string; type: string } | null {
+    if (!drawing || !source) return null;
+    const base = source.name.replace(/\.(dxf|svg)$/i, '') || 'zeichnung';
+    if (source.from === 'dxf') {
+      return {
+        data: writeSvg(drawing, {
+          margin: val('cv-margin', 2, 0),
+          strokeWidth: val('cv-stroke', 0.1, 0.001),
+        }),
+        name: `${base}.svg`,
+        type: 'image/svg+xml',
+      };
+    }
+    return { data: writeDxf(drawing), name: `${base}.dxf`, type: 'application/dxf' };
+  }
+
+  async function handle(file: File): Promise<void> {
+    status('info', `<strong>${esc(file.name)}</strong> wird gelesen …`);
+    try {
+      const text = await file.text();
+      const from = detectFormat(text, file.name);
+      source = { text, name: file.name, from };
+      setText('cv-filename', `${file.name} · ${nf(file.size / 1024, 1)} kB`);
+      if (resultEl) resultEl.hidden = false;
+      // Skalierung ist nur beim SVG-Import sinnvoll, Strichstärke nur beim SVG-Export.
+      const scaleWrap = $('cv-scale-wrap');
+      const strokeWrap = $('cv-stroke-wrap');
+      if (scaleWrap) scaleWrap.hidden = from === 'dxf';
+      if (strokeWrap) strokeWrap.hidden = from === 'svg';
+      render();
+    } catch (err) {
+      source = null;
+      drawing = null;
+      if (resultEl) resultEl.hidden = true;
+      status('error', esc(err instanceof ConvertError ? err.message : 'Die Datei konnte nicht gelesen werden.'));
+    }
+  }
+
+  const pick = (files: FileList | null) => {
+    const f = files?.[0];
+    if (f) void handle(f);
+  };
+
+  fileInput?.addEventListener('change', () => pick(fileInput.files));
+
+  const active = ['border-brand-400', 'bg-brand-50'];
+  drop?.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    drop.classList.add(...active);
+  });
+  drop?.addEventListener('dragleave', () => drop.classList.remove(...active));
+  drop?.addEventListener('drop', (e) => {
+    e.preventDefault();
+    drop.classList.remove(...active);
+    pick((e as DragEvent).dataTransfer?.files ?? null);
+  });
+
+  form?.addEventListener('input', render);
+  $('cv-download')?.addEventListener('click', () => {
+    const o = output();
+    if (!o) return;
+    const blob = new Blob([o.data], { type: o.type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = o.name;
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+</script>
