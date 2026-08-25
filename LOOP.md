@@ -107,7 +107,7 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
 - [x] ~~**T4 DXF ⇄ SVG Konverter**~~ → `/generatoren/dxf-svg-konverter` (2026-08-25)
 - [x] ~~**T5 Gridfinity-Bin-Generator**~~ → `/generatoren/gridfinity-generator` (2026-08-25)
 - [x] ~~**T6 Living-Hinge-Generator**~~ → `/generatoren/living-hinge` (2026-08-25)
-- [ ] **T7 Zuschnittoptimierung v2**: Schnittliste/Etiketten-Druck, mehrere Plattenformate gleichzeitig.
+- [x] ~~**T7 Zuschnittoptimierung v2**~~ → Schnittliste + mehrere Plattenformate (2026-08-25)
 - [ ] **T8 OpenSEO anbinden** (siehe Abschnitt oben): MCP-Server in `.mcp.json` eintragen, Zugang
       testen, erste Ranking- und Keyword-Abfrage machen und das Ergebnis als neue P1/P2-Punkte
       eintragen. **Blockiert durch E5** (DataForSEO kostet Geld) – vorher nichts installieren.
@@ -226,6 +226,24 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
 
   *Merksatz:* Warnschwellen mit den eigenen Standardwerten gegenprüfen. Eine Warnung, die beim
   ersten Seitenaufruf erscheint, obwohl nichts falsch ist, entwertet alle übrigen Warnungen.
+- **2026-08-25 · Iteration 8 (T7):** Zuschnittoptimierung v2 live. Zwei neue Fähigkeiten:
+  **(1) Mehrere Plattenformate** – Lagertabelle mit beliebig vielen Formaten, je mit Stückzahl
+  (leer = unbegrenzt) und optionalem Preis. Ohne Preise minimiert der Optimierer die Fläche, mit
+  Preisen die Kosten; das führt teils zu anderen Lösungen. Im Test: drei Platten 2500 × 1250 für
+  105 € statt zwei Platten 2800 × 2070 für 160 €, bei weniger Verschnitt (38,1 % statt 49,9 %).
+  **(2) Schnittliste** – jedes Teil bekommt im Plan eine Nummer, darunter steht die Liste mit
+  Bezeichnung, Maß, Position und Drehung. Plan und Liste werden zusammen gedruckt.
+  Umbau ohne Bruch: Der bewährte Packer bekam nur ein Mengenlimit und gibt nicht platzierbare Teile
+  zurück; darüber liegt die Lagerverwaltung. Alle 10 Alt-Tests blieben unverändert grün,
+  `optimize()` ist jetzt die Kurzform von `optimizeStock()` mit einem Posten. 23 neue Tests.
+  **Zwei Tests schlugen fehl, weil der Optimierer klüger war als meine Erwartung:** Er packte beide
+  Teile auf eine große Platte, statt wie von mir angenommen zwei Formate anzubrechen – das war
+  sparsamer und damit richtig. Testfall so umgebaut, dass er zwei Formate wirklich erzwingt, und die
+  clevere Variante als eigener Test festgehalten.
+  IndexNow-Ping: 2 URLs.
+
+  *Merksatz:* Wenn ein Test einer Optimierung fehlschlägt, zuerst prüfen, ob die Lösung besser ist
+  als die erwartete. Sonst zementiert man die eigene Annahme statt das gewünschte Verhalten.
 
 ## Start-Prompt (Referenz)
 
