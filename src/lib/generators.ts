@@ -13,6 +13,22 @@ export interface Generator {
 
 export const GENERATORS: Generator[] = [
   {
+    slug: 'fingerzinken-box',
+    title: 'Fingerzinken-Box-Generator (Kiste als SVG & DXF)',
+    shortTitle: 'Fingerzinken-Box',
+    description:
+      'Erzeuge eine passgenaue Kiste mit Fingerzinken: Maße, Materialstärke und Schnittfuge eingeben – alle Zuschnitte werden fertig verzinkt als SVG oder DXF für Laser und CNC ausgegeben.',
+    keywords: [
+      'fingerzinken box generator',
+      'laser box generator deutsch',
+      'kiste fingerzinken generator',
+      'box generator svg dxf',
+      'kiste lasern vorlage',
+      'fingerzinken berechnen',
+      'holzkiste konstruieren online',
+    ],
+  },
+  {
     slug: 'zuschnittoptimierung',
     title: 'Zuschnittoptimierung – Plattenzuschnitt & Schnittplan',
     shortTitle: 'Zuschnittoptimierung',

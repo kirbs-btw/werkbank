@@ -66,8 +66,7 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
 
 ### P1 – Neue Tools (je 1 pro Iteration, „kostet woanders Geld" zuerst)
 
-- [ ] **T1 Fingerzinken-Box-Generator** (SVG/DXF): Kisten mit Fingerzinken für Laser/CNC.
-      Keywords: „laser box generator deutsch", „kiste fingerzinken generator".
+- [x] ~~**T1 Fingerzinken-Box-Generator** (SVG/DXF)~~ → `/generatoren/fingerzinken-box` (2026-08-25)
 - [ ] **T2 Schnittdaten-Rechner mit Material-Datenbank** (Feeds & Speeds Pro): Material × Werkzeug
       → vc/fz-Empfehlung + Drehzahl/Vorschub. Pendant zu HSMAdvisor/FSWizard (kostenpflichtig).
       Keywords: „schnittdaten rechner", „schnittdaten aluminium fräsen".
@@ -109,6 +108,12 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
   Schnittplan-SVG, Druck, localStorage, Reste-Liste, FAQ-Schema. Nebenbei: `/rechner` listet jetzt auch
   Generatoren (waren vorher unauffindbar), interne Links aus 2 Holz-Tools, `@astrojs/check` installiert.
   LOOP.md angelegt. IndexNow-Ping: 6 URLs.
+- **2026-08-25 · Iteration 1 (T1):** Fingerzinken-Box-Generator live
+  (`/generatoren/fingerzinken-box`): Box-Joint-Geometrie (`src/lib/fingerbox.ts`) mit 19 Tests,
+  Kerf-Kompensation per Kontur-Offset, Außen-/Innenmaß, Deckel optional, SVG/DXF-Export,
+  Anordnung auf Arbeitsflächenbreite. Test deckte zwei echte Geometriefehler auf (Diagonale statt
+  Eckpunkt, wenn an einer Ecke zwei Ausklinkungen zusammentreffen) – behoben vor dem Push.
+  Interner Link aus `kerf-kompensation`. IndexNow-Ping: 4 URLs.
 
 ## Start-Prompt (Referenz)
 

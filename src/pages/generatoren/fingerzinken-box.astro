@@ -1,0 +1,359 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import { getGenerator } from '../../lib/generators';
+import { breadcrumbLd, faqLd } from '../../lib/schema';
+import { SITE } from '../../config/site';
+import { buildBox, previewSvg, type BoxSpec } from '../../lib/fingerbox';
+
+const gen = getGenerator('fingerzinken-box')!;
+const path = '/generatoren/fingerzinken-box';
+const crumbs = [
+  { name: 'Start', href: '/' },
+  { name: 'Generatoren', href: '/kategorie/generatoren' },
+  { name: gen.shortTitle ?? gen.title, href: path },
+];
+
+const FAQ = [
+  {
+    q: 'Was sind Fingerzinken?',
+    a: 'Fingerzinken (auch Box-Joint oder Fingerzapfen) sind rechteckige Zapfen, die an den Kanten zweier Bretter ineinandergreifen. Die Verbindung hat viel Leimfläche, ist sehr stabil und lässt sich am Laser oder auf der CNC in einem Durchgang schneiden.',
+  },
+  {
+    q: 'Welche Schnittfuge (Kerf) muss ich eintragen?',
+    a: 'Die Schnittfuge ist die Breite des Materials, das der Strahl oder Fräser wegnimmt. CO₂-Laser liegen je nach Material und Fokus bei etwa 0,1–0,3 mm, Diodenlaser oft bei 0,1–0,2 mm, Fräser entsprechen ihrem Durchmesser. Der Generator gleicht die Fuge aus, indem er die Konturen um die halbe Fugenbreite nach außen versetzt – Zapfen werden dadurch etwas größer, Ausklinkungen etwas kleiner, und nach dem Schnitt passt beides exakt.',
+  },
+  {
+    q: 'Die Teile sitzen zu stramm oder zu locker – was tun?',
+    a: 'Über die Schnittfuge feinjustieren: Sitzen die Zapfen zu stramm, den Wert leicht erhöhen (z. B. von 0,15 auf 0,20 mm), sind sie zu locker, verringern. Am besten vorab eine Testkiste in kleinem Format schneiden, bevor du teures Material verbrauchst.',
+  },
+  {
+    q: 'Sind die Maße Außen- oder Innenmaße?',
+    a: 'Du entscheidest per Umschalter. Bei Außenmaß beschreibt die Angabe die fertige Kiste von außen, bei Innenmaß den nutzbaren Innenraum – der Generator rechnet die Materialstärke dann automatisch auf allen Seiten dazu.',
+  },
+  {
+    q: 'Warum ist die Zinkenzahl immer ungerade?',
+    a: 'Bei ungerader Zahl beginnt und endet jede Kante mit einem Zapfen. Dadurch bleibt das Muster gültig, auch wenn die Gegenkante spiegelverkehrt läuft – linke und rechte Seitenwand passen so mit identischer Kontur an Vorder- und Rückwand.',
+  },
+  {
+    q: 'Welches Material eignet sich?',
+    a: 'Für den Laser Sperrholz und MDF von 3–6 mm sowie Acryl; für die CNC zusätzlich Multiplex und Massivholz. Wichtig ist, die reale Materialstärke zu messen: Nennmaß und Istmaß weichen bei Sperrholz oft um mehrere Zehntel ab, und genau diese Abweichung entscheidet über die Passung.',
+  },
+];
+
+const ld: object[] = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: gen.title,
+    url: new URL(path, SITE.url).href,
+    description: gen.description,
+    applicationCategory: 'DesignApplication',
+    operatingSystem: 'Web',
+    inLanguage: 'de-DE',
+    isAccessibleForFree: true,
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+    publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
+  },
+  breadcrumbLd(crumbs.map((c) => ({ name: c.name, path: c.href }))),
+  faqLd(FAQ),
+];
+
+// SSR-Standardkiste – sofort sichtbares Ergebnis ohne JS, kein Layout-Sprung.
+const DEFAULT: BoxSpec = {
+  length: 200,
+  width: 120,
+  height: 80,
+  thickness: 4,
+  fingerWidth: 15,
+  kerf: 0.15,
+  measure: 'outer',
+  lid: true,
+  bedWidth: 600,
+};
+const initial = buildBox(DEFAULT);
+
+const nf = (n: number, dig = 1) => n.toLocaleString('de-DE', { maximumFractionDigits: dig });
+const inputCls =
+  'w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-zinc-900 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200';
+const rowCls = 'flex items-baseline justify-between gap-4 border-b border-zinc-100 py-2.5 last:border-0';
+---
+
+<BaseLayout
+  title="Fingerzinken-Box-Generator – Kiste als SVG & DXF"
+  description={gen.description}
+  path={path}
+  ogType="article"
+  jsonLd={ld}
+>
+  <div class="mx-auto max-w-5xl px-4 py-8">
+    <Breadcrumbs items={crumbs} />
+
+    <header class="mt-4">
+      <h1 class="text-3xl font-extrabold tracking-tight text-zinc-900">Fingerzinken-Box-Generator</h1>
+      <p class="mt-2 text-lg text-zinc-600">
+        Maße, Materialstärke und Schnittfuge eingeben – der Generator konstruiert alle Zuschnitte mit
+        passgenauen Fingerzinken und exportiert sie als SVG oder DXF für Laser und CNC.
+      </p>
+    </header>
+
+    <div class="mt-8 grid gap-6 lg:grid-cols-[300px_1fr]">
+      <form id="fb-form" class="space-y-4" onsubmit="return false">
+        <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Kiste</h2>
+          <div class="mt-3 space-y-4">
+            <label class="block">
+              <span class="mb-1 flex items-center justify-between text-sm font-medium text-zinc-700"><span>Länge</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="fb-l" type="number" value="200" min="1" step="any" inputmode="decimal" class={inputCls} />
+            </label>
+            <label class="block">
+              <span class="mb-1 flex items-center justify-between text-sm font-medium text-zinc-700"><span>Breite</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="fb-w" type="number" value="120" min="1" step="any" inputmode="decimal" class={inputCls} />
+            </label>
+            <label class="block">
+              <span class="mb-1 flex items-center justify-between text-sm font-medium text-zinc-700"><span>Höhe</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="fb-h" type="number" value="80" min="1" step="any" inputmode="decimal" class={inputCls} />
+            </label>
+            <label class="block">
+              <span class="mb-1 block text-sm font-medium text-zinc-700">Maßbezug</span>
+              <select id="fb-measure" class={inputCls}>
+                <option value="outer" selected>Außenmaß</option>
+                <option value="inner">Innenmaß (nutzbarer Raum)</option>
+              </select>
+            </label>
+            <label class="flex items-center gap-2 pt-1">
+              <input id="fb-lid" type="checkbox" checked class="h-4 w-4 accent-brand-600" />
+              <span class="text-sm font-medium text-zinc-700">Mit Deckel</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Material & Maschine</h2>
+          <div class="mt-3 space-y-4">
+            <label class="block">
+              <span class="mb-1 flex items-center justify-between text-sm font-medium text-zinc-700"><span>Materialstärke</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="fb-t" type="number" value="4" min="0.1" step="0.1" inputmode="decimal" class={inputCls} />
+              <span class="mt-1 block text-xs text-zinc-500">Istmaß nachmessen – Sperrholz weicht oft ab</span>
+            </label>
+            <label class="block">
+              <span class="mb-1 flex items-center justify-between text-sm font-medium text-zinc-700"><span>Zinkenbreite</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="fb-finger" type="number" value="15" min="0.5" step="0.5" inputmode="decimal" class={inputCls} />
+              <span class="mt-1 block text-xs text-zinc-500">Richtwert – wird je Kante auf eine ungerade Anzahl gerundet</span>
+            </label>
+            <label class="block">
+              <span class="mb-1 flex items-center justify-between text-sm font-medium text-zinc-700"><span>Schnittfuge (Kerf)</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="fb-kerf" type="number" value="0.15" min="0" step="0.01" inputmode="decimal" class={inputCls} />
+              <span class="mt-1 block text-xs text-zinc-500">Laser ca. 0,1–0,3 mm · Fräser = Durchmesser</span>
+            </label>
+            <label class="block">
+              <span class="mb-1 flex items-center justify-between text-sm font-medium text-zinc-700"><span>Arbeitsfläche Breite</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="fb-bed" type="number" value="600" min="10" step="10" inputmode="decimal" class={inputCls} />
+            </label>
+          </div>
+          <div class="mt-5 flex flex-col gap-2">
+            <button id="fb-svg" type="button" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-500">SVG herunterladen</button>
+            <button id="fb-dxf" type="button" class="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-100">DXF herunterladen</button>
+          </div>
+        </div>
+      </form>
+
+      <div>
+        <div id="fb-warn" hidden class="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"></div>
+
+        <figure class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+          <figcaption class="mb-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+            Zuschnitte <span id="fb-layout" class="font-normal normal-case tracking-normal text-zinc-500">({nf(initial.layout.width)} × {nf(initial.layout.height)} mm)</span>
+          </figcaption>
+          <div id="fb-preview" set:html={previewSvg(initial)} />
+        </figure>
+
+        <div class="mt-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <h2 class="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-500">Maße & Teile</h2>
+          <div aria-live="polite" aria-atomic="true">
+            <div class={rowCls + ' text-lg'}>
+              <span class="font-semibold text-zinc-900">Außenmaß</span>
+              <span id="fb-outer" class="whitespace-nowrap font-mono font-semibold text-brand-700">{nf(initial.outer.length)} × {nf(initial.outer.width)} × {nf(initial.outer.height)} <span class="text-sm font-sans text-zinc-500">mm</span></span>
+            </div>
+            <div class={rowCls}>
+              <span class="text-zinc-600">Innenmaß</span>
+              <span id="fb-inner" class="whitespace-nowrap font-mono font-semibold text-zinc-900">{nf(initial.inner.length)} × {nf(initial.inner.width)} × {nf(initial.inner.height)} mm</span>
+            </div>
+            <div class={rowCls}>
+              <span class="text-zinc-600">Zuschnitte</span>
+              <span id="fb-count" class="whitespace-nowrap font-mono font-semibold text-zinc-900">{initial.panels.length} Teile</span>
+            </div>
+            <div class={rowCls}>
+              <span class="text-zinc-600">Zinken (Länge / Breite / Höhe)</span>
+              <span id="fb-fingers" class="whitespace-nowrap font-mono font-semibold text-zinc-900">{initial.fingers.length} / {initial.fingers.width} / {initial.fingers.height}</span>
+            </div>
+            <div class={rowCls}>
+              <span class="text-zinc-600">Zinkenbreite <span class="block text-xs font-normal text-zinc-500">tatsächlich, je Richtung</span></span>
+              <span id="fb-fingersize" class="whitespace-nowrap font-mono font-semibold text-zinc-900">{nf(initial.fingerSize.length)} / {nf(initial.fingerSize.width)} / {nf(initial.fingerSize.height)} mm</span>
+            </div>
+            <div class={rowCls}>
+              <span class="text-zinc-600">Materialbedarf</span>
+              <span id="fb-area" class="whitespace-nowrap font-mono font-semibold text-zinc-900">{nf(initial.partsArea / 1e6, 3)} m²</span>
+            </div>
+            <div class={rowCls}>
+              <span class="text-zinc-600">Schnittlänge</span>
+              <span id="fb-cut" class="whitespace-nowrap font-mono font-semibold text-zinc-900">{nf(initial.cutLength / 1000, 2)} m</span>
+            </div>
+          </div>
+        </div>
+        <p class="mt-2 text-xs text-zinc-500">
+          Alles rechnet live im Browser – keine Anmeldung, keine Daten verlassen dein Gerät.
+        </p>
+      </div>
+    </div>
+
+    <section class="prose-werkbank mt-12 max-w-none">
+      <h2>So funktioniert der Fingerzinken-Box-Generator</h2>
+      <p>
+        Eine Kiste mit <strong>Fingerzinken</strong> (englisch <em>box joint</em> oder <em>finger joint</em>) ist die
+        Standardverbindung für gelaserte und gefräste Boxen: rechteckige Zapfen greifen an jeder Kante ineinander,
+        bieten viel Leimfläche und richten die Teile beim Zusammenbau von selbst aus. Genau diese Konstruktion nimmt
+        dir dieser Generator ab – du gibst nur Maße, Materialstärke und Schnittfuge ein, alles Weitere entsteht
+        automatisch: sechs (oder bei offener Kiste fünf) fertig verzinkte Zuschnitte, sauber auf der Arbeitsfläche
+        angeordnet und als <strong>SVG</strong> oder <strong>DXF</strong> exportierbar.
+      </p>
+      <h3>Die Schnittfuge entscheidet über die Passung</h3>
+      <p>
+        Laser und Fräser nehmen Material weg – beim Laser sind das je nach Fokus und Werkstoff etwa 0,1 bis 0,3 mm.
+        Wer diese <strong>Schnittfuge</strong> ignoriert, bekommt Zapfen, die zu locker sitzen und verleimt werden
+        müssen, statt zu klemmen. Der Generator versetzt deshalb jede Kontur um die halbe Fugenbreite nach außen:
+        Zapfen werden um die volle Fugenbreite größer, Ausklinkungen genauso viel kleiner – nach dem Schnitt haben
+        beide exakt Nennmaß und die Kiste lässt sich mit sanftem Druck fügen. Sitzt es zu stramm oder zu locker,
+        korrigierst du den Wert einfach um ein bis zwei Hundertstel.
+      </p>
+      <h3>Ungerade Zinkenzahl – warum das wichtig ist</h3>
+      <p>
+        Der Generator rundet die gewünschte Zinkenbreite je Kante auf eine <strong>ungerade Anzahl</strong>. Dadurch
+        beginnt und endet jede Kante mit einem Zapfen, und das Muster bleibt auch dann gültig, wenn die Gegenkante
+        spiegelverkehrt verläuft. Praktischer Effekt: Linke und rechte Seitenwand haben identische Konturen und
+        passen trotzdem beide an Vorder- und Rückwand. Zusätzlich sorgt eine Untergrenze dafür, dass kein Zapfen
+        schmaler als die Materialstärke wird – zu feine Zinken brechen beim Fügen aus.
+      </p>
+      <h3>Material messen statt vertrauen</h3>
+      <p>
+        Der häufigste Grund für schlecht sitzende Boxen ist die Materialstärke: 4-mm-Sperrholz misst real oft
+        3,6 bis 4,2 mm. Diese Abweichung geht direkt in die Tiefe jeder Ausklinkung ein. Miss dein Material mit dem
+        Messschieber an mehreren Stellen und trage den echten Wert ein – das kostet zehn Sekunden und rettet die
+        ganze Kiste.
+      </p>
+      <p>
+        Passend dazu: die <a href="/rechner/kerf-kompensation">Kerf-Kompensation</a> für einzelne Konturen, die
+        <a href="/rechner/laser-schnittzeit">Laser-Schnittzeit</a> als Kalkulationsgrundlage für die ausgegebene
+        Schnittlänge und die <a href="/generatoren/zuschnittoptimierung">Zuschnittoptimierung</a>, wenn du mehrere
+        Kisten aus großen Platten schneiden willst.
+      </p>
+    </section>
+
+    <section class="mt-10">
+      <h2 class="text-2xl font-bold tracking-tight text-zinc-900">Häufige Fragen</h2>
+      <div class="mt-4 space-y-3">
+        {
+          FAQ.map((f) => (
+            <details class="rounded-lg border border-zinc-200 bg-white p-4">
+              <summary class="cursor-pointer font-medium text-zinc-800">{f.q}</summary>
+              <p class="mt-2 text-zinc-600">{f.a}</p>
+            </details>
+          ))
+        }
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<script>
+  import { buildBox, previewSvg, exportSvg, exportDxf, type BoxSpec, type BoxResult } from '../../lib/fingerbox';
+
+  const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
+  const form = $('fb-form');
+  const preview = $('fb-preview');
+  const warnEl = $('fb-warn');
+
+  const nf = (n: number, dig = 1) => n.toLocaleString('de-DE', { maximumFractionDigits: dig });
+  const esc = (s: string) =>
+    s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+
+  function val(id: string, fallback: number, min = 0): number {
+    const el = $(id) as HTMLInputElement | null;
+    if (!el) return fallback;
+    const v = parseFloat(el.value.replace(',', '.'));
+    return Number.isFinite(v) ? Math.max(min, v) : fallback;
+  }
+
+  function readSpec(): BoxSpec {
+    const measure = ($('fb-measure') as HTMLSelectElement | null)?.value === 'inner' ? 'inner' : 'outer';
+    return {
+      length: val('fb-l', 200, 0.1),
+      width: val('fb-w', 120, 0.1),
+      height: val('fb-h', 80, 0.1),
+      thickness: val('fb-t', 4, 0.1),
+      fingerWidth: val('fb-finger', 15, 0.5),
+      kerf: val('fb-kerf', 0.15, 0),
+      measure,
+      lid: ($('fb-lid') as HTMLInputElement | null)?.checked ?? true,
+      bedWidth: val('fb-bed', 600, 10),
+    };
+  }
+
+  let last: BoxResult | null = null;
+
+  function render(): void {
+    const spec = readSpec();
+    const r = buildBox(spec);
+    last = r;
+
+    const setText = (id: string, t: string) => {
+      const el = $(id);
+      if (el) el.textContent = t;
+    };
+
+    const messages = [...r.errors, ...r.warnings];
+    if (warnEl) {
+      warnEl.hidden = messages.length === 0;
+      warnEl.className = r.errors.length
+        ? 'mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800'
+        : 'mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900';
+      warnEl.innerHTML = messages.map((m) => `<p>${esc(m)}</p>`).join('');
+    }
+
+    if (preview) {
+      preview.innerHTML =
+        r.panels.length > 0
+          ? previewSvg(r)
+          : '<p class="py-12 text-center text-sm text-zinc-500">Maße prüfen – mit diesen Werten lässt sich keine Kiste bauen.</p>';
+    }
+
+    setText('fb-layout', r.panels.length ? `(${nf(r.layout.width)} × ${nf(r.layout.height)} mm)` : '');
+    setText('fb-outer', `${nf(r.outer.length)} × ${nf(r.outer.width)} × ${nf(r.outer.height)} mm`);
+    setText('fb-inner', `${nf(r.inner.length)} × ${nf(r.inner.width)} × ${nf(r.inner.height)} mm`);
+    setText('fb-count', `${r.panels.length} Teile`);
+    setText('fb-fingers', `${r.fingers.length} / ${r.fingers.width} / ${r.fingers.height}`);
+    setText(
+      'fb-fingersize',
+      `${nf(r.fingerSize.length)} / ${nf(r.fingerSize.width)} / ${nf(r.fingerSize.height)} mm`,
+    );
+    setText('fb-area', `${nf(r.partsArea / 1e6, 3)} m²`);
+    setText('fb-cut', `${nf(r.cutLength / 1000, 2)} m`);
+  }
+
+  function download(filename: string, content: string, type: string): void {
+    if (!content) return;
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  form?.addEventListener('input', render);
+  form?.addEventListener('change', render);
+  $('fb-svg')?.addEventListener('click', () => last && download('fingerzinken-box.svg', exportSvg(last), 'image/svg+xml'));
+  $('fb-dxf')?.addEventListener('click', () => last && download('fingerzinken-box.dxf', exportDxf(last), 'application/dxf'));
+  render();
+</script>

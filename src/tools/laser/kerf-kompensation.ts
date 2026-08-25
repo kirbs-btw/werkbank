@@ -44,7 +44,7 @@ export const tool: Tool = {
     ];
   },
   intro:
-    'Der Laserstrahl trägt beim Schneiden eine schmale Schnittfuge ab, den sogenannten Kerf. Schneidet man exakt auf der Konturlinie, fällt ein Außenteil um eine halbe Fugenbreite zu klein und ein Loch um eine halbe Fugenbreite zu groß aus. Dieser Rechner liefert das korrigierte Konturmaß für die CAD-Zeichnung, damit Steckverbindungen und Passungen tatsächlich klemmen.',
+    'Der Laserstrahl trägt beim Schneiden eine schmale Schnittfuge ab, den sogenannten Kerf. Schneidet man exakt auf der Konturlinie, fällt ein Außenteil um eine halbe Fugenbreite zu klein und ein Loch um eine halbe Fugenbreite zu groß aus. Dieser Rechner liefert das korrigierte Konturmaß für die CAD-Zeichnung, damit Steckverbindungen und Passungen tatsächlich klemmen. Für komplette Kisten übernimmt der <a href="/generatoren/fingerzinken-box">Fingerzinken-Box-Generator</a> diese Korrektur bereits an jedem Zapfen.',
   howto: [
     'Sollmaß eintragen: das Endmaß, das das Teil oder die Öffnung später haben soll.',
     'Kerf eintragen: Schnittfugenbreite des Lasers für dieses Material (zuvor an einem Probeschnitt messen).',
