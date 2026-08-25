@@ -61,8 +61,13 @@ export interface HingeResult {
   stats: HingeStats;
 }
 
-/** Faustwert aus der Laserpraxis: mehr Verdrehung je Reihe lässt Stege ausreißen. */
-export const MAX_ANGLE_PER_ROW = 6;
+/**
+ * Ab hier wird die Verdrehung je Steg sportlich. Ein harter Grenzwert existiert nicht –
+ * er hängt von Material, Dicke, Schlitzlänge und Stegbreite ab. Übliche Auslegungen für
+ * 3-mm-Sperrholz liegen bei etwa 5 bis 10° je Reihe; darüber steigt das Ausreißrisiko
+ * spürbar und die Schlitze klaffen außen sichtbar auf.
+ */
+export const MAX_ANGLE_PER_ROW = 10;
 /** Schlitzreste unterhalb dieser Länge werden verworfen. */
 const MIN_SLIT = 1;
 
@@ -143,7 +148,7 @@ export function buildHinge(spec: HingeSpec): HingeResult {
   }
   if (anglePerRow > MAX_ANGLE_PER_ROW) {
     warnings.push(
-      `${anglePerRow.toFixed(1)}° je Reihe sind viel – als Faustwert gelten höchstens ${MAX_ANGLE_PER_ROW}°. Reihenabstand verkleinern, damit mehr Reihen entstehen.`,
+      `${anglePerRow.toFixed(1)}° je Reihe: Jeder Steg muss sich dafür kräftig verdrehen und die Schlitze klaffen außen rund ${openingPerRow.toFixed(1)} mm auf. Übliche Auslegungen bleiben unter ${MAX_ANGLE_PER_ROW}° – dafür den Reihenabstand verkleinern, damit mehr Reihen entstehen.`,
     );
   }
   if (gap < t / 2) {

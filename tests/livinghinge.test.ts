@@ -145,6 +145,18 @@ describe('Kennzahlen & Warnungen', () => {
     expect(r.stats.openingPerRow).toBeCloseTo(3 * r.stats.anglePerRow * (Math.PI / 180), 9);
   });
 
+  it('die Standardwerte der Seite lösen keine Warnung aus', () => {
+    // Sonst begrüßt der Generator jeden Besucher mit einer Warnung, obwohl nichts falsch ist.
+    const seitenStandard = spec({
+      panelWidth: 120, panelHeight: 100, angle: 90, radius: 20, thickness: 3,
+      slitLength: 20, gap: 3, rowSpacing: 2.5, margin: 2, outline: true,
+    });
+    const r = buildHinge(seitenStandard);
+    expect(r.stats.warnings, r.stats.warnings.join(' | ')).toEqual([]);
+    expect(r.stats.anglePerRow).toBeLessThan(MAX_ANGLE_PER_ROW);
+    expect(r.stats.slits).toBeGreaterThan(20);
+  });
+
   it('warnt, wenn zu wenige Reihen zu viel Winkel je Reihe ergeben', () => {
     const r = buildHinge(spec({ rowSpacing: 20 }));
     expect(r.stats.anglePerRow).toBeGreaterThan(MAX_ANGLE_PER_ROW);

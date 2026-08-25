@@ -13,6 +13,22 @@ export interface Generator {
 
 export const GENERATORS: Generator[] = [
   {
+    slug: 'living-hinge',
+    title: 'Living-Hinge-Generator (Biegescharnier für Laser)',
+    shortTitle: 'Living Hinge',
+    description:
+      'Erzeuge das Schnittmuster für ein Biegescharnier: Biegewinkel, Radius und Materialstärke eingeben – der Generator berechnet Breite und Reihen und gibt das Muster als SVG oder DXF aus.',
+    keywords: [
+      'living hinge generator',
+      'biegescharnier laser',
+      'living hinge muster',
+      'holz biegen laser schlitze',
+      'kerf bending muster',
+      'sperrholz biegen laser',
+      'federscharnier lasercut',
+    ],
+  },
+  {
     slug: 'gridfinity-generator',
     title: 'Gridfinity-Generator (Bins als STL)',
     shortTitle: 'Gridfinity',

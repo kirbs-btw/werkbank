@@ -106,7 +106,7 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
 - [x] ~~**T3 STL-Analyse im Browser**~~ → `/generatoren/stl-analyse` (2026-08-25)
 - [x] ~~**T4 DXF ⇄ SVG Konverter**~~ → `/generatoren/dxf-svg-konverter` (2026-08-25)
 - [x] ~~**T5 Gridfinity-Bin-Generator**~~ → `/generatoren/gridfinity-generator` (2026-08-25)
-- [ ] **T6 Living-Hinge-Generator** (SVG/DXF-Muster für Laser).
+- [x] ~~**T6 Living-Hinge-Generator**~~ → `/generatoren/living-hinge` (2026-08-25)
 - [ ] **T7 Zuschnittoptimierung v2**: Schnittliste/Etiketten-Druck, mehrere Plattenformate gleichzeitig.
 - [ ] **T8 OpenSEO anbinden** (siehe Abschnitt oben): MCP-Server in `.mcp.json` eintragen, Zugang
       testen, erste Ranking- und Keyword-Abfrage machen und das Ergebnis als neue P1/P2-Punkte
@@ -212,6 +212,20 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
   Konfigurationen). Außerdem: OpenSEO als datengetriebene Steuerung in den Prozess aufgenommen
   (T8 + E5) und die Regel ergänzt, dass gemeldete Fehler den Backlog schlagen.
   T6 (Living Hinge) verschoben; Geometrie-Library und 23 Tests sind bereits fertig und grün.
+- **2026-08-25 · Iteration 7 (T6):** Living-Hinge-Generator live (`/generatoren/living-hinge`):
+  Seite zur bereits vorhandenen Geometrie-Library gebaut, Export über die geprüften Konverter aus
+  Iteration 4 (kein zweiter SVG/DXF-Writer). Zwei Vorschauen: Schnittmuster flach und Seitenansicht
+  der Biegung. Kennzahlen: Scharnierbreite aus der Bogenlänge der neutralen Faser, Reihen,
+  Winkel je Reihe, Schnittlänge, Schlitzöffnung.
+  **UX-Fehler beim Smoke-Test gefunden:** Die Standardwerte lösten sofort eine Warnung aus, weil
+  meine Faustregel von 6° je Reihe zu streng war – reale Auslegungen für 3-mm-Sperrholz liegen bei
+  etwa 5 bis 10°. Schwelle auf 10° korrigiert, Formulierung von „Grenzwert" auf „übliche Auslegung"
+  geändert (es gibt keinen harten Wert) und der Standard-Reihenabstand auf 2,5 mm gesetzt.
+  Neuer Test: Die Standardwerte der Seite dürfen keine Warnung erzeugen.
+  Interner Link aus `laser-schnittzeit`. IndexNow-Ping: 4 URLs.
+
+  *Merksatz:* Warnschwellen mit den eigenen Standardwerten gegenprüfen. Eine Warnung, die beim
+  ersten Seitenaufruf erscheint, obwohl nichts falsch ist, entwertet alle übrigen Warnungen.
 
 ## Start-Prompt (Referenz)
 

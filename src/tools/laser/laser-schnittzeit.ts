@@ -37,7 +37,7 @@ export const tool: Tool = {
     ];
   },
   intro:
-    'Die Schnittzeit ergibt sich direkt aus der gesamten Schnittlänge geteilt durch die Schnittgeschwindigkeit. Hinzu kommen Leerwege zwischen den Konturen und das Einstechen, die als prozentualer Aufschlag berücksichtigt werden. Maker brauchen diesen Wert, um Maschinenzeit zu kalkulieren, Aufträge zu takten und Angebotspreise sauber zu begründen.',
+    'Die Schnittzeit ergibt sich direkt aus der gesamten Schnittlänge geteilt durch die Schnittgeschwindigkeit. Hinzu kommen Leerwege zwischen den Konturen und das Einstechen, die als prozentualer Aufschlag berücksichtigt werden. Maker brauchen diesen Wert, um Maschinenzeit zu kalkulieren, Aufträge zu takten und Angebotspreise sauber zu begründen. Die Schnittlänge musst du dabei nicht schätzen: Generatoren wie der <a href="/generatoren/living-hinge">Living-Hinge-Generator</a> geben sie direkt aus, und für bestehende Zeichnungen liefert sie der <a href="/generatoren/dxf-svg-konverter">DXF ⇄ SVG Konverter</a>.',
   howto: [
     'Gesamte Schnittlänge eintragen (Summe aller Konturen, im CAM oft als Pfadlänge angezeigt).',
     'Schnittgeschwindigkeit in mm/min für Material und Dicke eintragen.',
