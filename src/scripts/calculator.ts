@@ -1,5 +1,6 @@
 import type { Tool, ToolResult, InputValues } from '../lib/types';
 import { formatResult } from '../lib/format';
+import { decodeValues, shareUrl } from '../lib/shareurl';
 
 // Lazy-Glob: jedes Tool wird ein eigener Chunk → nur das benötigte wird geladen.
 const modules = import.meta.glob<{ tool: Tool }>('../tools/**/*.ts');
@@ -52,6 +53,44 @@ function renderResults(container: HTMLElement, results: ToolResult[]): void {
     .join('');
 }
 
+/**
+ * Werte aus der Adresszeile in die Felder schreiben. Was dort nicht steht oder
+ * nicht taugt, bleibt auf der Voreinstellung – geprüft wird in `decodeValues`.
+ */
+function applyFromUrl(form: HTMLFormElement, tool: Tool): void {
+  const werte = decodeValues(tool, window.location.search);
+  for (const [id, wert] of Object.entries(werte)) {
+    const el = form.querySelector<HTMLInputElement | HTMLSelectElement>(`[data-input="${id}"]`);
+    if (el) el.value = String(wert);
+  }
+}
+
+/**
+ * Adresszeile nachführen, damit sich der Stand teilen und neu laden lässt.
+ *
+ * Bewusst verzögert und nur bei echter Änderung: Safari lässt rund 100
+ * `replaceState`-Aufrufe je 30 Sekunden zu und wirft danach einen Fehler –
+ * bei jedem Tastendruck zu schreiben, wäre also ein sicherer Weg in die
+ * Ausnahme.
+ */
+function makeUrlWriter(tool: Tool): (values: InputValues) => void {
+  let timer = 0;
+  let zuletzt = '';
+  return (values: InputValues): void => {
+    const ziel = shareUrl(tool, values, window.location.href);
+    if (ziel === zuletzt) return;
+    zuletzt = ziel;
+    window.clearTimeout(timer);
+    timer = window.setTimeout(() => {
+      try {
+        window.history.replaceState(null, '', ziel);
+      } catch {
+        /* Adresszeile ist ein Zusatz, kein Muss – Rechner läuft weiter. */
+      }
+    }, 400);
+  };
+}
+
 async function initRoot(root: HTMLElement): Promise<void> {
   const slug = root.dataset.slug;
   if (!slug) return;
@@ -61,18 +100,41 @@ async function initRoot(root: HTMLElement): Promise<void> {
   const out = root.querySelector<HTMLElement>('[data-results]');
   if (!form || !out) return;
 
+  applyFromUrl(form, tool);
+  const schreibeUrl = makeUrlWriter(tool);
+
   const update = (): void => {
+    const werte = readValues(form, tool);
     try {
-      const results = tool.compute(readValues(form, tool));
-      renderResults(out, results);
+      renderResults(out, tool.compute(werte));
     } catch {
       /* Eingabe unvollständig – Ergebnis stehen lassen. */
     }
+    schreibeUrl(werte);
   };
 
   form.addEventListener('input', update);
   form.addEventListener('change', update);
   update();
+
+  const teilen = root.querySelector<HTMLButtonElement>('[data-share]');
+  if (teilen) {
+    const beschriftung = teilen.textContent ?? 'Link kopieren';
+    teilen.addEventListener('click', async () => {
+      const url = shareUrl(tool, readValues(form, tool), window.location.href);
+      let geklappt = false;
+      try {
+        await navigator.clipboard.writeText(url);
+        geklappt = true;
+      } catch {
+        /* Zwischenablage verweigert – dann eben der Hinweis unten. */
+      }
+      teilen.textContent = geklappt ? 'Link kopiert' : 'Kopieren nicht möglich';
+      window.setTimeout(() => {
+        teilen.textContent = beschriftung;
+      }, 2000);
+    });
+  }
 }
 
 function init(): void {

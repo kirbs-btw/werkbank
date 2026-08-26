@@ -160,7 +160,7 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 - [x] ~~**S3 Content-Lücken schließen**~~ → alle 153 Tools vollständig, Testsperre gesetzt (2026-08-26)
 - [x] ~~**S4 Per-Tool-OG-Bilder**~~ → 171 Karten zur Build-Zeit, Text als Pfade (2026-08-26)
 - [x] ~~**S5 Cross-Kategorie-Verlinkung**~~ → 41 kuratierte Paare in `src/lib/crosslinks.ts` (2026-08-26)
-- [ ] **S6 Teilen-Links:** Rechner-Eingaben als URL-Parameter, Canonical bleibt sauber.
+- [x] ~~**S6 Teilen-Links**~~ → Eingaben in der Adresszeile, `src/lib/shareurl.ts` (2026-08-26)
 
 ### P3 – Qualität & Bugs
 
@@ -762,6 +762,33 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   **Merksatz:** Interne Verlinkung, die nur innerhalb ihrer Kategorie bleibt, ist keine Verlinkung,
   sondern eine Sackgasse mit Karten drin. Erst der Weg nach draußen macht aus Einzelseiten eine
   Seite.
+
+- **2026-08-26 · Iteration 26 (S6):** **Rechnungen lassen sich teilen.** Wer Werte verstellt, findet
+  sie in der Adresszeile wieder; ein Knopf legt den Link in die Zwischenablage. Der Link führt
+  dieselbe Rechnung wieder vor – für eine Rückfrage im Forum, eine Notiz an sich selbst oder eine
+  Absprache in der Werkstatt.
+
+  Drei Entscheidungen, die mehr wiegen, als es aussieht:
+
+  **Nur Abweichungen wandern in die URL.** Wer nichts verstellt, bekommt keine Parameter, wer ein
+  Maß ändert, bekommt genau eines. Das hält Links kurz – und sorgt nebenbei dafür, dass die
+  geteilte Seite inhaltlich dieselbe bleibt wie die kanonische. Stellt man alles zurück,
+  verschwindet die Query wieder ganz.
+
+  **Fremden Werten wird nicht geglaubt.** Ein geteilter Link kommt von außen. Unbekannte Parameter
+  fliegen raus, „abc" in einem Zahlenfeld ebenso, Auswahlwerte müssen zu den angebotenen gehören,
+  und Zahlen außerhalb der erklärten Grenzen werden auf die Grenze gezogen statt durchgereicht.
+  Live geprüft mit `?vc=abc&d=-999&boeser=1&x=<script>`: Ergebnis war `?d=0.1`, sonst nichts.
+
+  **Die Adresszeile wird verzögert geschrieben.** Safari lässt rund 100 `replaceState`-Aufrufe je
+  30 Sekunden zu und wirft danach – bei jedem Tastendruck zu schreiben wäre ein sicherer Weg in die
+  Ausnahme. Jetzt 400 ms nach der letzten Änderung und nur, wenn sich die Adresse wirklich ändert.
+
+  Das Canonical bleibt unangetastet: Es entsteht aus dem Seitenpfad, nicht aus der aufgerufenen
+  Adresse – geprüft im Build und live. 12 neue Tests, insgesamt 1004.
+
+  **Merksatz:** Eine URL mit Parametern ist eine Eingabe wie jede andere. Wer sie ungeprüft in
+  Felder schreibt, hat sich eine Hintertür in den eigenen Rechner gebaut.
 
 ## Start-Prompt (Referenz)
 
