@@ -29,6 +29,12 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
 1. **Sync:** `git pull --rebase origin main`. Bei unerwarteten Konflikten: stoppen, Log-Eintrag, nachfragen.
 2. **Gesundheitscheck:** Live-Seite erreichbar? Hat der letzte Deploy die vorige Änderung ausgeliefert
    (Stichprobe per `curl`)? Wenn nein → das zuerst fixen (das ist dann die Iteration).
+   **Bei gebündelten Seiten den richtigen Chunk prüfen.** Astro legt gemeinsam genutzte Module
+   (`meshsplit`, `viewer3d`, `gridfinity` …) in eigene Dateien, die das Seitenskript erst
+   nachlädt und die im HTML nirgends stehen. Wer nur die Seite oder ihr Einstiegsskript
+   durchsucht, findet eine längst ausgelieferte Änderung nicht: erst den Import-Verweis im
+   Einstiegsskript auflösen, dann dort suchen. Das hat einmal zehn Minuten Warten auf einen
+   Deploy gekostet, der schon fertig war.
 3. **Task wählen** – in dieser Reihenfolge:
    a) **Von Bastian gemeldete Fehler haben immer Vorrang** vor dem Backlog. Ein gemeldeter Fehler
       ist die Iteration; anschließend Regressionstest ergänzen, damit er nicht wiederkommt.
