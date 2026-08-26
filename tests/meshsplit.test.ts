@@ -529,34 +529,14 @@ describe('Mehrkörper-Netze und Sonderlagen der Ebene', () => {
     }
   });
 
-  it('bleibt entweder dicht – oder sagt es', () => {
-    // Übrig bleibt ein Fall: Flächen, die über Brücken trianguliert sind. Die
-    // Magnetlöcher machen das an der Bodenfläche nötig, und die dabei
-    // entstehenden nullbreiten Schlitze hinterlassen beim Queren entartete
-    // Konturstücke – siehe T15 im Backlog.
-    //
-    // Zusichern lässt sich hier nicht „immer dicht", wohl aber das, worauf sich
-    // ein Nutzer verlassen können muss: **Ein undichtes Ergebnis wird nie
-    // stillschweigend ausgeliefert.**
-    const r = splitMesh(bin({ holes: 'magnet' }), { nx: 1, ny: 0, nz: 0, d: 5 });
-    if (r.stats.openEdges === 0) {
-      expect(closureError(r.below), 'dicht gemeldet, aber offen').toBeLessThan(1e-9);
-    } else {
-      expect(r.stats.warnings.join(' '), 'undicht ohne Warnung').toContain('Kanten offen');
-    }
-  });
-
-  it('weist offene Kanten aus, statt sie zu verschweigen', () => {
-    // Die Magnetlöcher machen die Bodenfläche mit Loch-Überbrückung nötig, und
-    // die hinterlässt nullbreite Schlitze. Läuft die Ebene durch so einen
-    // Schlitz, entstehen entartete Konturstücke und die Deckfläche schließt
-    // nicht ganz. Bekannt und offen – siehe T15 im Backlog.
-    //
-    // Entscheidend ist hier nicht, dass es klappt, sondern dass es **auffällt**:
-    // Die Zahl steht in den Kennzahlen und die Seite warnt.
-    const r = splitMesh(bin({ holes: 'magnet' }), { nx: 1, ny: 0, nz: 0, d: 2.7 });
+  it('meldet offene Kanten, wenn das Ausgangsnetz selbst löchrig ist', () => {
+    // Die Meldung ist die Zusage, auf die sich ein Nutzer verlassen können muss:
+    // Ein undichtes Ergebnis wird nie stillschweigend ausgeliefert. Geprüft an
+    // einem Netz mit fehlender Wand – daraus *kann* kein dichtes Teil werden.
+    const loechrig = cube(20).subarray(0, cube(20).length - 18);
+    const r = splitMesh(loechrig, { nx: 0, ny: 0, nz: 1, d: 10 });
     expect(r.stats.openEdges).toBeGreaterThan(0);
-    expect(r.stats.warnings.join(' ')).toContain('offen');
+    expect(r.stats.warnings.join(' ')).toContain('Kanten offen');
   });
 
   it('meldet bei sauberem Schnitt keine offenen Kanten und keine Warnung dazu', () => {
@@ -573,6 +553,101 @@ describe('Mehrkörper-Netze und Sonderlagen der Ebene', () => {
       const r = splitMesh(bin(), p);
       expect(r.stats.openEdges, JSON.stringify(p)).toBe(0);
       expect(closureError(r.below), JSON.stringify(p)).toBeLessThan(1e-9);
+    }
+  });
+});
+
+describe('Ohrenschneiden deckt das Polygon vollständig ab', () => {
+  /** Jede Kante des Polygons muss genau einmal Rand der Zerlegung sein. */
+  function pruefe(poly: { x: number; y: number }[], name: string): void {
+    const tris = earClip(poly);
+    expect(tris.length, `${name}: Dreieckszahl`).toBe(poly.length - 2);
+
+    const flaeche = Math.abs(
+      tris.reduce((s, [i, j, k]) => {
+        const A = poly[i], B = poly[j], C = poly[k];
+        return s + ((B.x - A.x) * (C.y - A.y) - (C.x - A.x) * (B.y - A.y)) / 2;
+      }, 0),
+    );
+    const soll = Math.abs(poly.reduce((s, p2, i) => {
+      const q = poly[(i + 1) % poly.length];
+      return s + (p2.x * q.y - q.x * p2.y);
+    }, 0) / 2);
+    expect(flaeche, `${name}: Fläche`).toBeCloseTo(soll, 6);
+
+    const kanten = new Map<string, number>();
+    for (const [i, j, k] of tris)
+      for (const [a, b] of [[i, j], [j, k], [k, i]]) {
+        const id = a < b ? `${a}|${b}` : `${b}|${a}`;
+        kanten.set(id, (kanten.get(id) ?? 0) + 1);
+      }
+    const rand = new Set([...kanten.entries()].filter(([, n]) => n === 1).map(([id]) => id));
+    for (let i = 0; i < poly.length; i++) {
+      const a = i, b = (i + 1) % poly.length;
+      const id = a < b ? `${a}|${b}` : `${b}|${a}`;
+      expect(rand.has(id), `${name}: Konturkante ${id} fehlt am Rand`).toBe(true);
+    }
+    expect(rand.size, `${name}: zusätzliche Randkanten`).toBe(poly.length);
+  }
+
+  it('bei einfachen Formen', () => {
+    pruefe([{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 10 }, { x: 0, y: 10 }], 'Quadrat');
+    pruefe([{ x: 0, y: 0 }, { x: 10, y: 0 }, { x: 10, y: 4 }, { x: 4, y: 4 }, { x: 4, y: 10 }, { x: 0, y: 10 }], 'L-Form');
+  });
+
+  it('auch mit Punkten mitten auf einer geraden Kante', () => {
+    // Genau hier blieb die Zerlegung stehen: Flache Ecken sind weder konvex noch
+    // einspringend, und weil ein Punkt auf der Kante eines Ohrs als „innen"
+    // zählt, blockierten sie zugleich jedes Ohr, dessen Kante durch sie läuft.
+    const mit = [{ x: 0, y: 0 }, { x: 3, y: 0 }, { x: 6, y: 0 }, { x: 9, y: 0 }, { x: 10, y: 0 },
+                 { x: 10, y: 10 }, { x: 7, y: 10 }, { x: 3, y: 10 }, { x: 0, y: 10 }];
+    pruefe(mit, 'Quadrat mit Zwischenpunkten');
+  });
+
+  it('auch bei einer langen Reihe fast kollinearer Punkte', () => {
+    // Der reale Fall: eine flache Fläche, deren Schnittlinie viele dicht
+    // benachbarte Punkte liefert.
+    const poly: { x: number; y: number }[] = [];
+    for (let i = 0; i <= 20; i++) poly.push({ x: i * 0.04, y: 0 });
+    poly.push({ x: 0.8, y: 2 }, { x: 0.4, y: 3 }, { x: 0, y: 2 });
+    pruefe(poly, 'lange kollineare Reihe');
+  });
+
+  it('lässt bei einer konkaven Form keine Fläche liegen', () => {
+    const stern: { x: number; y: number }[] = [];
+    for (let i = 0; i < 12; i++) {
+      const w = (2 * Math.PI * i) / 12;
+      const r = i % 2 === 0 ? 10 : 4;
+      stern.push({ x: r * Math.cos(w), y: r * Math.sin(w) });
+    }
+    pruefe(stern, 'Stern');
+  });
+});
+
+describe('Bins mit Magnetlöchern', () => {
+  const bin = (o: Record<string, unknown> = {}) =>
+    buildBin({ unitsX: 1, unitsY: 1, unitsZ: 4, wall: 1.2, floor: 1.2, compartmentsX: 1, compartmentsY: 1, lip: true, holes: 'magnet', ...o } as Parameters<typeof buildBin>[0]).triangles;
+
+  it('lassen sich in jeder Richtung dicht schneiden', () => {
+    // Vorher: konstant 16 offene Kanten, sobald die Ebene die Bodenfläche traf.
+    const modelle: [string, Float64Array][] = [
+      ['Magnet', bin()],
+      ['Magnet + Schraube', bin({ holes: 'magnet-schraube' })],
+      ['2x3 mit Fächern', bin({ unitsX: 2, unitsY: 3, compartmentsX: 2, compartmentsY: 2 })],
+    ];
+    for (const [name, t] of modelle) {
+      let maxAbs = 1;
+      for (const v of t) if (Math.abs(v) > maxAbs) maxAbs = Math.abs(v);
+      for (const [an, n] of [['x', { nx: 1, ny: 0, nz: 0 }], ['y', { nx: 0, ny: 1, nz: 0 }], ['z', { nx: 0, ny: 0, nz: 1 }], ['diagonal', { nx: 1, ny: 1, nz: 1 }]] as [string, Omit<Plane, 'd'>][]) {
+        for (const f of [-0.4, -0.1, 0, 0.1, 0.25, 0.4]) {
+          const r = splitMesh(t, { ...n, d: f * maxAbs });
+          if (r.below.length === 0 || r.above.length === 0) continue;
+          const wo = `${name} ${an} ${f}`;
+          expect(r.stats.openEdges, `${wo}: offene Kanten`).toBe(0);
+          expect(analyzeStl(toStl(r.below, 'binary')).watertight, `${wo} unten`).toBe(true);
+          expect(analyzeStl(toStl(r.above, 'binary')).watertight, `${wo} oben`).toBe(true);
+        }
+      }
     }
   });
 });

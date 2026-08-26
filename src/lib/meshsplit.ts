@@ -188,6 +188,8 @@ export function earClip(poly: V2[]): [number, number, number][] {
   for (const p of poly) spanne = Math.max(spanne, Math.abs(p.x), Math.abs(p.y));
   const TOL = Math.max(spanne, 1) * 1e-9;
   const gleich = (p: V2, q: V2) => Math.abs(p.x - q.x) <= TOL && Math.abs(p.y - q.y) <= TOL;
+  /** Schranke für „flach": Das Kreuzprodukt hat die Einheit einer Fläche. */
+  const FLACH = Math.max(spanne, 1) ** 2 * 1e-12;
 
   const out: [number, number, number][] = [];
   let guard = idx.length * idx.length + 16;
@@ -219,7 +221,37 @@ export function earClip(poly: V2[]): [number, number, number][] {
       geschnitten = true;
       break;
     }
-    if (!geschnitten) break; // entartetes Polygon – Rest verwerfen statt zu hängen
+    if (!geschnitten) {
+      // Kein echtes Ohr gefunden. Der häufigste Grund sind **flache Ecken**:
+      // Sie liegen genau auf der Verbindung ihrer Nachbarn, sind also weder
+      // konvex noch einspringend, und weil `inTriangle` Punkte auf dem Rand als
+      // innen zählt, blockieren sie zugleich jedes Ohr, dessen Kante durch sie
+      // hindurchläuft. Die Zerlegung blieb dann stehen und verwarf den Rest –
+      // gemessen an einem Schnitt durch ein Bin mit Magnetlöchern: 57 statt 63
+      // Dreiecke, sechs Konturkanten ohne Deckfläche und damit offene Kanten.
+      //
+      // Solche Ecken einfach zu überspringen wäre falsch: Die Deckfläche hätte
+      // dann die Kante a–c, die beschnittene Seitenwand aber a–b und b–c – die
+      // Kanten fänden nicht zusammen. Stattdessen wird die flache Ecke mit einem
+      // flächenlosen Dreieck abgeschnitten. Das bringt die Zerlegung weiter und
+      // erhält die Randkanten: a–b und b–c werden verbraucht, a–c kommt als
+      // Diagonale neu hinzu.
+      let flach = -1;
+      for (let i = 0; i < idx.length && flach < 0; i++) {
+        const a = poly[idx[(i + idx.length - 1) % idx.length]];
+        const b = poly[idx[i]];
+        const c = poly[idx[(i + 1) % idx.length]];
+        if (Math.abs((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)) <= FLACH) flach = i;
+      }
+      if (flach < 0) break; // wirklich entartet – Rest verwerfen statt zu hängen
+      out.push([
+        idx[(flach + idx.length - 1) % idx.length],
+        idx[flach],
+        idx[(flach + 1) % idx.length],
+      ]);
+      idx.splice(flach, 1);
+      continue;
+    }
   }
   if (idx.length === 3) out.push([idx[0], idx[1], idx[2]]);
   return out;

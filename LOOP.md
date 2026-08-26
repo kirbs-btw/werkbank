@@ -125,20 +125,21 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
 - [x] ~~**T7 Zuschnittoptimierung v2**~~ → Schnittliste + mehrere Plattenformate (2026-08-25)
 - [x] ~~**T14 Splitter: senkrechte Schnitte durch Mehrkörper-Netze**~~ → jeder Körper wird
       einzeln geschnitten (2026-08-26)
-- [ ] **T15 Splitter: Flächen, die über Brücken trianguliert sind** – Eine flache Fläche mit
-      Löchern (etwa die Bodenfläche eines Bins mit Magnetlöchern) wird über nullbreite Schlitze
-      trianguliert, die vom Rand zu jedem Loch führen. Quert die Schnittebene so einen Schlitz,
-      entstehen entartete Konturstücke und die Deckfläche schließt nicht ganz.
-      **Gemessen:** konstant 4 offene Kanten je Brücke (16 bei vier Magnetlöchern), unabhängig von
-      der Schnittposition, solange die Ebene die Brücken quert; im Bereich der Löcher selbst
-      40–110. Die offenen Kanten liegen alle auf der Schnittlinie der flachen Fläche, sechs Punkte
-      innerhalb von 0,17 mm.
-      **Zwei Wege wurden geprüft und verworfen:** Richtung der Schnittstrecken beim Verketten
-      bevorzugen (keine Wirkung – die Verkettung biegt dort nicht falsch ab) und Punkte
-      zusammenfassen (die Punkte liegen mit 0,04 mm weit über jeder sinnvollen Toleranz).
-      Nötig ist vermutlich eine echte Reparatur der Kontur in 2D – wobei die Deckfläche danach
-      exakt auf die beschnittenen Seitenwände passen muss, sonst entstehen erst recht offene
-      Kanten. Bis dahin weist `stats.openEdges` das Problem aus und die Seite warnt.
+- [x] ~~**T15 Splitter: Deckflächen bei entarteten Schnittkonturen**~~ → flache Ecken beim
+      Ohrenschneiden (2026-08-26)
+- [ ] **T16 `bridgeHoles` bei mehreren Löchern** – Die Verschmelzung von Außenkontur und Löchern
+      zu einem einzigen Polygon geht bei bestimmten Lochlagen schief; die entstehende Kontur
+      schneidet sich selbst, und das Ohrenschneiden kann sie nicht mehr zerlegen.
+      **Gemessen** an einem 40×40-Quadrat mit Löchern r=4 nahe den Ecken: 1 Loch sauber
+      (28/28 Dreiecke), **2 Löcher kaputt** (22 von 54, Fläche 249 statt 1501), 3 Löcher sauber
+      (80/80), **4 Löcher kaputt** (70 von 106, Fläche 583 statt 1401). Es hängt also an der Lage,
+      nicht an der Zahl: Eine Brücke kreuzt ein anderes Loch oder eine andere Brücke.
+      Die jetzige Fassung sucht zum Verbinden nur die nächste Kante rechts vom rechtesten Punkt
+      des Lochs. Das übliche Verfahren (Eberly) prüft zusätzlich, ob eine einspringende Ecke im
+      Dreieck aus Loch-, Schnitt- und Zielpunkt liegt, und weicht dann auf diese aus.
+      **Erreichbar im Splitter**, sobald ein Querschnitt zwei oder mehr Löcher hat – etwa beim
+      Teilen einer gelochten Platte längs ihrer Fläche. Bis dahin weist `stats.openEdges` das
+      Problem aus und die Seite warnt.
 - [ ] **T8 OpenSEO anbinden** (siehe Abschnitt oben): MCP-Server in `.mcp.json` eintragen, Zugang
       testen, erste Ranking- und Keyword-Abfrage machen und das Ergebnis als neue P1/P2-Punkte
       eintragen. **Blockiert durch E5** (DataForSEO kostet Geld) – vorher nichts installieren.
@@ -547,6 +548,40 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   haben. Erst messen, was am jeweiligen Ort tatsächlich anders ist – hier: Punkte auf der Ebene
   gegen durchtrennte Dreiecke. Das trennte in einer Minute, was ich vorher in einen Backlog-Punkt
   zusammengeschrieben hatte.
+
+- **2026-08-26 · Iteration 19 (T15):** **Bins mit Magnetlöchern lassen sich jetzt in jeder
+  Richtung dicht schneiden.** Die Ursache lag ganz woanders, als meine Backlog-Notiz behauptet
+  hatte – die sprach von Brücken-Triangulierung, dabei baut der Gridfinity-Generator seine
+  Magnetlöcher überhaupt nicht mit Brücken, sondern mit `annulus`.
+
+  Der Weg dahin über drei widerlegte Vermutungen: Ein minimaler Nachbau mit einem gebrückten Loch
+  reproduzierte den Fehler **nicht**. Die Schnittkontur selbst war einwandfrei – eine geschlossene
+  Schleife aus 65 Punkten, keine Mehrfachbesuche. Erst die Messung von `earClip` gegen diese
+  Kontur brachte es: **57 Dreiecke statt 63, sechs Konturkanten ohne Deckfläche.**
+
+  Der Grund: **flache Ecken.** Sie liegen genau auf der Verbindung ihrer Nachbarn, sind also weder
+  konvex noch einspringend – und weil ein Punkt auf der Kante eines Ohrs als „innen" zählt,
+  blockieren sie zugleich jedes Ohr, dessen Kante durch sie hindurchläuft. Fünf solcher Ecken
+  blockierten die drei verbliebenen Ohren gegenseitig; die Zerlegung blieb stehen und verwarf den
+  Rest.
+
+  **Ein naheliegender Fix war falsch und wurde verworfen:** die Lehrbuchregel „nur einspringende
+  Ecken blockieren ein Ohr". Damit stimmte die Fläche zwar exakt, aber die Ohren übersprangen die
+  flachen Punkte – die Deckfläche bekam die Kante a–c, die beschnittene Wand hatte a–b und b–c,
+  und plötzlich fehlten 32 statt 6 Kanten. Die Anforderung ist strenger als „Fläche abdecken":
+  **Jeder Konturpunkt muss Ecke bleiben.** Richtig ist deshalb, eine flache Ecke mit einem
+  flächenlosen Dreieck abzuschneiden – das bringt die Zerlegung weiter und verbraucht genau die
+  beiden Randkanten, die verbraucht werden müssen.
+
+  **Nebenbei ein neuer Fehler gefunden:** `bridgeHoles` verschmilzt Löcher bei bestimmten Lagen
+  falsch – 1 und 3 Löcher sauber, 2 und 4 kaputt. Als T16 mit Messwerten festgehalten.
+
+  13 neue Tests, darunter eine Zusicherung für `earClip`, die nicht nur die Fläche prüft, sondern
+  dass **jede Konturkante genau einmal Rand der Zerlegung** ist. Insgesamt 967.
+
+  **Merksatz:** Eine Notiz im Backlog ist eine Vermutung von damals, kein Befund. Diese hier stand
+  zwei Iterationen lang da und schickte mich in die falsche Richtung. Beim Wiederaufnehmen zuerst
+  nachmessen, ob sie noch stimmt.
 
 ## Start-Prompt (Referenz)
 
