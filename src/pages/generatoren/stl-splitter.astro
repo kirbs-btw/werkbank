@@ -31,12 +31,16 @@ const FAQ = [
     a: 'Zwei Faustregeln: Schneide dort, wo der Querschnitt klein ist – das spart Klebefläche und fällt weniger auf. Und schneide so, dass beide Hälften eine große flache Fläche zum Aufliegen bekommen. Der Bauraum-Vergleich unten zeigt dir sofort, ob beide Teile passen.',
   },
   {
+    q: 'Was bringen die Passstifte?',
+    a: 'Sie nehmen dir das Ausrichten ab. Die untere Hälfte bekommt Zapfen, die obere passende Löcher – beim Zusammenstecken sitzt alles automatisch fluchtend, statt dass du zwei glatte Flächen freihändig ausrichten musst, während der Kleber anzieht. Das Spiel von 0,15 mm ist auf üblichen FDM-Druck abgestimmt; sitzt es zu stramm, erhöhe den Wert leicht. Wenn der Querschnitt an keiner Stelle dick genug ist, setzt der Generator lieber gar keinen Stift, als einen halb im Nichts stehenden.',
+  },
+  {
     q: 'Wie klebe ich die Teile wieder zusammen?',
     a: 'Bei PLA und PETG funktioniert Sekundenkleber (Cyanacrylat) sehr gut, bei ABS zusätzlich Aceton, das die Oberflächen anlöst. Wichtiger als der Kleber ist die Passung: Beide Schnittflächen sind exakt eben, also vorher entgraten und trocken zusammenstecken, um zu prüfen, ob nichts vorsteht.',
   },
   {
     q: 'Kann ich mehrfach schneiden?',
-    a: 'Ja – speichere eine Hälfte, lade sie erneut und setze den nächsten Schnitt. So zerlegst du auch sehr große Modelle Schritt für Schritt. Passstifte, die das Zusammensetzen erleichtern, sind als nächster Ausbauschritt geplant.',
+    a: 'Ja – speichere eine Hälfte, lade sie erneut und setze den nächsten Schnitt. So zerlegst du auch sehr große Modelle Schritt für Schritt – die Passstifte werden bei jedem Schnitt neu gesetzt.',
   },
 ];
 
@@ -113,6 +117,37 @@ const labelCls = 'mb-1 flex items-center justify-between text-sm font-medium tex
             <button id="sp-center" type="button" class="w-full rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100">
               Mittig setzen
             </button>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <div class="flex items-center justify-between">
+            <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Passstifte</h2>
+            <label class="flex items-center gap-2">
+              <input id="sp-pins" type="checkbox" checked class="h-4 w-4 accent-brand-600" />
+              <span class="text-sm font-medium text-zinc-700">an</span>
+            </label>
+          </div>
+          <p class="mt-1 text-xs text-zinc-500">Zapfen unten, passendes Loch oben – hilft beim Ausrichten.</p>
+          <div id="sp-pin-fields" class="mt-3 space-y-3">
+            <label class="block">
+              <span class={labelCls}><span>Anzahl</span></span>
+              <input id="sp-pin-n" type="number" value="2" min="1" max="8" step="1" class={inputCls} />
+            </label>
+            <label class="block">
+              <span class={labelCls}><span>Durchmesser</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="sp-pin-d" type="number" value="4" min="1" step="0.5" inputmode="decimal" class={inputCls} />
+            </label>
+            <label class="block">
+              <span class={labelCls}><span>Länge</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="sp-pin-l" type="number" value="4" min="0.5" step="0.5" inputmode="decimal" class={inputCls} />
+            </label>
+            <label class="block">
+              <span class={labelCls}><span>Spiel</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="sp-pin-c" type="number" value="0.15" min="0" step="0.05" inputmode="decimal" class={inputCls} />
+              <span class="mt-1 block text-xs text-zinc-500">Loch wird um diesen Wert weiter und tiefer</span>
+            </label>
+            <p id="sp-pin-info" class="text-xs text-zinc-500"></p>
           </div>
         </div>
 
@@ -242,7 +277,7 @@ const labelCls = 'mb-1 flex items-center justify-between text-sm font-medium tex
 
 <script>
   import { parseStl, StlError } from '../../lib/stl';
-  import { splitMesh, meshVolume, type SplitResult } from '../../lib/meshsplit';
+  import { splitMesh, meshVolume, type SplitResult, type PinOptions } from '../../lib/meshsplit';
   import { createViewer, meshBounds, type Viewer } from '../../lib/viewer3d';
   import { toStl } from '../../lib/gridfinity';
 
@@ -348,17 +383,39 @@ const labelCls = 'mb-1 flex items-center justify-between text-sm font-medium tex
     }
   }
 
+  function stiftOptionen(): PinOptions | undefined {
+    if (!($('sp-pins') as HTMLInputElement | null)?.checked) return undefined;
+    return {
+      count: Math.round(val('sp-pin-n', 2)),
+      radius: Math.max(val('sp-pin-d', 4), 0.2) / 2,
+      length: Math.max(val('sp-pin-l', 4), 0.2),
+      clearance: Math.max(val('sp-pin-c', 0.15), 0),
+    };
+  }
+
   function schneiden(): void {
     if (!mesh) return;
     const a = achse();
     const d = val('sp-pos', 0);
-    const r = splitMesh(mesh, {
-      nx: a === 0 ? 1 : 0,
-      ny: a === 1 ? 1 : 0,
-      nz: a === 2 ? 1 : 0,
-      d,
-    });
+    const stift = stiftOptionen();
+    const r = splitMesh(
+      mesh,
+      { nx: a === 0 ? 1 : 0, ny: a === 1 ? 1 : 0, nz: a === 2 ? 1 : 0, d },
+      stift,
+    );
     letztes = r;
+
+    const info = $('sp-pin-info');
+    if (info) {
+      if (!stift) info.textContent = '';
+      else if (r.stats.pins === 0)
+        info.textContent = 'Kein Stift gesetzt – der Querschnitt ist an keiner Stelle dick genug. Durchmesser verringern oder anders schneiden.';
+      else if (r.stats.pins < stift.count)
+        info.textContent = `${r.stats.pins} von ${stift.count} Stiften gesetzt – mehr passen nicht mit Materialrand hinein.`;
+      else info.textContent = r.stats.pins === 1 ? '1 Stift gesetzt.' : `${r.stats.pins} Stifte gesetzt.`;
+    }
+    const felder = $('sp-pin-fields');
+    if (felder) felder.hidden = !stift;
 
     zeigeHaelfte('a', r.above);
     zeigeHaelfte('b', r.below);
@@ -469,6 +526,10 @@ const labelCls = 'mb-1 flex items-center justify-between text-sm font-medium tex
         zeigeHaelfte('b', letztes.below);
       }
     });
+  }
+  for (const id of ['sp-pins', 'sp-pin-n', 'sp-pin-d', 'sp-pin-l', 'sp-pin-c']) {
+    $(id)?.addEventListener('input', planen);
+    $(id)?.addEventListener('change', planen);
   }
   $('sp-reset-view')?.addEventListener('click', () => viewer?.resetView());
 

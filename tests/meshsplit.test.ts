@@ -243,3 +243,138 @@ describe('Robustheit', () => {
     }
   });
 });
+
+/* ---------------- Passstifte ---------------- */
+
+import { pinPositions, type PinOptions } from '../src/lib/meshsplit';
+
+const stifte = (over: Partial<PinOptions> = {}): PinOptions => ({
+  count: 2, radius: 2, length: 4, clearance: 0.15, ...over,
+});
+
+describe('Passstifte', () => {
+  const s = 40;
+  const ohne = splitMesh(cube(s), zAt(s / 2));
+  const mit = splitMesh(cube(s), zAt(s / 2), stifte());
+
+  it('setzt die gewünschte Anzahl', () => {
+    expect(mit.stats.pins).toBe(2);
+    expect(ohne.stats.pins).toBe(0);
+  });
+
+  it('beide Hälften bleiben geschlossen und richtig orientiert', () => {
+    for (const [name, tris] of [['oben', mit.above], ['unten', mit.below]] as const) {
+      const a = pruefe(tris);
+      expect(a.watertight, `${name}: ${a.openEdges} offene Kanten`).toBe(true);
+      expect(a.inverted, name).toBe(false);
+      expect(a.degenerate, name).toBe(0);
+    }
+  });
+
+  it('der Zapfen bringt Material dazu, die Tasche nimmt welches weg', () => {
+    const p = stifte();
+    // Zapfen und Tasche sind 20-Ecke, keine echten Kreise – entsprechend rechnen
+    const nEckFlaeche = (r: number) => 0.5 * 20 * r * r * Math.sin((2 * Math.PI) / 20);
+    const zapfenVol = 2 * nEckFlaeche(p.radius) * (p.length + 0.02);
+    const taschenVol = 2 * nEckFlaeche(p.radius + p.clearance) * (p.length + p.clearance);
+    expect(meshVolume(mit.below) - meshVolume(ohne.below)).toBeCloseTo(zapfenVol, 1);
+    expect(meshVolume(ohne.above) - meshVolume(mit.above)).toBeCloseTo(taschenVol, 1);
+  });
+
+  it('die Tasche ist weiter und tiefer als der Zapfen – sonst klemmt es', () => {
+    const p = stifte();
+    expect(p.radius + p.clearance).toBeGreaterThan(p.radius);
+    expect(p.length + p.clearance).toBeGreaterThan(p.length);
+  });
+
+  it('der Zapfen ragt über die Schnittebene hinaus', () => {
+    const oben = [];
+    for (let i = 2; i < mit.below.length; i += 3) oben.push(mit.below[i]);
+    expect(Math.max(...oben)).toBeCloseTo(s / 2 + stifte().length, 6);
+  });
+
+  it('die Stifte liegen innerhalb des Querschnitts', () => {
+    // Querschnitt des Wuerfels ist 0..40; die Stifte muessen mit Rand hineinpassen
+    for (let i = 0; i < mit.below.length; i += 3) {
+      expect(mit.below[i]).toBeGreaterThanOrEqual(-1e-6);
+      expect(mit.below[i]).toBeLessThanOrEqual(s + 1e-6);
+    }
+  });
+
+  it('funktioniert auch bei hohlen Modellen mit ausreichend dicker Wand', () => {
+    const bin = buildBin({
+      unitsX: 2, unitsY: 1, unitsZ: 5, wall: 6, floor: 2,
+      compartmentsX: 1, compartmentsY: 1, lip: false, holes: 'keine', segments: 4,
+    }).triangles;
+    const r = splitMesh(bin, zAt(20), stifte({ count: 3, radius: 0.8, length: 3 }));
+    expect(r.stats.pins).toBeGreaterThan(0);
+    expect(pruefe(r.above).watertight, `oben: ${pruefe(r.above).openEdges} offene Kanten`).toBe(true);
+    expect(pruefe(r.below).watertight, `unten: ${pruefe(r.below).openEdges} offene Kanten`).toBe(true);
+  });
+
+  it('verzichtet auf Stifte, wenn die Wand zu dünn ist – statt sie halb im Nichts zu setzen', () => {
+    // 2,4 mm Wand traegt keinen Stift mit Materialrand: hoechstens 1,2 mm bis zur Kante
+    const duenn = buildBin({
+      unitsX: 2, unitsY: 1, unitsZ: 5, wall: 2.4, floor: 2,
+      compartmentsX: 1, compartmentsY: 1, lip: false, holes: 'keine', segments: 4,
+    }).triangles;
+    const r = splitMesh(duenn, zAt(20), stifte({ count: 3, radius: 0.8, length: 3 }));
+    expect(r.stats.pins).toBe(0);
+    expect(pruefe(r.above).watertight).toBe(true);
+    expect(pruefe(r.below).watertight).toBe(true);
+  });
+
+  it('setzt weniger Stifte, wenn der Querschnitt zu klein ist', () => {
+    const schmal = splitMesh(cube(6), zAt(3), stifte({ count: 5, radius: 2 }));
+    expect(schmal.stats.pins).toBeLessThan(5);
+    expect(pruefe(schmal.above).watertight).toBe(true);
+  });
+
+  it('verzichtet ganz auf Stifte, wenn keiner hineinpasst', () => {
+    const winzig = splitMesh(cube(3), zAt(1.5), stifte({ count: 2, radius: 5 }));
+    expect(winzig.stats.pins).toBe(0);
+    expect(pruefe(winzig.above).watertight).toBe(true);
+    expect(pruefe(winzig.below).watertight).toBe(true);
+  });
+
+  it('ist deterministisch', () => {
+    const a = splitMesh(cube(40), zAt(20), stifte({ count: 3 }));
+    const b = splitMesh(cube(40), zAt(20), stifte({ count: 3 }));
+    expect(Array.from(a.below)).toEqual(Array.from(b.below));
+    expect(a.stats.pins).toBe(b.stats.pins);
+  });
+});
+
+describe('pinPositions', () => {
+  const quadrat = [{ x: 0, y: 0 }, { x: 40, y: 0 }, { x: 40, y: 40 }, { x: 0, y: 40 }];
+
+  it('liegt mit Abstand zum Rand', () => {
+    const p = pinPositions(quadrat, [], 3, 2);
+    expect(p).toHaveLength(2);
+    for (const q of p) {
+      expect(q.x).toBeGreaterThan(3);
+      expect(q.x).toBeLessThan(37);
+      expect(q.y).toBeGreaterThan(3);
+      expect(q.y).toBeLessThan(37);
+    }
+  });
+
+  it('verteilt die Stifte, statt sie zu häufen', () => {
+    const p = pinPositions(quadrat, [], 2, 3);
+    for (let i = 0; i < p.length; i++)
+      for (let j = i + 1; j < p.length; j++)
+        expect(Math.hypot(p[i].x - p[j].x, p[i].y - p[j].y)).toBeGreaterThan(6);
+  });
+
+  it('meidet Löcher', () => {
+    const loch = [{ x: 12, y: 12 }, { x: 12, y: 28 }, { x: 28, y: 28 }, { x: 28, y: 12 }];
+    for (const q of pinPositions(quadrat, [loch], 2, 4)) {
+      expect(pointInPolygon(q, loch)).toBe(false);
+    }
+  });
+
+  it('gibt bei unmöglichen Vorgaben nichts zurück', () => {
+    expect(pinPositions(quadrat, [], 50, 2)).toEqual([]);
+    expect(pinPositions(quadrat, [], 3, 0)).toEqual([]);
+  });
+});

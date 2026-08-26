@@ -40,6 +40,11 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
    passenden Zeilen in `keywords/*.txt` übernehmen, interne Links von 1–2 bestehenden Tools setzen.
 5. **Verifizieren:** `npm test` und `npm run build` müssen grün sein. Bei UI-Änderungen zusätzlich
    Smoke-Test im Browser (Preview-Server + Screenshot/Interaktion).
+   **Browser-Messungen immer über mehrere Zeitpunkte protokollieren, nie einen Einzelwert lesen.**
+   Die Seite rechnet in `requestAnimationFrame`; eine Ablesung direkt nach dem Ereignis zeigt den
+   alten Stand. Das hat in drei Iterationen in Folge zu falschen Fehlerdiagnosen geführt – bis
+   zum Beweis eines Fehlers gehört ein Verlauf, der zeigt, dass sich der Wert auch nach dem
+   Warten nicht ändert.
 6. **Dokumentieren:** In dieser Datei den Backlog-Punkt abhaken und unten im Iterations-Log
    eine Zeile ergänzen (Datum, was, welche URLs neu/geändert).
 7. **Deploy:** Committen (inkl. LOOP.md) und `git push origin main`.
@@ -126,8 +131,7 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 
 - [x] ~~**T10 3D-Viewer als Grundlage**~~ → `src/lib/viewer3d.ts`, eingebaut in die STL-Analyse (2026-08-26)
 - [x] ~~**T11 STL-Splitter**~~ → `/generatoren/stl-splitter` (2026-08-26)
-- [ ] **T12 Passstifte automatisch**: Zapfen und Loch mit einstellbarem Spiel in die Schnittfläche
-      setzen, damit die Hälften beim Verkleben fluchten.
+- [x] ~~**T12 Passstifte automatisch**~~ → im STL-Splitter (2026-08-26)
 - [ ] **T13 Mess- und Transformwerkzeuge**: Strecken im Netz messen, skalieren, drehen, auf die
       Bauplatte legen – das, was man sonst im Slicer sucht.
 
@@ -362,6 +366,21 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   *Merksatz:* Browser-Messungen brauchen einen Verlauf, keinen Einzelwert. Mehrere „Fehler" dieser
   Iteration waren Ablesungen vor dem nächsten Animationsrahmen – erst das Protokollieren über
   mehrere Zeitpunkte zeigte, dass alles stimmte.
+
+- **2026-08-26 · Iteration 13 (T12):** **Passstifte im STL-Splitter.** Die untere Hälfte bekommt
+  Zapfen, die obere passende Taschen mit einstellbarem Spiel – Anzahl, Durchmesser, Länge und Spiel
+  frei wählbar. Der elegante Teil: **Ein Stiftloch ist einfach ein weiteres Loch in der
+  Deckfläche**, die Loch-Überbrückung aus Iteration 12 trägt das ohne Änderung. Der Zapfen kommt
+  als eigener geschlossener Körper dazu, minimal ins Material eintauchend, damit keine Fläche
+  doppelt liegt. Stiftpositionen werden über ein Raster gesucht und dann möglichst weit
+  auseinander gewählt; wo der Querschnitt zu dünn ist, setzt der Generator **lieber gar keinen
+  Stift als einen halb im Nichts stehenden** – bei einer 2,4-mm-Wand ist das der richtige Verzicht.
+  15 neue Tests, insgesamt 862. Beide Hälften bleiben in allen Varianten dicht, geprüft über den
+  eigenen STL-Analyzer; Volumen und Bauhöhe stimmen (Zapfen 4 mm → untere Hälfte 4 mm höher).
+  **Zwei Testerwartungen waren falsch, nicht der Code:** Der Zapfen ist ein 20-Eck, kein Kreis
+  (1,6 % weniger Volumen als die Kreisformel), und die Ablehnung von Stiften in einer 2,4-mm-Wand
+  ist die gewünschte Schutzfunktion.
+  Nebenbei ein Grammatikfehler behoben („1 Stifte gesetzt").
 
 ## Start-Prompt (Referenz)
 

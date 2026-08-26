@@ -25,6 +25,18 @@ export interface Plane {
   d: number;
 }
 
+/** Passstifte, damit die Hälften beim Verkleben fluchten. */
+export interface PinOptions {
+  /** Gewünschte Anzahl. Passen weniger in die Schnittfläche, werden es weniger. */
+  count: number;
+  /** Zapfenradius in mm. */
+  radius: number;
+  /** Zapfenlänge in mm (so weit steht er aus der Schnittfläche heraus). */
+  length: number;
+  /** Radiales Spiel des Lochs in mm; die Tasche wird um denselben Wert tiefer. */
+  clearance: number;
+}
+
 export interface SplitStats {
   /** Dreiecke je Hälfte, inklusive Deckfläche. */
   aboveTriangles: number;
@@ -35,6 +47,8 @@ export interface SplitStats {
   openLoops: number;
   /** Dreiecke der Deckfläche je Hälfte. */
   capTriangles: number;
+  /** Tatsächlich gesetzte Passstifte. */
+  pins: number;
   warnings: string[];
 }
 
@@ -251,9 +265,90 @@ export function bridgeHoles(outer: V2[], holes: V2[][]): V2[] {
   return poly;
 }
 
+/**
+ * Der Zapfen taucht um diesen Betrag in die untere Hälfte ein. Ohne die
+ * Überlappung läge seine Bodenfläche exakt auf der Deckfläche – zwei
+ * deckungsgleiche Flächen, die das Netz nicht-mannigfaltig machen.
+ */
+const PIN_OVERLAP = 0.02;
+
+/** Kürzester Abstand eines Punktes zum Polygonrand. */
+function distToPolygon(p: V2, poly: V2[]): number {
+  let best = Infinity;
+  for (let i = 0; i < poly.length; i++) {
+    const a = poly[i];
+    const b = poly[(i + 1) % poly.length];
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len2 = dx * dx + dy * dy;
+    const t = len2 > 0 ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / len2)) : 0;
+    const qx = a.x + t * dx;
+    const qy = a.y + t * dy;
+    best = Math.min(best, Math.hypot(p.x - qx, p.y - qy));
+  }
+  return best;
+}
+
+/**
+ * Sucht Stellen in der Schnittfläche, an denen ein Stift mit dem geforderten
+ * Radius vollständig im Material sitzt. Erst ein Raster abtasten, dann die
+ * Punkte möglichst weit auseinander auswählen – dicht beieinander stehende
+ * Stifte würden das Ausrichten nicht verbessern.
+ */
+export function pinPositions(outer: V2[], holes: V2[][], radius: number, count: number): V2[] {
+  if (count <= 0 || radius <= 0 || outer.length < 3) return [];
+  const xs = outer.map((p) => p.x);
+  const ys = outer.map((p) => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minY = Math.min(...ys), maxY = Math.max(...ys);
+  const noetig = radius * 1.6; // Materialrand um den Stift herum
+
+  const kandidaten: V2[] = [];
+  const N = 36;
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+      const p = {
+        x: minX + ((i + 0.5) / N) * (maxX - minX),
+        y: minY + ((j + 0.5) / N) * (maxY - minY),
+      };
+      if (!pointInPolygon(p, outer)) continue;
+      if (holes.some((h) => pointInPolygon(p, h))) continue;
+      let abstand = distToPolygon(p, outer);
+      for (const h of holes) abstand = Math.min(abstand, distToPolygon(p, h));
+      if (abstand < noetig) continue;
+      kandidaten.push(p);
+    }
+  }
+  if (kandidaten.length === 0) return [];
+
+  // Weitester-Punkt-Auswahl: erst der Punkt mit dem meisten Rand um sich herum,
+  // danach jeweils der, der am weitesten von allen gesetzten entfernt liegt.
+  const gewaehlt: V2[] = [];
+  let start = 0;
+  let bestAbstand = -1;
+  kandidaten.forEach((p, i) => {
+    let a = distToPolygon(p, outer);
+    for (const h of holes) a = Math.min(a, distToPolygon(p, h));
+    if (a > bestAbstand) { bestAbstand = a; start = i; }
+  });
+  gewaehlt.push(kandidaten[start]);
+  while (gewaehlt.length < count) {
+    let bester: V2 | null = null;
+    let besteDistanz = -1;
+    for (const p of kandidaten) {
+      const dmin = Math.min(...gewaehlt.map((q) => Math.hypot(p.x - q.x, p.y - q.y)));
+      if (dmin > besteDistanz) { besteDistanz = dmin; bester = p; }
+    }
+    // Zu dicht beieinander bringt nichts – dann lieber weniger Stifte
+    if (!bester || besteDistanz < radius * 3) break;
+    gewaehlt.push(bester);
+  }
+  return gewaehlt;
+}
+
 /* ---------------- Teilen ---------------- */
 
-export function splitMesh(triangles: ArrayLike<number>, plane: Plane): SplitResult {
+export function splitMesh(triangles: ArrayLike<number>, plane: Plane, pins?: PinOptions): SplitResult {
   const len = Math.hypot(plane.nx, plane.ny, plane.nz) || 1;
   const nx = plane.nx / len;
   const ny = plane.ny / len;
@@ -333,6 +428,7 @@ export function splitMesh(triangles: ArrayLike<number>, plane: Plane): SplitResu
   /* --- Deckfläche --- */
   const { loops, open } = chainSegments(segments, CHAIN_TOL);
   let capTriangles = 0;
+  let pinCount = 0;
 
   if (loops.length > 0) {
     // Orthonormale Basis in der Ebene, um in 2D zu rechnen
@@ -375,31 +471,107 @@ export function splitMesh(triangles: ArrayLike<number>, plane: Plane): SplitResu
       else gruppen.push({ outer: i, holes: [] });
     });
 
+    // Rueckprojektion in den Raum: (a,b) sind Koordinaten in der Ebenenbasis,
+    // s ist der Abstand entlang der Normalen.
+    const to3 = (a: number, b: number, sOff: number): V3 => ({
+      x: a * ux + b * vx + (d + sOff) * nx,
+      y: a * uy + b * vy + (d + sOff) * ny,
+      z: a * uz + b * vz + (d + sOff) * nz,
+    });
+    const kreis2 = (m: V2, r: number, n2: number, imUhrzeigersinn: boolean): V2[] => {
+      const out: V2[] = [];
+      for (let i = 0; i < n2; i++) {
+        const w = (2 * Math.PI * i) / n2;
+        out.push({ x: m.x + r * Math.cos(w), y: m.y + r * Math.sin(w) });
+      }
+      return imUhrzeigersinn ? out.reverse() : out;
+    };
+
     for (const g of gruppen) {
       const outer2 = flach[g.outer];
       const outer3 = loops[g.outer];
       const holes2 = g.holes.map((h) => flach[h]);
       const holes3 = g.holes.map((h) => loops[h]);
 
-      // 2D-Punkte auf ihre 3D-Urbilder zurückführen
+      // 2D-Punkte auf ihre 3D-Urbilder zurückführen; neue Punkte (Stiftkreise)
+      // liegen im Inneren und werden direkt zurückprojiziert.
       const karte = new Map<string, V3>();
       const key = (p: V2) => `${Math.round(p.x / CHAIN_TOL)},${Math.round(p.y / CHAIN_TOL)}`;
       outer2.forEach((p, i) => karte.set(key(p), outer3[i]));
       holes2.forEach((h, hi) => h.forEach((p, i) => karte.set(key(p), holes3[hi][i])));
+      const zu3 = (p: V2): V3 => karte.get(key(p)) ?? to3(p.x, p.y, 0);
 
-      const merged = holes2.length > 0 ? bridgeHoles(outer2, holes2) : outer2;
-      const tris = earClip(merged);
-      for (const [a, b, c] of tris) {
-        const pa = karte.get(key(merged[a]));
-        const pb = karte.get(key(merged[b]));
-        const pc = karte.get(key(merged[c]));
-        if (!pa || !pb || !pc) continue;
-        // Ear-Clipping liefert gegen den Uhrzeigersinn in (u,v) – die Normale
-        // zeigt damit in +n. Für die untere Hälfte ist das die Oberseite,
-        // für die obere Hälfte muss sie gespiegelt werden.
-        push(below, pa, pb, pc);
-        push(above, pa, pc, pb);
-        capTriangles++;
+      /** Deckfläche eines Halbteils erzeugen. `oben` dreht die Normale um. */
+      const deckel = (ziel: number[], loecher: V2[][], oben: boolean): void => {
+        const merged = loecher.length > 0 ? bridgeHoles(outer2, loecher) : outer2;
+        for (const [a, b, c] of earClip(merged)) {
+          const pa = zu3(merged[a]);
+          const pb = zu3(merged[b]);
+          const pc = zu3(merged[c]);
+          // Ear-Clipping liefert gegen den Uhrzeigersinn in (u,v) – die Normale
+          // zeigt damit in +n. Für die untere Hälfte ist das die Oberseite,
+          // für die obere Hälfte muss sie gespiegelt werden.
+          if (oben) push(ziel, pa, pc, pb);
+          else push(ziel, pa, pb, pc);
+          capTriangles++;
+        }
+      };
+
+      // Stiftpositionen im Inneren der Schnittfläche suchen
+      const stifte =
+        pins && pins.count > 0 && pins.radius > 0
+          ? pinPositions(outer2, holes2, pins.radius + pins.clearance, pins.count)
+          : [];
+      pinCount += stifte.length;
+
+      const SEG = 20;
+      const lochR = pins ? pins.radius + pins.clearance : 0;
+      const stiftLoecher = stifte.map((m) => kreis2(m, lochR, SEG, true));
+
+      deckel(below, holes2, false);
+      deckel(above, [...holes2, ...stiftLoecher], true);
+
+      if (pins && stifte.length > 0) {
+        const tiefe2 = pins.length + pins.clearance;
+        for (const m of stifte) {
+          // Zapfen an der unteren Hälfte: eigener geschlossener Körper, der
+          // minimal in das Material eintaucht, damit keine Fläche doppelt liegt.
+          const zapfen = kreis2(m, pins.radius, SEG, false);
+          for (let i = 0; i < SEG; i++) {
+            const j = (i + 1) % SEG;
+            const a0 = to3(zapfen[i].x, zapfen[i].y, -PIN_OVERLAP);
+            const b0 = to3(zapfen[j].x, zapfen[j].y, -PIN_OVERLAP);
+            const a1 = to3(zapfen[i].x, zapfen[i].y, pins.length);
+            const b1 = to3(zapfen[j].x, zapfen[j].y, pins.length);
+            push(below, a0, b0, b1);
+            push(below, a0, b1, a1);
+          }
+          const mBoden = to3(m.x, m.y, -PIN_OVERLAP);
+          const mDeckel = to3(m.x, m.y, pins.length);
+          for (let i = 0; i < SEG; i++) {
+            const j = (i + 1) % SEG;
+            push(below, mBoden, to3(zapfen[j].x, zapfen[j].y, -PIN_OVERLAP), to3(zapfen[i].x, zapfen[i].y, -PIN_OVERLAP));
+            push(below, mDeckel, to3(zapfen[i].x, zapfen[i].y, pins.length), to3(zapfen[j].x, zapfen[j].y, pins.length));
+          }
+
+          // Passende Tasche in der oberen Hälfte: Wand nach innen gerichtet,
+          // Decke nach unten. Das Loch in der Deckfläche steckt schon oben drin.
+          const loch = kreis2(m, lochR, SEG, false);
+          for (let i = 0; i < SEG; i++) {
+            const j = (i + 1) % SEG;
+            const a0 = to3(loch[i].x, loch[i].y, 0);
+            const b0 = to3(loch[j].x, loch[j].y, 0);
+            const a1 = to3(loch[i].x, loch[i].y, tiefe2);
+            const b1 = to3(loch[j].x, loch[j].y, tiefe2);
+            push(above, a0, b1, b0);
+            push(above, a0, a1, b1);
+          }
+          const mDecke = to3(m.x, m.y, tiefe2);
+          for (let i = 0; i < SEG; i++) {
+            const j = (i + 1) % SEG;
+            push(above, mDecke, to3(loch[j].x, loch[j].y, tiefe2), to3(loch[i].x, loch[i].y, tiefe2));
+          }
+        }
       }
     }
   }
@@ -422,6 +594,7 @@ export function splitMesh(triangles: ArrayLike<number>, plane: Plane): SplitResu
       loops: loops.length,
       openLoops: open,
       capTriangles,
+      pins: pinCount,
       warnings,
     },
   };
