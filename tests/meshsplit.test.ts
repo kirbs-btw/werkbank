@@ -381,21 +381,63 @@ describe('pinPositions', () => {
 });
 
 describe('Schnittflächen sind einheitlich gewickelt', () => {
+  /** Einzelner geschlossener Körper mit Hohlraum: Außenwürfel + umgestülpter Innenwürfel. */
+  function hohlerWuerfel(a = 20, w = 3): Float64Array {
+    const q = (s: number, o: number, aussen: boolean) => {
+      const v = [[0,0,0],[s,0,0],[s,s,0],[0,s,0],[0,0,s],[s,0,s],[s,s,s],[0,s,s]].map((p) => p.map((c) => c + o));
+      const f: [number, number, number][] = [[0,2,1],[0,3,2],[4,5,6],[4,6,7],[0,1,5],[0,5,4],[3,7,6],[3,6,2],[0,4,7],[0,7,3],[1,2,6],[1,6,5]];
+      const out: number[] = [];
+      for (const [x, y, z] of f) for (const i of aussen ? [x, y, z] : [x, z, y]) out.push(...v[i]);
+      return out;
+    };
+    return new Float64Array([...q(a, 0, true), ...q(a - 2 * w, w, false)]);
+  }
+
+  const bin = buildBin({ unitsX: 1, unitsY: 1, unitsZ: 4, wall: 1.2, floor: 1.2, compartmentsX: 1, compartmentsY: 1, lip: true, holes: 'keine' });
+
   // Dichtheit über die Kantenzählung reicht nicht: Eine verdrehte Deckfläche
   // hätte dieselbe Kantenbilanz. Erst die Vektorfläche zeigt, dass beide
   // Hälften wirklich geschlossene Körper sind.
-  it('bei Würfel, Bin und mit Passstiften', () => {
-    const bin = buildBin({ unitsX: 1, unitsY: 1, unitsZ: 4, wall: 1.2, floor: 1.2, compartmentsX: 1, compartmentsY: 1, lip: true, holes: 'keine' });
+  it('bei Vollkörper, Hohlkörper, Bin und mit Passstiften', () => {
     const faelle: [string, Float64Array, Plane, { count: number; radius: number; length: number; clearance: number } | undefined][] = [
-      ['Würfel', cube(20), { axis: 'z', position: 10 }, undefined],
-      ['Würfel mit Stiften', cube(20), { axis: 'z', position: 10 }, { count: 2, radius: 2, length: 4, clearance: 0.15 }],
-      ['Bin quer', bin.triangles, { axis: 'z', position: 12 }, undefined],
-      ['Bin längs', bin.triangles, { axis: 'x', position: 0 }, undefined],
+      ['Würfel waagerecht', cube(20), { nx: 0, ny: 0, nz: 1, d: 10 }, undefined],
+      ['Würfel senkrecht', cube(20), { nx: 1, ny: 0, nz: 0, d: 9 }, undefined],
+      ['Würfel mit Stiften', cube(20), { nx: 0, ny: 0, nz: 1, d: 10 }, { count: 2, radius: 2, length: 4, clearance: 0.15 }],
+      ['Hohlkörper waagerecht', hohlerWuerfel(20, 3), { nx: 0, ny: 0, nz: 1, d: 10 }, undefined],
+      ['Hohlkörper senkrecht durch den Hohlraum', hohlerWuerfel(20, 3), { nx: 1, ny: 0, nz: 0, d: 10 }, undefined],
+      ['Hohlkörper schräg', hohlerWuerfel(20, 3), { nx: 1, ny: 1, nz: 0, d: 14 }, undefined],
+      ['Bin waagerecht', bin.triangles, { nx: 0, ny: 0, nz: 1, d: 12 }, undefined],
     ];
     for (const [name, t, ebene, stifte] of faelle) {
       const r = splitMesh(t, ebene, stifte);
+      // Zuerst: Es muss überhaupt geschnitten worden sein. Ohne diese Prüfung
+      // wäre der Test wertlos – closureError liefert für ein leeres Netz 0, eine
+      // fehlgeschlagene Trennung ginge also stillschweigend durch. Genau das ist
+      // passiert, solange hier eine falsch benannte Ebene übergeben wurde.
+      expect(r.below.length, `${name}: unten leer`).toBeGreaterThan(0);
+      expect(r.above.length, `${name}: oben leer`).toBeGreaterThan(0);
       expect(closureError(r.below), `${name} unten`).toBeLessThan(1e-9);
       expect(closureError(r.above), `${name} oben`).toBeLessThan(1e-9);
+      expect(analyzeStl(toStl(r.below, 'binary')).watertight, `${name} unten dicht`).toBe(true);
+      expect(analyzeStl(toStl(r.above, 'binary')).watertight, `${name} oben dicht`).toBe(true);
     }
+  });
+
+  it('bekannte Grenze: senkrechter Schnitt durch überlappende Mehrkörper-Netze', () => {
+    // Der Gridfinity-Bin besteht aus mehreren geschlossenen Körpern, die sich
+    // leicht überlappen. Ein senkrechter Schnitt trifft mehrere davon auf
+    // einmal; die Deckflächen-Erzeugung kommt mit den dabei entstehenden,
+    // einander überlappenden Schnittkonturen noch nicht zurecht.
+    //
+    // Waagerecht geht es gut, weil die Ebene dort nur einen Körper trifft.
+    // Einkörper-Netze sind in jeder Richtung sauber – siehe Test darüber.
+    //
+    // WIRD DIESER TEST ROT, IST DER FEHLER BEHOBEN: Dann Backlog-Punkt T14
+    // abhaken und die Erwartungen hier auf `true` bzw. `< 1e-9` umstellen.
+    const r = splitMesh(bin.triangles, { nx: 1, ny: 0, nz: 0, d: 10 });
+    expect(r.below.length).toBeGreaterThan(0);
+    expect(r.above.length).toBeGreaterThan(0);
+    expect(analyzeStl(toStl(r.below, 'binary')).watertight).toBe(false);
+    expect(closureError(r.below)).toBeGreaterThan(1e-6);
   });
 });

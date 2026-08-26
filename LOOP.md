@@ -117,6 +117,16 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
 - [x] ~~**T5 Gridfinity-Bin-Generator**~~ → `/generatoren/gridfinity-generator` (2026-08-25)
 - [x] ~~**T6 Living-Hinge-Generator**~~ → `/generatoren/living-hinge` (2026-08-25)
 - [x] ~~**T7 Zuschnittoptimierung v2**~~ → Schnittliste + mehrere Plattenformate (2026-08-25)
+- [ ] **T14 Splitter: senkrechte Schnitte durch Mehrkörper-Netze** – Beim Schnitt quer durch
+      mehrere einander überlappende Körper überlappen sich auch die Schnittkonturen, und die
+      Deckflächen-Erzeugung liefert kein dichtes Netz mehr (gemessen: 0,4 % bis 95 % offene
+      Fläche). Waagerecht ist sauber, Einkörper-Netze sind in jeder Richtung sauber – betroffen
+      sind Mehrkörper-STLs, wie sie unter anderem der eigene Gridfinity-Generator erzeugt.
+      Nötig ist eine 2D-Vereinigung der Schnittkonturen vor dem Triangulieren.
+      **Zwischenschritt, falls die Vereinigung länger dauert:** Ergebnis im Splitter prüfen und
+      den Nutzer warnen, statt still ein kaputtes Netz auszugeben.
+      Der Test `bekannte Grenze: senkrechter Schnitt …` in `tests/meshsplit.test.ts` hält den
+      Ist-Zustand fest und wird rot, sobald der Fehler behoben ist.
 - [ ] **T8 OpenSEO anbinden** (siehe Abschnitt oben): MCP-Server in `.mcp.json` eintragen, Zugang
       testen, erste Ranking- und Keyword-Abfrage machen und das Ergebnis als neue P1/P2-Punkte
       eintragen. **Blockiert durch E5** (DataForSEO kostet Geld) – vorher nichts installieren.
@@ -139,7 +149,7 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 - [x] ~~**S1 Sitemap-`lastmod` pro Seite**~~ → `src/lib/lastmod.ts` + `serialize` in der Astro-Config (2026-08-26)
 - [x] ~~**S2 `dateModified` in JSON-LD** + menschenlesbares Datum~~ → `UpdatedAt.astro`, 162 Seiten (2026-08-26)
 - [x] ~~**S3 Content-Lücken schließen**~~ → alle 153 Tools vollständig, Testsperre gesetzt (2026-08-26)
-- [ ] **S4 Per-Tool-OG-Bilder** zur Build-Zeit generieren (ohne externe Dienste).
+- [x] ~~**S4 Per-Tool-OG-Bilder**~~ → 171 Karten zur Build-Zeit, Text als Pfade (2026-08-26)
 - [ ] **S5 Cross-Kategorie-`related`-Kuratierung** (z. B. Laser ↔ CNC ↔ Holz sinnvoll verweben).
 - [ ] **S6 Teilen-Links:** Rechner-Eingaben als URL-Parameter, Canonical bleibt sauber.
 
@@ -433,6 +443,38 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 
   **Merksatz:** Vollständigkeit, die man einmal herstellt, zerfällt wieder. Wer eine Lücke schließt,
   sollte im selben Zug den Test schreiben, der sie nicht zurückkommen lässt.
+
+- **2026-08-26 · Iteration 16 (S4):** **Eigene Vorschaubilder für 171 Seiten**, erzeugt zur
+  Build-Zeit ohne fremden Dienst. Der Kniff steckt darin, **den Text vor dem Rastern in Pfade zu
+  verwandeln**: Ein `<text>`-Element bräuchte eine installierte Schrift, und welche auf dem
+  Build-Server liegen, weiß niemand sicher – im Zweifel käme eine Ersatzschrift oder ein leeres
+  Bild heraus. Gesetzt wird Glyphe für Glyphe mit eigenem Kerning, weil opentype.js über Inters
+  `ccmp`-Tabelle stolpert und Shaping für lateinischen Text ohnehin nichts beiträgt. Gerastert
+  wird mit sharp, das über Astro schon im Baum lag – jetzt ausdrücklich als Abhängigkeit
+  eingetragen, statt sich auf eine fremde transitive zu verlassen.
+
+  Zwei Entscheidungen unterwegs: Das Paket `@fontsource/inter` bringt 5 MB in 252 Dateien mit,
+  gebraucht werden zwei mit 62 KB – die liegen jetzt samt Lizenz im Repo. Und Vites `?inline`
+  flog wieder raus, weil es im Build eine Data-URL liefert, unter vitest aber einen
+  Dev-Server-Pfad: Dann prüften die Tests einen anderen Weg als den ausgelieferten. Stattdessen
+  ein Weg für beide, über die von der eigenen Modulposition aus gesuchte Projektwurzel.
+  Build dauert dadurch 12 statt 2 Sekunden; 28 neue Tests.
+
+  **Der eigentliche Fund kam aus `astro check`:** Vier Typfehler in dem Splitter-Test, den ich in
+  Iteration 14 geschrieben hatte. Ich hatte die Schnittebene als `{axis, position}` übergeben –
+  richtig ist `{nx, ny, nz, d}`. Damit war die Ebene komplett `undefined`, eine Hälfte blieb leer,
+  und `closureError` liefert für ein leeres Netz 0. **Der Test lief 40 Minuten lang grün, ohne
+  irgendetwas zu prüfen.** Mit richtiger Ebene fällt er sofort durch und legt einen echten Defekt
+  frei: senkrechte Schnitte durch überlappende Mehrkörper-Netze → T14. Eingegrenzt ist er sauber –
+  Vollkörper und Einkörper-Hohlkörper überstehen jeden Schnitt, auch schräg.
+
+  Typfehler insgesamt von 7 auf 2 gesenkt (Rest ist Q1); für opentype.js eine eigene Deklaration
+  ergänzt. 954 Tests.
+
+  **Merksatz:** Ein grüner Test beweist nichts, solange er nicht auch beweist, dass er gearbeitet
+  hat. Wo eine Kennzahl bei leerer Eingabe „gut" meldet, gehört eine Prüfung auf nichtleere
+  Eingabe davor. Und: `npm test` allein reicht als Netz nicht – `astro check` sieht Fehler, die
+  zur Laufzeit stumm bleiben.
 
 ## Start-Prompt (Referenz)
 

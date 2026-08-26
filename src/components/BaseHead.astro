@@ -1,5 +1,6 @@
 ---
 import { SITE } from '../config/site';
+import { ogImageFor } from '../lib/ogpaths';
 
 interface Props {
   title: string;
@@ -21,7 +22,10 @@ const {
 
 const canonical = new URL(path, SITE.url).href.replace(/\/$/, '') || SITE.url;
 const fullTitle = title.includes(SITE.name) ? title : `${title} · ${SITE.name}`;
-const ogImage = new URL('/og-default.png', SITE.url).href;
+// Eigenes Vorschaubild je Seite, sofern eines erzeugt wurde – sonst die
+// allgemeine Karte. Beide Seiten fragen dieselbe Liste, ein Verweis ins Leere
+// ist damit ausgeschlossen.
+const ogImage = new URL(ogImageFor(path), SITE.url).href;
 const blocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 ---
 
