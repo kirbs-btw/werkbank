@@ -127,19 +127,20 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
       einzeln geschnitten (2026-08-26)
 - [x] ~~**T15 Splitter: Deckflächen bei entarteten Schnittkonturen**~~ → flache Ecken beim
       Ohrenschneiden (2026-08-26)
-- [ ] **T16 `bridgeHoles` bei mehreren Löchern** – Die Verschmelzung von Außenkontur und Löchern
-      zu einem einzigen Polygon geht bei bestimmten Lochlagen schief; die entstehende Kontur
-      schneidet sich selbst, und das Ohrenschneiden kann sie nicht mehr zerlegen.
-      **Gemessen** an einem 40×40-Quadrat mit Löchern r=4 nahe den Ecken: 1 Loch sauber
-      (28/28 Dreiecke), **2 Löcher kaputt** (22 von 54, Fläche 249 statt 1501), 3 Löcher sauber
-      (80/80), **4 Löcher kaputt** (70 von 106, Fläche 583 statt 1401). Es hängt also an der Lage,
-      nicht an der Zahl: Eine Brücke kreuzt ein anderes Loch oder eine andere Brücke.
-      Die jetzige Fassung sucht zum Verbinden nur die nächste Kante rechts vom rechtesten Punkt
-      des Lochs. Das übliche Verfahren (Eberly) prüft zusätzlich, ob eine einspringende Ecke im
-      Dreieck aus Loch-, Schnitt- und Zielpunkt liegt, und weicht dann auf diese aus.
-      **Erreichbar im Splitter**, sobald ein Querschnitt zwei oder mehr Löcher hat – etwa beim
-      Teilen einer gelochten Platte längs ihrer Fläche. Bis dahin weist `stats.openEdges` das
-      Problem aus und die Seite warnt.
+- [x] ~~**T16 `bridgeHoles` bei mehreren Löchern**~~ → Sichtbarkeitsprüfung nach Eberly plus
+      Kreuzungsprüfung (2026-08-26)
+- [ ] **T17 Ohrenschneiden an Berührstellen** – Hängen zwei Löcher ihre Brücke an dieselbe Ecke,
+      berührt sich das verschmolzene Polygon dort selbst. Es ist damit noch gültig („schwach
+      einfach"), aber das Ohrenschneiden findet keine Zerlegung mehr und bricht ab.
+      **Gemessen** über 717 zufällige Lochanordnungen: Die Verschmelzung selbst ist in 712 Fällen
+      korrekt, vollständig zerlegen lassen sich davon 659 – die Lücke von 53 Fällen ist genau
+      dieser Effekt.
+      Zwei Ansätze wurden geprüft und verworfen, beide machten es schlechter: den Gleichstand an
+      senkrechten Kanten über den kürzeren Weg auflösen (659 → 604) und Brückenpunkte meiden, an
+      denen schon ein Loch hängt (659 → 605).
+      Nötig ist vermutlich, die Berührstelle vor dem Zerlegen aufzutrennen: Das Polygon an einem
+      doppelt vorkommenden Punkt in zwei Schleifen zerlegen und diese einzeln triangulieren.
+      Im Splitter weist `stats.openEdges` das Problem aus und die Seite warnt.
 - [ ] **T8 OpenSEO anbinden** (siehe Abschnitt oben): MCP-Server in `.mcp.json` eintragen, Zugang
       testen, erste Ranking- und Keyword-Abfrage machen und das Ergebnis als neue P1/P2-Punkte
       eintragen. **Blockiert durch E5** (DataForSEO kostet Geld) – vorher nichts installieren.
@@ -582,6 +583,37 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   **Merksatz:** Eine Notiz im Backlog ist eine Vermutung von damals, kein Befund. Diese hier stand
   zwei Iterationen lang da und schickte mich in die falsche Richtung. Beim Wiederaufnehmen zuerst
   nachmessen, ob sie noch stimmt.
+
+- **2026-08-26 · Iteration 20 (T16):** **Löcher werden richtig an die Außenkontur angebunden.**
+  Die alte Fassung schickte vom rechtesten Punkt eines Lochs einen Strahl nach rechts und nahm den
+  Endpunkt der getroffenen Kante – ohne zu prüfen, ob der von dort überhaupt zu sehen ist. Stand
+  ein anderes Loch dazwischen, kreuzte die Brücke fremde Kanten und das verschmolzene Polygon
+  schnitt sich selbst. Neu ist der fehlende Schritt aus dem üblichen Verfahren (Eberly): Im
+  Dreieck aus Lochpunkt, Strahlentreffer und Kantenendpunkt darf keine einspringende Ecke liegen;
+  liegt doch eine darin, wird diese genommen. Dazu eine ausdrückliche Kreuzungsprüfung – eine
+  Brücke taugt genau dann, wenn ihre Strecke keine Kante kreuzt. **Prüfen statt hoffen.**
+
+  **Gemessen an 717 zufälligen Lochanordnungen:** Die Verschmelzung ist jetzt in 712 Fällen
+  korrekt statt in 487; vollständig zerlegen lassen sich 659 statt 340.
+
+  Zwei weitere Ideen habe ich probiert und **wieder zurückgenommen, weil die Messung sie widerlegte**
+  – beide klangen plausibel und machten es schlechter: den Gleichstand an senkrechten Kanten über
+  den kürzeren Weg auflösen (659 → 604) und Brückenpunkte meiden, an denen schon ein Loch hängt
+  (659 → 605).
+
+  Wichtiger als die Zahlen war eine **Trennung der Zuständigkeiten**, die vorher fehlte: Eine
+  Zwischenmessung zeigte, dass das verschmolzene Polygon in den verbliebenen Fehlerfällen völlig
+  korrekt ist – richtige Fläche, keine Selbstschnitte – und erst das Ohrenschneiden an der
+  Berührstelle zweier Brücken hängen bleibt. Das ist ein eigener Punkt (T17), kein Rest von T16.
+  Die Tests prüfen deshalb beide Zusagen getrennt.
+
+  Ein Zwischenschritt führte mich fast in die Irre: Ich hatte Fehlerfälle mit gerundeten Mittelpunkt-
+  und Radiuswerten protokolliert und daraus nachgebaut – die Nachbauten liefen sauber durch, weil
+  sie eben nicht dieselben Polygone waren. Erst das Protokollieren der exakten Koordinaten führte
+  zum Befund. 12 neue Tests, insgesamt 970.
+
+  **Merksatz:** Ein Fehlerbericht muss den Fall exakt festhalten, nicht ungefähr. Eine gerundete
+  Rekonstruktion beweist gar nichts – sie kann grün laufen, während der echte Fall rot ist.
 
 ## Start-Prompt (Referenz)
 

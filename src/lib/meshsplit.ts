@@ -262,44 +262,143 @@ export function earClip(poly: V2[]): [number, number, number][] {
  * entsteht. Klassisches Verfahren: vom rechtesten Punkt des Lochs nach rechts
  * strahlen, die getroffene Kante suchen und dorthin eine doppelte Kante ziehen.
  */
+/** Kreuzen sich die Strecken p1p2 und p3p4 echt (gemeinsame Endpunkte zählen nicht)? */
+function kreuzen(p1: V2, p2: V2, p3: V2, p4: V2, eps: number): boolean {
+  const d = (a: V2, b: V2, c: V2) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+  const skala = Math.max(eps, 1e-30);
+  const d1 = d(p3, p4, p1);
+  const d2 = d(p3, p4, p2);
+  const d3 = d(p1, p2, p3);
+  const d4 = d(p1, p2, p4);
+  if (Math.abs(d1) <= skala || Math.abs(d2) <= skala || Math.abs(d3) <= skala || Math.abs(d4) <= skala) {
+    return false; // Berührung oder kollinear – kein echtes Kreuzen
+  }
+  return d1 * d2 < 0 && d3 * d4 < 0;
+}
+
+/**
+ * Taugt die Brücke von M zum Punkt `ziel` des Polygons? Sie taugt, wenn ihre
+ * Strecke keine Polygonkante echt kreuzt. Kanten, die im Zielpunkt selbst
+ * beginnen oder enden, sind ausgenommen – die berühren sie zwangsläufig.
+ */
+function brueckeFrei(poly: V2[], M: V2, ziel: number, eps: number): boolean {
+  const Z = poly[ziel];
+  for (let i = 0; i < poly.length; i++) {
+    const j = (i + 1) % poly.length;
+    if (i === ziel || j === ziel) continue;
+    if (kreuzen(M, Z, poly[i], poly[j], eps)) return false;
+  }
+  return true;
+}
+
+/**
+ * Verschmilzt Außenkontur und Löcher zu einem einzigen Polygon, indem jedes
+ * Loch über eine nullbreite „Brücke" an den Rand angebunden wird. Das Ergebnis
+ * lässt sich anschließend mit gewöhnlichem Ohrenschneiden zerlegen.
+ *
+ * Der heikle Teil ist die Wahl des Brückenpunkts. Naheliegend – und falsch –
+ * ist es, vom rechtesten Punkt M des Lochs einen Strahl nach rechts zu schicken
+ * und einfach den Endpunkt der getroffenen Kante zu nehmen. Der ist von M aus
+ * nämlich womöglich gar nicht zu sehen: Zwischen beiden kann ein anderes Loch
+ * oder eine schon gelegte Brücke stehen. Die Brücke kreuzt dann fremde Kanten,
+ * das verschmolzene Polygon schneidet sich selbst, und das Ohrenschneiden
+ * findet keine gültige Zerlegung mehr. Gemessen an einem Quadrat mit
+ * kreisrunden Löchern: Bei Löchern auf gleicher Höhe ging es gut, bei Löchern
+ * auf verschiedenen Höhen fehlten bis zu drei Viertel der Fläche.
+ *
+ * Deshalb der zusätzliche Schritt aus dem üblichen Verfahren (Eberly): Im
+ * Dreieck aus M, dem Strahlentreffer I und dem Kantenendpunkt P darf keine
+ * einspringende Ecke liegen. Liegt doch eine darin, ist P verdeckt, und es wird
+ * diejenige einspringende Ecke genommen, die dem Strahl am nächsten liegt – die
+ * ist garantiert sichtbar.
+ */
 export function bridgeHoles(outer: V2[], holes: V2[][]): V2[] {
   let poly = outer.slice();
-  if (area2(poly) < 0) poly.reverse();
+  if (area2(poly) < 0) poly.reverse(); // außen gegen den Uhrzeigersinn
   const sortiert = holes
-    .map((h) => (area2(h) > 0 ? h.slice().reverse() : h.slice()))
+    .map((h) => (area2(h) > 0 ? h.slice().reverse() : h.slice())) // Löcher im Uhrzeigersinn
     .sort((a, b) => Math.max(...b.map((p) => p.x)) - Math.max(...a.map((p) => p.x)));
 
+  let spanne = 0;
+  for (const p of [outer, ...holes].flat()) spanne = Math.max(spanne, Math.abs(p.x), Math.abs(p.y));
+  const EPS = Math.max(spanne, 1) * 1e-9;
+
+  /** Springt die Ecke i nach innen? Bei umlaufend gegen den Uhrzeigersinn: Kreuzprodukt negativ. */
+  const einspringend = (pts: V2[], i: number): boolean => {
+    const u = pts[(i + pts.length - 1) % pts.length];
+    const v = pts[i];
+    const w = pts[(i + 1) % pts.length];
+    return (v.x - u.x) * (w.y - v.y) - (v.y - u.y) * (w.x - v.x) < 0;
+  };
+
   for (const hole of sortiert) {
+    // Rechtester Punkt des Lochs – von dort aus wird nach rechts gesucht.
     let mi = 0;
     for (let i = 1; i < hole.length; i++) if (hole[i].x > hole[mi].x) mi = i;
     const M = hole[mi];
 
-    // Nächste Kante rechts von M suchen
+    // Nächste Kante rechts von M
     let bestT = Infinity;
-    let bestIdx = -1;
+    let kante = -1;
     for (let i = 0; i < poly.length; i++) {
       const a = poly[i];
       const b = poly[(i + 1) % poly.length];
       if (a.y > M.y === b.y > M.y) continue;
       const t = a.x + ((M.y - a.y) / (b.y - a.y)) * (b.x - a.x);
-      if (t >= M.x - 1e-9 && t - M.x < bestT) {
-        bestT = t - M.x;
-        bestIdx = a.x > b.x ? i : (i + 1) % poly.length;
+      if (t >= M.x - EPS && t < bestT) {
+        bestT = t;
+        kante = i;
       }
     }
-    if (bestIdx < 0) {
+
+    let ziel: number;
+    if (kante < 0) {
       // Kein Partner gefunden – Loch anhängen, statt es zu verlieren
-      bestIdx = 0;
-      for (let i = 1; i < poly.length; i++) if (poly[i].x > poly[bestIdx].x) bestIdx = i;
+      ziel = 0;
+      for (let i = 1; i < poly.length; i++) if (poly[i].x > poly[ziel].x) ziel = i;
+    } else {
+      const I: V2 = { x: bestT, y: M.y };
+      const ia = kante;
+      const ib = (kante + 1) % poly.length;
+      // P ist der Endpunkt der getroffenen Kante mit dem größeren x.
+      ziel = poly[ia].x >= poly[ib].x ? ia : ib;
+
+      const trifftEcke =
+        Math.hypot(poly[ia].x - I.x, poly[ia].y - I.y) <= EPS ||
+        Math.hypot(poly[ib].x - I.x, poly[ib].y - I.y) <= EPS;
+      if (trifftEcke) {
+        // Der Strahl endet genau auf einer Ecke – die ist von M aus sichtbar.
+        ziel = Math.hypot(poly[ia].x - I.x, poly[ia].y - I.y) <= EPS ? ia : ib;
+      } else {
+        // Verdeckt P jemand? Statt das nur zu vermuten, wird es geprüft: Eine
+        // Brücke taugt genau dann, wenn ihre Strecke keine Polygonkante kreuzt.
+        // Der Dreieckstest liefert die Reihenfolge der Kandidaten, die
+        // Kreuzungsprüfung das letzte Wort.
+        const P = poly[ziel];
+        const kandidaten: number[] = [ziel];
+        for (let i = 0; i < poly.length; i++) {
+          if (i === ziel) continue;
+          const R = poly[i];
+          if (R.x < M.x - EPS) continue; // links von M – kann nicht im Weg stehen
+          if (!einspringend(poly, i)) continue;
+          if (!inTriangle(R, M, I, P)) continue;
+          kandidaten.push(i);
+        }
+        // Nach Nähe zum Strahl ordnen, bei Gleichstand der kürzere Weg zuerst.
+        kandidaten.sort((a, b) => {
+          const wa = Math.abs(Math.atan2(poly[a].y - M.y, poly[a].x - M.x));
+          const wb = Math.abs(Math.atan2(poly[b].y - M.y, poly[b].x - M.x));
+          if (Math.abs(wa - wb) > 1e-12) return wa - wb;
+          return Math.hypot(poly[a].x - M.x, poly[a].y - M.y) - Math.hypot(poly[b].x - M.x, poly[b].y - M.y);
+        });
+        const passt = kandidaten.find((i) => brueckeFrei(poly, M, i, EPS));
+        ziel = passt ?? kandidaten[0];
+      }
     }
 
-    const eingefuegt = [
-      poly[bestIdx],
-      ...hole.slice(mi),
-      ...hole.slice(0, mi),
-      hole[mi],
-    ];
-    poly = [...poly.slice(0, bestIdx + 1), ...eingefuegt.slice(1), ...poly.slice(bestIdx)];
+    // Brücke einfügen: … P, M, Loch einmal herum, M, P, …
+    const eingefuegt = [poly[ziel], ...hole.slice(mi), ...hole.slice(0, mi), hole[mi]];
+    poly = [...poly.slice(0, ziel + 1), ...eingefuegt.slice(1), ...poly.slice(ziel)];
   }
   return poly;
 }

@@ -651,3 +651,120 @@ describe('Bins mit Magnetlöchern', () => {
     }
   });
 });
+
+describe('Löcher an die Außenkontur anbinden', () => {
+  type P = { x: number; y: number };
+  const signFl = (pts: P[]) =>
+    pts.reduce((s, q, i) => { const r = pts[(i + 1) % pts.length]; return s + (q.x * r.y - r.x * q.y); }, 0) / 2;
+  const kreis = (cx: number, cy: number, r: number, n = 12): P[] =>
+    Array.from({ length: n }, (_, i) => { const w = (-2 * Math.PI * i) / n; return { x: cx + r * Math.cos(w), y: cy + r * Math.sin(w) }; });
+  const quadrat = (a: number): P[] => [{ x: -a, y: -a }, { x: a, y: -a }, { x: a, y: a }, { x: -a, y: a }];
+
+  /** Echte Selbstschnitte (Berührungen und kollineare Lagen zählen nicht). */
+  function selbstschnitte(pts: P[]): number {
+    const d = (a: P, b: P, c: P) => (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    let n = 0;
+    for (let i = 0; i < pts.length; i++)
+      for (let j = i + 2; j < pts.length; j++) {
+        if (i === 0 && j === pts.length - 1) continue;
+        const a = pts[i], b = pts[(i + 1) % pts.length], c = pts[j], e = pts[(j + 1) % pts.length];
+        const d1 = d(c, e, a), d2 = d(c, e, b), d3 = d(a, b, c), d4 = d(a, b, e);
+        if (Math.abs(d1) < 1e-9 || Math.abs(d2) < 1e-9 || Math.abs(d3) < 1e-9 || Math.abs(d4) < 1e-9) continue;
+        if (d1 * d2 < 0 && d3 * d4 < 0) n++;
+      }
+    return n;
+  }
+
+  /** Zusage: Das verschmolzene Polygon hat die richtige Fläche und kreuzt sich nicht. */
+  function mergeOk(aussen: P[], loecher: P[][]): boolean {
+    const merged = bridgeHoles(aussen, loecher);
+    const soll = signFl(aussen) - loecher.reduce((s, h) => s + Math.abs(signFl(h)), 0);
+    if (Math.abs(signFl(merged) - soll) > 1e-6 * Math.max(1, Math.abs(soll))) return false;
+    return selbstschnitte(merged) === 0;
+  }
+
+  /** Zusage darüber hinaus: Das Ergebnis lässt sich auch vollständig zerlegen. */
+  function ganzOk(aussen: P[], loecher: P[][]): boolean {
+    const merged = bridgeHoles(aussen, loecher);
+    const tris = earClip(merged);
+    if (tris.length !== merged.length - 2) return false;
+    const f = Math.abs(tris.reduce((s, [i, j, k]) => {
+      const A = merged[i], B = merged[j], C = merged[k];
+      return s + ((B.x - A.x) * (C.y - A.y) - (C.x - A.x) * (B.y - A.y)) / 2;
+    }, 0));
+    const soll = Math.abs(signFl(aussen)) - loecher.reduce((s, h) => s + Math.abs(signFl(h)), 0);
+    return Math.abs(f - soll) < 1e-6 * Math.max(1, soll);
+  }
+
+  it('bei typischen Lochanordnungen vollständig', () => {
+    // Vorher scheiterte alles, wo die Löcher auf verschiedenen Höhen lagen: Der
+    // Suchstrahl lief über ein anderes Loch hinweg, und der gewählte
+    // Brückenpunkt war von dort aus gar nicht zu sehen.
+    //
+    // Das dritte Feld sagt, ob sich das Ergebnis auch vollständig zerlegen
+    // lässt. Wo es `false` steht, ist die Verschmelzung in Ordnung und nur das
+    // Ohrenschneiden bleibt an einer Berührstelle hängen – siehe T17.
+    const faelle: [string, P[][], boolean][] = [
+      ['ein Loch mittig', [kreis(0, 0, 4)], true],
+      ['zwei diagonal', [kreis(-11, -11, 4), kreis(11, 11, 4)], true],
+      ['zwei nebeneinander', [kreis(-11, 0, 4), kreis(11, 0, 4)], true],
+      ['zwei übereinander', [kreis(0, -11, 4), kreis(0, 11, 4)], true],
+      ['drei', [kreis(-11, -11, 4), kreis(11, 11, 4), kreis(11, -11, 4)], true],
+      ['vier in den Ecken', [kreis(-11, -11, 4), kreis(11, -11, 4), kreis(11, 11, 4), kreis(-11, 11, 4)], true],
+      ['vier in einer Reihe', [kreis(-14, 0, 3), kreis(-5, 0, 3), kreis(5, 0, 3), kreis(14, 0, 3)], true],
+      ['fünf', [kreis(0, 0, 3), kreis(-12, -12, 3), kreis(12, -12, 3), kreis(12, 12, 3), kreis(-12, 12, 3)], true],
+      ['unterschiedlich groß', [kreis(-10, -8, 5, 16), kreis(8, 2, 2, 8), kreis(-2, 12, 3, 10)], false],
+    ];
+    for (const [name, loecher, zerlegbar] of faelle) {
+      expect(mergeOk(quadrat(20), loecher), `${name}: Verschmelzung`).toBe(true);
+      expect(ganzOk(quadrat(20), loecher), `${name}: Zerlegung`).toBe(zerlegbar);
+    }
+  });
+
+  it('auch bei einer konkaven Außenkontur', () => {
+    const lForm: P[] = [{ x: -20, y: -20 }, { x: 20, y: -20 }, { x: 20, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 20 }, { x: -20, y: 20 }];
+    for (const loecher of [[kreis(-10, -10, 4)], [kreis(-10, -10, 4), kreis(10, -10, 4)], [kreis(-10, -10, 3), kreis(10, -12, 3), kreis(-10, 10, 3)]]) {
+      expect(mergeOk(lForm, loecher), JSON.stringify(loecher.length)).toBe(true);
+      expect(ganzOk(lForm, loecher), JSON.stringify(loecher.length)).toBe(true);
+    }
+  });
+
+  it('hält die Zusage über viele zufällige Anordnungen', () => {
+    // Deterministischer Zufall, damit der Test reproduzierbar bleibt.
+    let seed = 12345;
+    const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+    let ges = 0, gutMerge = 0, gutGanz = 0;
+    for (let n = 1; n <= 5; n++) {
+      for (let versuch = 0; versuch < 30; versuch++) {
+        const loecher: P[][] = [];
+        let ok = true;
+        for (let k = 0; k < n && ok; k++) {
+          let platziert = false;
+          for (let t = 0; t < 60 && !platziert; t++) {
+            const r = 1.2 + rnd() * 3;
+            const cx = (rnd() - 0.5) * 34, cy = (rnd() - 0.5) * 34;
+            const kandidat = kreis(cx, cy, r, 8 + Math.floor(rnd() * 8));
+            if (!kandidat.every((p2) => pointInPolygon(p2, quadrat(20)))) continue;
+            if (loecher.some((h) => {
+              const c = h.reduce((s, p2) => ({ x: s.x + p2.x / h.length, y: s.y + p2.y / h.length }), { x: 0, y: 0 });
+              return Math.hypot(c.x - cx, c.y - cy) < r + 5;
+            })) continue;
+            loecher.push(kandidat);
+            platziert = true;
+          }
+          if (!platziert) ok = false;
+        }
+        if (!ok || loecher.length !== n) continue;
+        ges++;
+        if (mergeOk(quadrat(20), loecher)) gutMerge++;
+        if (ganzOk(quadrat(20), loecher)) gutGanz++;
+      }
+    }
+    expect(ges).toBeGreaterThan(100);
+    // Vor der Korrektur: 68 % bzw. 47 %. Die Lücke von „Verschmelzung" zu
+    // „Zerlegung" geht auf das Ohrenschneiden, das an Berührstellen zweier
+    // Brücken hängen bleibt – festgehalten als T17.
+    expect(gutMerge / ges, `Verschmelzung ${gutMerge}/${ges}`).toBeGreaterThan(0.97);
+    expect(gutGanz / ges, `Zerlegung ${gutGanz}/${ges}`).toBeGreaterThan(0.85);
+  });
+});
