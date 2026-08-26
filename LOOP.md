@@ -111,8 +111,7 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
 - [ ] **T8 OpenSEO anbinden** (siehe Abschnitt oben): MCP-Server in `.mcp.json` eintragen, Zugang
       testen, erste Ranking- und Keyword-Abfrage machen und das Ergebnis als neue P1/P2-Punkte
       eintragen. **Blockiert durch E5** (DataForSEO kostet Geld) – vorher nichts installieren.
-- [ ] **T9 Gridfinity-Baseplate-Generator**: passende Grundplatten zu den Bins (Profil 2,15/1,8/0,7 mm,
-      Eckradius 4,0 mm, 4,65 mm hoch – Maße stehen bereits im Iterations-Log von Iteration 5).
+- [x] ~~**T9 Gridfinity-Baseplate-Generator**~~ → `/generatoren/gridfinity-baseplate` (2026-08-25)
 
 ### P2 – SEO
 
@@ -244,6 +243,32 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
 
   *Merksatz:* Wenn ein Test einer Optimierung fehlschlägt, zuerst prüfen, ob die Lösung besser ist
   als die erwartete. Sonst zementiert man die eigene Annahme statt das gewünschte Verhalten.
+- **2026-08-25 · Iteration 9 (T9):** Gridfinity-Grundplatten-Generator live
+  (`/generatoren/gridfinity-baseplate`), in `gridfinity.ts` ergänzt statt in einer neuen Datei –
+  gleiche Domäne, gleiche Konstanten, gleicher Mesh-Baukasten. Fassungsprofil 0,7/1,8/2,15 mm auf
+  4,65 mm mit Eckradius 4,0 mm, Boden optional. 21 neue Tests.
+  **Der wichtigste Test vergleicht die beiden Profile direkt:** Bin-Fuß gegen Fassung über die
+  gesamte Höhe abgetastet – das Spiel ist an jeder Stelle gleich. Damit ist belegt, dass die
+  Grundplatte die Bins des eigenen Generators wirklich aufnimmt, statt nur „nach Spec" zu sein.
+  **Drei Vernetzungsfehler, jeweils durch die Dichtheitsprüfung gefunden:**
+  (1) `roundedRectCorners` erzeugte bei Radius 0 mehrfach denselben Eckpunkt → entartete Kanten.
+  (2) Außenrahmen und Fassung haben unterschiedlich viele Punkte → `ring` ersetzt durch `annulus`
+      (Winkel-Zuordnung).
+  (3) Laut Spezifikation ist die Fassungsöffnung oben exakt so groß wie das Rasterfeld, benachbarte
+      Fassungen träfen sich also auf **null Wandstärke**. Das ist weder vernetzbar noch druckbar.
+      Lösung: Fassung um 0,05 mm je Seite zurückgenommen (`SOCKET_RELIEF`), Spiel dadurch 0,20 statt
+      0,25 mm, Plattenaußenmaße bleiben exakte Vielfache von 42 mm. Auf der Seite offen erklärt.
+  Zusätzlich: `PLATE_JOIN` und `SOCKET_RELIEF` müssen sich unterscheiden, sonst fallen die
+  Seitenmittelpunkte benachbarter Felder aufeinander – als Invariante mit eigenem Test festgehalten.
+  Gegenseitige Links zwischen Bin- und Grundplatten-Generator. IndexNow-Ping: 4 URLs.
+
+  *Merksatz:* Wo eine Spezifikation eine nulldicke Kante fordert, ist eine dokumentierte,
+  minimale Abweichung besser als ein Modell, das sich nicht drucken lässt – aber sie gehört
+  sichtbar auf die Seite, nicht nur in den Code.
+
+  *Wiederholt aufgetreten:* Die Browser-Session sprang erneut auf `about:blank` und lieferte dabei
+  einen unplausiblen Messwert. Bereits in Iteration 5 gesehen – Browser-Messungen bei Auffälligkeiten
+  immer gegen Node prüfen, nicht den Code ändern.
 
 ## Start-Prompt (Referenz)
 

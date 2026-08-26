@@ -236,3 +236,198 @@ describe('STL & Vorschau', () => {
     expect(viel).toBeGreaterThan(wenig);
   });
 });
+
+/* ---------------- Grundplatte ---------------- */
+
+import { buildBaseplate, baseplatePreviewSvg, roundedRectCorners, PLATE, SOCKET_RELIEF, PLATE_JOIN, type BaseplateSpec } from '../src/lib/gridfinity';
+
+const plate = (over: Partial<BaseplateSpec> = {}): BaseplateSpec => ({
+  unitsX: 2,
+  unitsY: 2,
+  floor: 0,
+  segments: 6,
+  ...over,
+});
+
+/** Halbe Breite des Bin-Fusses in Hoehe z ueber seiner Unterkante. */
+function binHalf(z: number): number {
+  const inset = z <= 0.8 ? 2.95 - z : z <= 2.6 ? 2.15 : Math.max(0, 2.15 - (z - 2.6));
+  return (GF.GRID - GF.CLEARANCE) / 2 - inset;
+}
+/** Halbe Breite der Fassung in Hoehe dz ueber ihrem Grund (inkl. Ruecknahme). */
+function socketHalf(dz: number): number {
+  const inset =
+    (dz <= 0.7 ? 2.85 - dz : dz <= 2.5 ? 2.15 : Math.max(0, 2.15 - (dz - 2.5))) + SOCKET_RELIEF;
+  return GF.GRID / 2 - inset;
+}
+
+describe('Grundplatte – Spezifikationsmaße', () => {
+  it('hält Profilhöhe, Versatz und Eckradius ein', () => {
+    expect(PLATE.HEIGHT).toBe(4.65);
+    expect(0.7 + 1.8 + 2.15).toBeCloseTo(PLATE.HEIGHT, 9);
+    expect(0.7 + 2.15).toBeCloseTo(PLATE.INSET, 9);
+    expect(PLATE.CORNER_R).toBe(4);
+    // Der Eckradius des Bins liegt genau 0,25 mm darunter
+    expect(PLATE.CORNER_R - GF.CORNER_R).toBeCloseTo(0.25, 9);
+  });
+
+  it('misst Rasterfelder × 42 mm ohne Abzug', () => {
+    const r = buildBaseplate(plate({ unitsX: 3, unitsY: 2 }));
+    expect(r.stats.size).toEqual([126, 84, 4.65]);
+    expect(r.stats.cells).toBe(6);
+  });
+
+  it('rechnet den Boden auf die Höhe auf', () => {
+    expect(buildBaseplate(plate({ floor: 1.2 })).stats.size[2]).toBeCloseTo(4.65 + 1.2, 9);
+  });
+});
+
+describe('Grundplatte – nimmt die erzeugten Bins auf', () => {
+  it('lässt über die gesamte Profilhöhe gleichmäßig Luft je Seite', () => {
+    // Oberkanten aneinander ausgerichtet: Bin-Fuss 4,75 mm, Fassung 4,65 mm tief.
+    // Nennspiel 0,25 mm abzueglich der Ruecknahme, die den Steg oben rettet.
+    const soll = 0.25 - SOCKET_RELIEF;
+    for (let d = 0; d <= 4.65 + 1e-9; d += 0.05) {
+      const luft = socketHalf(4.65 - d) - binHalf(4.75 - d);
+      expect(luft, `Tiefe ${d.toFixed(2)} mm`).toBeCloseTo(soll, 6);
+    }
+    expect(soll).toBeGreaterThan(0.15); // fuer FDM reichlich
+  });
+
+  it('die Fassung ist an jeder Stelle weiter als der Bin-Fuß', () => {
+    for (let d = 0; d <= 4.65; d += 0.01) {
+      expect(socketHalf(4.65 - d)).toBeGreaterThan(binHalf(4.75 - d));
+    }
+  });
+
+  it('Fassungsöffnung oben ist weiter als der breiteste Punkt des Bins', () => {
+    expect(binHalf(4.75) * 2).toBeCloseTo(GF.GRID - GF.CLEARANCE, 9); // 41,5 mm
+    expect(socketHalf(4.65) * 2).toBeCloseTo(GF.GRID - 2 * SOCKET_RELIEF, 9); // 41,9 mm
+    expect(socketHalf(4.65) * 2).toBeGreaterThan(binHalf(4.75) * 2);
+    // Oben bleibt ein Steg stehen, statt einer nicht druckbaren Schneide
+    expect(GF.GRID - socketHalf(4.65) * 2).toBeCloseTo(2 * SOCKET_RELIEF, 9);
+  });
+});
+
+describe('Grundplatte – Netzqualität', () => {
+  const analyzePlate = (s: BaseplateSpec) => analyzeStl(toStl(buildBaseplate(s).triangles));
+
+  it('erzeugt ein geschlossenes Netz mit nach außen zeigenden Normalen', () => {
+    const r = analyzePlate(plate());
+    expect(r.watertight, `offene Kanten: ${r.openEdges}`).toBe(true);
+    expect(r.inverted).toBe(false);
+    expect(r.degenerate).toBe(0);
+  });
+
+  it('bleibt in allen Größen und mit Boden geschlossen', () => {
+    const varianten: Partial<BaseplateSpec>[] = [
+      { unitsX: 1, unitsY: 1 },
+      { unitsX: 4, unitsY: 1 },
+      { unitsX: 3, unitsY: 3 },
+      { floor: 1.2 },
+      { unitsX: 2, unitsY: 3, floor: 2.4 },
+    ];
+    for (const v of varianten) {
+      const r = analyzePlate(plate(v));
+      expect(r.watertight, `${JSON.stringify(v)} → ${r.openEdges} offene Kanten`).toBe(true);
+      expect(r.inverted, JSON.stringify(v)).toBe(false);
+      expect(r.degenerate, JSON.stringify(v)).toBe(0);
+    }
+  });
+
+  it('bleibt bei jeder Auflösungsstufe geschlossen', () => {
+    for (const segments of [2, 4, 8, 16]) {
+      const r = analyzePlate(plate({ segments }));
+      expect(r.watertight, `segments=${segments} → ${r.openEdges} offene Kanten`).toBe(true);
+    }
+  });
+
+  it('liefert die erwarteten Außenmaße im Netz', () => {
+    const r = analyzePlate(plate({ unitsX: 3, unitsY: 2 }));
+    expect(r.size[0]).toBeCloseTo(126, 3);
+    expect(r.size[1]).toBeCloseTo(84, 3);
+    expect(r.size[2]).toBeCloseTo(4.65, 3);
+  });
+
+  it('hält die Außenmaße trotz Feld-Überlappung exakt ein', () => {
+    // Die Rahmen greifen nur nach innen ineinander, nicht ueber den Plattenrand hinaus
+    const eins = analyzePlate(plate({ unitsX: 1, unitsY: 1 }));
+    const vier = analyzePlate(plate({ unitsX: 4, unitsY: 4 }));
+    expect(eins.size[0]).toBeCloseTo(42, 3);
+    expect(vier.size[0]).toBeCloseTo(168, 3);
+  });
+});
+
+describe('Grundplatte – Material & Grenzen', () => {
+  it('ist überwiegend Hohlraum, nicht Vollmaterial', () => {
+    const r = buildBaseplate(plate());
+    const quader = (r.stats.size[0] * r.stats.size[1] * r.stats.size[2]) / 1000;
+    expect(r.stats.volumeCm3).toBeGreaterThan(quader * 0.05);
+    expect(r.stats.volumeCm3).toBeLessThan(quader * 0.6);
+  });
+
+  it('ein Boden erhöht das Materialvolumen', () => {
+    expect(buildBaseplate(plate({ floor: 2 })).stats.volumeCm3).toBeGreaterThan(
+      buildBaseplate(plate({ floor: 0 })).stats.volumeCm3,
+    );
+  });
+
+  it('mehr Felder brauchen mehr Material', () => {
+    expect(buildBaseplate(plate({ unitsX: 4, unitsY: 4 })).stats.volumeCm3).toBeGreaterThan(
+      buildBaseplate(plate({ unitsX: 2, unitsY: 2 })).stats.volumeCm3,
+    );
+  });
+
+  it('warnt bei sehr großen Platten und zu dünnem Boden', () => {
+    expect(buildBaseplate(plate({ unitsX: 8, unitsY: 8 })).stats.warnings.length).toBeGreaterThan(0);
+    expect(buildBaseplate(plate({ floor: 0.4 })).stats.warnings.some((w) => w.includes('dünn'))).toBe(true);
+  });
+
+  it('ist deterministisch', () => {
+    expect(buildBaseplate(plate()).stats).toEqual(buildBaseplate(plate()).stats);
+  });
+});
+
+describe('roundedRectCorners', () => {
+  it('Rahmen-Überlappung und Fassungs-Rücknahme müssen sich unterscheiden', () => {
+    // Waeren beide gleich, faenden die Seitenmittelpunkte benachbarter Felder
+    // exakt aufeinander und die gemeinsamen Kanten waeren doppelt belegt.
+    expect(PLATE_JOIN).not.toBeCloseTo(SOCKET_RELIEF, 9);
+    expect(PLATE_JOIN).toBeGreaterThan(0);
+    expect(SOCKET_RELIEF).toBeGreaterThan(0);
+  });
+
+  it('rundet nur die angegebenen Ecken', () => {
+    const loop = roundedRectCorners(0, 0, 100, 100, [10, 0, 0, 0], 4);
+    // Die drei scharfen Ecken liegen exakt auf den Eckpunkten
+    expect(loop.some((p) => Math.abs(p.x + 50) < 1e-9 && Math.abs(p.y - 50) < 1e-9)).toBe(true);
+    expect(loop.some((p) => Math.abs(p.x + 50) < 1e-9 && Math.abs(p.y + 50) < 1e-9)).toBe(true);
+    // Die gerundete Ecke dagegen nicht
+    expect(loop.some((p) => Math.abs(p.x - 50) < 1e-9 && Math.abs(p.y - 50) < 1e-9)).toBe(false);
+    expect(Math.max(...loop.map((p) => p.x))).toBeCloseTo(50, 9);
+  });
+
+  it('verhält sich mit gleichen Radien wie roundedRect', () => {
+    expect(roundedRectCorners(1, 2, 40, 30, [3, 3, 3, 3], 5)).toEqual(roundedRect(1, 2, 40, 30, 3, 5));
+  });
+});
+
+describe('Grundplatte – Vorschau', () => {
+  it('zeichnet Platte, Fassungen und Böden', () => {
+    const svg = baseplatePreviewSvg(plate({ unitsX: 2, unitsY: 2 }));
+    expect(svg).toContain('<svg');
+    // Korpus + Oberseite + je Feld Fassung und Boden
+    expect((svg.match(/<polygon/g) ?? []).length).toBe(2 + 2 * 4);
+    expect(svg).not.toContain('NaN');
+  });
+
+  it('liefert für jede Größe eine gültige Vorschau', () => {
+    for (const v of [{ unitsX: 1, unitsY: 1 }, { unitsX: 5, unitsY: 3 }, { floor: 2 }]) {
+      const svg = baseplatePreviewSvg(plate(v));
+      const vb = svg.match(/viewBox="([^"]+)"/)?.[1].split(' ').map(Number) ?? [];
+      expect(vb).toHaveLength(4);
+      expect(vb.every(Number.isFinite)).toBe(true);
+      expect(vb[2]).toBeGreaterThan(0);
+    }
+  });
+});

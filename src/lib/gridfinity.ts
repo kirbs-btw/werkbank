@@ -208,22 +208,46 @@ class Mesh {
  * exakt an dieselben Kanten anschließt.
  */
 export function roundedRect(cx: number, cy: number, w: number, h: number, r: number, seg: number): P2[] {
+  return roundedRectCorners(cx, cy, w, h, [r, r, r, r], seg);
+}
+
+/**
+ * Wie `roundedRect`, aber mit einzeln wählbaren Eckradien in der Reihenfolge
+ * oben-rechts, oben-links, unten-links, unten-rechts. Die Grundplatte braucht
+ * das: Dort sind nur die vier Außenecken der Platte gerundet, die inneren
+ * Feldgrenzen dagegen scharf.
+ */
+export function roundedRectCorners(
+  cx: number,
+  cy: number,
+  w: number,
+  h: number,
+  radii: [number, number, number, number],
+  seg: number,
+): P2[] {
   const hw = w / 2;
   const hh = h / 2;
-  const rr = Math.max(0, Math.min(r, hw, hh));
-  const corners: [number, number, number, P2][] = [
-    [cx + hw - rr, cy + hh - rr, 0, { x: cx, y: cy + hh }],
-    [cx - hw + rr, cy + hh - rr, 90, { x: cx - hw, y: cy }],
-    [cx - hw + rr, cy - hh + rr, 180, { x: cx, y: cy - hh }],
-    [cx + hw - rr, cy - hh + rr, 270, { x: cx + hw, y: cy }],
+  const lim = Math.min(hw, hh);
+  const clamp = (r: number) => Math.max(0, Math.min(r, lim));
+  const corners = [
+    { ox: cx + hw - clamp(radii[0]), oy: cy + hh - clamp(radii[0]), a0: 0, r: clamp(radii[0]), mid: { x: cx, y: cy + hh } },
+    { ox: cx - hw + clamp(radii[1]), oy: cy + hh - clamp(radii[1]), a0: 90, r: clamp(radii[1]), mid: { x: cx - hw, y: cy } },
+    { ox: cx - hw + clamp(radii[2]), oy: cy - hh + clamp(radii[2]), a0: 180, r: clamp(radii[2]), mid: { x: cx, y: cy - hh } },
+    { ox: cx + hw - clamp(radii[3]), oy: cy - hh + clamp(radii[3]), a0: 270, r: clamp(radii[3]), mid: { x: cx + hw, y: cy } },
   ];
   const out: P2[] = [];
-  for (const [ox, oy, a0, mid] of corners) {
-    for (let i = 0; i <= seg; i++) {
-      const a = ((a0 + (90 * i) / seg) * Math.PI) / 180;
-      out.push({ x: ox + rr * Math.cos(a), y: oy + rr * Math.sin(a) });
+  for (const c of corners) {
+    if (c.r < 1e-9) {
+      // Scharfe Ecke: nur ein Punkt. Mehrfach derselbe Punkt würde entartete
+      // Kanten erzeugen und damit Löcher ins Netz reißen.
+      out.push({ x: c.ox, y: c.oy });
+    } else {
+      for (let i = 0; i <= seg; i++) {
+        const a = ((c.a0 + (90 * i) / seg) * Math.PI) / 180;
+        out.push({ x: c.ox + c.r * Math.cos(a), y: c.oy + c.r * Math.sin(a) });
+      }
     }
-    out.push(mid);
+    out.push(c.mid);
   }
   return out;
 }
@@ -408,6 +432,214 @@ export function buildBin(spec: BinSpec): BinResult {
       warnings,
     },
   };
+}
+
+/* ---------------- Grundplatte (Baseplate) ---------------- */
+
+/**
+ * Fassungsprofil der Grundplatte, von unten: 0,7 mm 45° · 1,8 mm gerade ·
+ * 2,15 mm 45° → 4,65 mm hoch, Versatz 2,85 mm. Der Eckradius folgt dem Versatz
+ * (oben 4,0 mm, dann 1,85 mm, unten 1,15 mm) – gespiegelt zum Fußprofil des Bins.
+ */
+/**
+ * Nach Spezifikation ist die Fassungsöffnung oben genau so groß wie das
+ * Rasterfeld (42 mm). Benachbarte Fassungen und der Plattenrand träfen sich
+ * dort also auf null Wandstärke – eine Schneide, die sich weder sauber
+ * vernetzen noch drucken lässt. Die Fassung wird deshalb um diesen Betrag je
+ * Seite zurückgenommen: Oben bleibt ein schmaler Steg stehen, und das Spiel zum
+ * Bin beträgt 0,20 statt 0,25 mm – für FDM-Druck reichlich.
+ */
+export const SOCKET_RELIEF = 0.05;
+
+const PLATE_PROFILE = [
+  { inset: 2.85 + SOCKET_RELIEF, dz: 0 },
+  { inset: 2.15 + SOCKET_RELIEF, dz: 0.7 },
+  { inset: 2.15 + SOCKET_RELIEF, dz: 2.5 },
+  { inset: SOCKET_RELIEF, dz: 4.65 },
+] as const;
+
+export const PLATE = {
+  /** Höhe des Fassungsprofils. */
+  HEIGHT: 4.65,
+  /** Eckradius der Fassung auf voller Breite. */
+  CORNER_R: 4,
+  INSET: 2.85,
+} as const;
+
+/**
+ * Damit die Feldrahmen keine deckungsgleichen Flächen erzeugen, greift jeder
+ * um diesen Betrag in seine Nachbarn hinein. Außenkanten der Platte bleiben
+ * unverändert, deshalb stimmen die Plattenmaße exakt.
+ *
+ * Der Wert muss sich von `SOCKET_RELIEF` unterscheiden: Wären beide gleich,
+ * fielen die Seitenmittelpunkte benachbarter Felder exakt aufeinander und die
+ * gemeinsamen Kanten würden doppelt belegt.
+ */
+export const PLATE_JOIN = 0.08;
+
+export interface BaseplateSpec {
+  unitsX: number;
+  unitsY: number;
+  /** Bodenstärke unter den Fassungen in mm; 0 = offener Rahmen. */
+  floor: number;
+  segments?: number;
+}
+
+export interface BaseplateStats {
+  size: [number, number, number];
+  cells: number;
+  triangles: number;
+  volumeCm3: number;
+  warnings: string[];
+}
+
+export function buildBaseplate(spec: BaseplateSpec): BinResult & { stats: BinStats & BaseplateStats } {
+  const seg = Math.max(2, Math.min(Math.round(spec.segments ?? 8), 24));
+  const ux = Math.max(1, Math.round(spec.unitsX));
+  const uy = Math.max(1, Math.round(spec.unitsY));
+  const floor = Math.max(0, Math.min(spec.floor, 20));
+  const warnings: string[] = [];
+
+  const W = ux * GF.GRID;
+  const D = uy * GF.GRID;
+  const topZ = PLATE.HEIGHT;
+  const m = new Mesh();
+
+  for (let gy = 0; gy < uy; gy++) {
+    for (let gx = 0; gx < ux; gx++) {
+      const cx = -W / 2 + GF.GRID / 2 + gx * GF.GRID;
+      const cy = -D / 2 + GF.GRID / 2 + gy * GF.GRID;
+      // Nur zu vorhandenen Nachbarn hin überlappen, damit die Plattenaußenmaße stimmen.
+      const left = gx > 0 ? PLATE_JOIN : 0;
+      const right = gx < ux - 1 ? PLATE_JOIN : 0;
+      const bottom = gy > 0 ? PLATE_JOIN : 0;
+      const top = gy < uy - 1 ? PLATE_JOIN : 0;
+      const ocx = cx + (right - left) / 2;
+      const ocy = cy + (top - bottom) / 2;
+      const ow = GF.GRID + left + right;
+      const od = GF.GRID + bottom + top;
+      // Gerundet wird nur an echten Plattenaußenecken.
+      const outerLoop = roundedRectCorners(
+        ocx,
+        ocy,
+        ow,
+        od,
+        [
+          gx === ux - 1 && gy === uy - 1 ? PLATE.CORNER_R : 0,
+          gx === 0 && gy === uy - 1 ? PLATE.CORNER_R : 0,
+          gx === 0 && gy === 0 ? PLATE.CORNER_R : 0,
+          gx === ux - 1 && gy === 0 ? PLATE.CORNER_R : 0,
+        ],
+        seg,
+      );
+      const sockets = PLATE_PROFILE.map((p) =>
+        roundedRect(cx, cy, GF.GRID - 2 * p.inset, GF.GRID - 2 * p.inset, PLATE.CORNER_R - p.inset, seg),
+      );
+
+      // Außenmantel
+      m.loft(outerLoop, 0, outerLoop, topZ);
+      // Fassungstrichter – z vertauscht, damit die Normalen in die Fassung zeigen
+      for (let i = 0; i < sockets.length - 1; i++) {
+        m.loft(sockets[i + 1], PLATE_PROFILE[i + 1].dz, sockets[i], PLATE_PROFILE[i].dz);
+      }
+      // Oberer Steg und Unterseite. Außenrahmen und Fassung haben unterschiedlich
+      // viele Punkte (scharfe gegen gerundete Ecken), deshalb über die
+      // Winkel-Zuordnung verbinden statt Punkt für Punkt.
+      m.annulus({ x: cx, y: cy }, sockets[sockets.length - 1], outerLoop, topZ, true);
+      m.annulus({ x: cx, y: cy }, sockets[0], outerLoop, 0, false);
+    }
+  }
+
+  // Optionaler Boden unter den Fassungen
+  if (floor > 0) {
+    const plate = roundedRectCorners(0, 0, W, D, [PLATE.CORNER_R, PLATE.CORNER_R, PLATE.CORNER_R, PLATE.CORNER_R], seg);
+    m.loft(plate, -floor, plate, 0.01);
+    m.cap(plate, 0.01, true);
+    m.cap(plate, -floor, false);
+  }
+
+  const tris = m.toArray();
+  let vol6 = 0;
+  for (let i = 0; i < tris.length; i += 9) {
+    const ax = tris[i], ay = tris[i + 1], az = tris[i + 2];
+    const bx = tris[i + 3], by = tris[i + 4], bz = tris[i + 5];
+    const cx2 = tris[i + 6], cy2 = tris[i + 7], cz = tris[i + 8];
+    vol6 += ax * (by * cz - bz * cy2) + ay * (bz * cx2 - bx * cz) + az * (bx * cy2 - by * cx2);
+  }
+
+  if (ux * uy > 40) {
+    warnings.push('Sehr große Grundplatte – die meisten Drucker schaffen etwa 5 × 5 Felder am Stück. Lieber mehrere kleinere Platten drucken und nebeneinander legen.');
+  }
+  if (floor > 0 && floor < 0.8) {
+    warnings.push('Ein Boden unter 0,8 mm ist sehr dünn und verzieht sich leicht – 1,2 mm oder mehr sind stabiler.');
+  }
+
+  return {
+    triangles: tris,
+    stats: {
+      size: [W, D, topZ + floor],
+      bodyHeight: topZ,
+      cells: ux * uy,
+      triangles: m.count,
+      volumeCm3: Math.abs(vol6) / 6 / 1000,
+      capacityMl: 0,
+      compartment: [0, 0, 0],
+      warnings,
+    },
+  };
+}
+
+/** Isometrische Vorschau der Grundplatte. */
+export function baseplatePreviewSvg(spec: BaseplateSpec): string {
+  const seg = 3;
+  const ux = Math.max(1, Math.round(spec.unitsX));
+  const uy = Math.max(1, Math.round(spec.unitsY));
+  const floor = Math.max(0, Math.min(spec.floor, 20));
+  const W = ux * GF.GRID;
+  const D = uy * GF.GRID;
+  const topZ = PLATE.HEIGHT;
+
+  const shapes: string[] = [];
+  const pts: P2[] = [];
+  const project = (loop: P2[], z: number) => loop.map((q) => iso(q.x, q.y, z));
+  const draw = (p: P2[], style: string) => {
+    pts.push(...p);
+    shapes.push(
+      `<polygon points="${p.map((q) => `${q.x.toFixed(2)},${q.y.toFixed(2)}`).join(' ')}" ${style} vector-effect="non-scaling-stroke"/>`,
+    );
+  };
+  const S = {
+    side: 'fill="#fdba74" stroke="#c2410c" stroke-width="1.2" stroke-linejoin="round"',
+    top: 'fill="#ffedd5" stroke="#c2410c" stroke-width="1.2" stroke-linejoin="round"',
+    socket: 'fill="#c2764a" stroke="#9a3412" stroke-width="0.7"',
+    floor: 'fill="#fff7ed" stroke="#9a3412" stroke-width="0.6"',
+  };
+
+  const plate = roundedRect(0, 0, W, D, PLATE.CORNER_R, seg);
+  draw(convexHull([...project(plate, -floor), ...project(plate, topZ)]), S.side);
+  draw(project(plate, topZ), S.top);
+
+  for (let gy = 0; gy < uy; gy++) {
+    for (let gx = 0; gx < ux; gx++) {
+      const cx = -W / 2 + GF.GRID / 2 + gx * GF.GRID;
+      const cy = -D / 2 + GF.GRID / 2 + gy * GF.GRID;
+      draw(project(roundedRect(cx, cy, GF.GRID, GF.GRID, PLATE.CORNER_R, seg), topZ), S.socket);
+      draw(
+        project(
+          roundedRect(cx, cy, GF.GRID - 2 * PLATE.INSET, GF.GRID - 2 * PLATE.INSET, PLATE.CORNER_R - PLATE.INSET, seg),
+          0,
+        ),
+        S.floor,
+      );
+    }
+  }
+
+  const pad = 6;
+  const minX = Math.min(...pts.map((p) => p.x)) - pad;
+  const maxX = Math.max(...pts.map((p) => p.x)) + pad;
+  const minY = Math.min(...pts.map((p) => p.y)) - pad;
+  const maxY = Math.max(...pts.map((p) => p.y)) + pad;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${minX.toFixed(1)} ${minY.toFixed(1)} ${(maxX - minX).toFixed(1)} ${(maxY - minY).toFixed(1)}" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Isometrische Vorschau der Gridfinity-Grundplatte">${shapes.join('')}</svg>`;
 }
 
 /* ---------------- STL-Export ---------------- */

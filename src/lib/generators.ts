@@ -29,6 +29,21 @@ export const GENERATORS: Generator[] = [
     ],
   },
   {
+    slug: 'gridfinity-baseplate',
+    title: 'Gridfinity-Grundplatten-Generator (STL)',
+    shortTitle: 'Gridfinity-Grundplatte',
+    description:
+      'Erzeuge passende Gridfinity-Grundplatten als druckfertiges STL: Rastergröße frei wählbar, optional mit Boden – maßhaltig nach Spezifikation, direkt im Browser.',
+    keywords: [
+      'gridfinity baseplate generator',
+      'gridfinity grundplatte stl',
+      'gridfinity baseplate drucken',
+      'gridfinity raster grundplatte',
+      'gridfinity baseplate maße',
+      'grundplatte gridfinity erstellen',
+    ],
+  },
+  {
     slug: 'gridfinity-generator',
     title: 'Gridfinity-Generator (Bins als STL)',
     shortTitle: 'Gridfinity',
