@@ -129,18 +129,24 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
       Ohrenschneiden (2026-08-26)
 - [x] ~~**T16 `bridgeHoles` bei mehreren Löchern**~~ → Sichtbarkeitsprüfung nach Eberly plus
       Kreuzungsprüfung (2026-08-26)
-- [ ] **T17 Ohrenschneiden an Berührstellen** – Hängen zwei Löcher ihre Brücke an dieselbe Ecke,
-      berührt sich das verschmolzene Polygon dort selbst. Es ist damit noch gültig („schwach
-      einfach"), aber das Ohrenschneiden findet keine Zerlegung mehr und bricht ab.
-      **Gemessen** über 717 zufällige Lochanordnungen: Die Verschmelzung selbst ist in 712 Fällen
-      korrekt, vollständig zerlegen lassen sich davon 659 – die Lücke von 53 Fällen ist genau
-      dieser Effekt.
-      Zwei Ansätze wurden geprüft und verworfen, beide machten es schlechter: den Gleichstand an
-      senkrechten Kanten über den kürzeren Weg auflösen (659 → 604) und Brückenpunkte meiden, an
-      denen schon ein Loch hängt (659 → 605).
-      Nötig ist vermutlich, die Berührstelle vor dem Zerlegen aufzutrennen: Das Polygon an einem
-      doppelt vorkommenden Punkt in zwei Schleifen zerlegen und diese einzeln triangulieren.
-      Im Splitter weist `stats.openEdges` das Problem aus und die Seite warnt.
+- [ ] **T17 Ohrenschneiden an Berührstellen** – Betrifft Querschnitte mit mehreren Hohlräumen.
+      **Der Mechanismus ist jetzt verstanden:** Ein Loch wird über eine Brücke aus *zwei* Kanten
+      angebunden; solange beide da sind, kommt das Ohrenschneiden damit zurecht. Wird das Ohr am
+      Brückenpunkt geschnitten, verschmelzen die beiden Kanten zu einer Berührung in einem
+      einzigen Punkt – und **auf so einem Ring ist das Ohrenschneiden grundsätzlich nicht mehr
+      korrekt**: Es findet „konvexe Ohren", die gar kein Material sind. Belegt: Der Rest eines
+      solchen Rings hatte am Ende die Fläche −606, war also längst verkehrt herum.
+      **Gemessen** über 717 zufällige Lochanordnungen: 712 Verschmelzungen korrekt, davon 659
+      vollständig zerlegbar. Die Lücke von 53 ist genau dieser Effekt.
+      **Vier Ansätze geprüft, alle wirkungslos oder schlechter – nicht noch einmal versuchen:**
+      an der Berührstelle auftrennen (Schutzbedingung greift zu Recht, die eine Schleife ist das
+      Loch und hat negative Fläche); Diagonale suchen und dort teilen (Einzelfall 15 → 26 von 30
+      Dreiecken, Messstand unverändert 659 – verschiebt das Problem nur); Brückenpunkte meiden,
+      an denen schon ein Loch hängt (659 → 658); Ohren an Brückenpunkten zurückstellen (659 → 0,
+      die müssen irgendwann geschnitten werden).
+      **Nötig ist ein anderes Verfahren**, kein weiterer Rückfall im Ohrenschneiden – etwa eine
+      Zerlegung, die Löcher direkt behandelt, statt sie über Brücken einzufädeln. Im Splitter
+      weist `stats.openEdges` das Problem aus und die Seite warnt.
 - [ ] **T8 OpenSEO anbinden** (siehe Abschnitt oben): MCP-Server in `.mcp.json` eintragen, Zugang
       testen, erste Ranking- und Keyword-Abfrage machen und das Ergebnis als neue P1/P2-Punkte
       eintragen. **Blockiert durch E5** (DataForSEO kostet Geld) – vorher nichts installieren.
@@ -614,6 +620,31 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 
   **Merksatz:** Ein Fehlerbericht muss den Fall exakt festhalten, nicht ungefähr. Eine gerundete
   Rekonstruktion beweist gar nichts – sie kann grün laufen, während der echte Fall rot ist.
+
+- **2026-08-26 · Iteration 21 (T17):** **Keine Verbesserung ausgeliefert – und das ist das
+  Ergebnis.** Vier Ansätze für die Berührstellen im Ohrenschneiden geprüft, alle am Messstand
+  widerlegt: an der Berührstelle auftrennen (unverändert), Diagonale suchen (Einzelfall besser,
+  Messstand unverändert), belegte Brückenpunkte meiden (658 statt 659), Ohren an Brückenpunkten
+  zurückstellen (0 statt 659). Jeder einzelne ist wieder aus dem Code verschwunden.
+
+  Gewonnen ist trotzdem etwas, und zwar das Entscheidende: **Der Mechanismus ist jetzt verstanden.**
+  Ein Loch hängt an einer Brücke aus *zwei* Kanten; solange beide existieren, funktioniert das
+  Ohrenschneiden. Wird das Ohr am Brückenpunkt geschnitten, verschmelzen sie zu einer Berührung in
+  einem einzigen Punkt – und auf so einem Ring ist das Verfahren **grundsätzlich nicht mehr
+  korrekt**, es findet „Ohren", die gar kein Material sind. Der Beleg ist eindeutig: Der Rest eines
+  solchen Rings hatte am Ende die Fläche −606, lief also längst verkehrt herum. Damit ist klar,
+  dass hier kein weiterer Rückfall hilft, sondern ein anderes Verfahren nötig ist. Das steht mitsamt
+  den vier Sackgassen in T17.
+
+  Ausgeliefert wurde eine Sache, die direkt aus dieser Arbeit folgt: **Der Warntext im Splitter
+  nannte die falsche Ursache.** Er sprach von „sehr schmalen oder entarteten Dreiecken"; tatsächlich
+  sind es Querschnitte mit mehreren getrennten Hohlräumen. Wer einen Hinweis gibt, sollte den
+  richtigen geben.
+
+  **Merksatz:** Eine Iteration ohne ausgelieferte Verbesserung ist kein verlorener Lauf, wenn
+  danach feststeht, welcher Weg *nicht* gangbar ist – vorausgesetzt, das steht so im Backlog, dass
+  niemand die Sackgassen erneut abläuft. Was nichts bringt, gehört aus dem Code heraus, nicht
+  auskommentiert hinein.
 
 ## Start-Prompt (Referenz)
 

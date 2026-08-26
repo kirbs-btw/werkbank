@@ -1020,7 +1020,7 @@ export function splitMesh(triangles: ArrayLike<number>, plane: Plane, pins?: Pin
   ergebnis.stats.openEdges = bestOffen;
   if (bestOffen > 0) {
     ergebnis.stats.warnings.push(
-      `An der Schnittfläche bleiben ${bestOffen} Kanten offen – die Hälften sind dort nicht dicht. Das passiert bei Netzen mit sehr schmalen oder entarteten Dreiecken an der Schnittstelle. Verschiebe die Ebene ein Stück, dann trifft sie die Stelle meist nicht mehr.`,
+      `An der Schnittfläche bleiben ${bestOffen} Kanten offen – die Hälften sind dort nicht ganz dicht. Das passiert, wenn der Querschnitt an dieser Stelle mehrere getrennte Hohlräume hat; die Deckfläche lässt sich dann nicht immer vollständig schließen. Verschiebe die Ebene ein Stück – meist sieht der Querschnitt dort anders aus und das Ergebnis wird dicht.`,
     );
   }
   return ergebnis;
