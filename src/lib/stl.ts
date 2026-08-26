@@ -112,9 +112,18 @@ export function parseStl(buffer: ArrayBuffer): { format: StlFormat; verts: Float
 const key = (x: number, y: number, z: number) =>
   `${Math.round(x * 1e4)},${Math.round(y * 1e4)},${Math.round(z * 1e4)}`;
 
-/** Vollständige Analyse eines eingelesenen Netzes. */
+/** Vollständige Analyse einer STL-Datei. */
 export function analyzeStl(buffer: ArrayBuffer): StlStats {
   const { format, verts } = parseStl(buffer);
+  return analyzeMesh(verts, format);
+}
+
+/**
+ * Analyse eines bereits eingelesenen Netzes. Getrennt von `analyzeStl`, damit
+ * Aufrufer, die die Dreiecke ohnehin brauchen (etwa für die 3D-Anzeige), große
+ * Dateien nicht zweimal einlesen müssen.
+ */
+export function analyzeMesh(verts: Float64Array, format: StlFormat): StlStats {
   const triangles = verts.length / 9;
 
   let vol6 = 0;

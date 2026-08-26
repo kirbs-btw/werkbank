@@ -57,6 +57,13 @@ const blocks = jsonLd ? (Array.isArray(jsonLd) ? jsonLd : [jsonLd]) : [];
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="sitemap" href="/sitemap-index.xml" />
 
+<!-- Google AdSense. Verbindung vorab aufbauen, damit die Anzeige den Seitenaufbau weniger bremst. -->
+<link rel="preconnect" href="https://pagead2.googlesyndication.com" crossorigin />
+<script
+  async
+  src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5049034536039989"
+  crossorigin="anonymous"></script>
+
 {
   blocks.map((obj) => (
     <script type="application/ld+json" set:html={JSON.stringify(obj)} />

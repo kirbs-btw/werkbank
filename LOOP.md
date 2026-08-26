@@ -11,8 +11,12 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
 2. **Eine kohärente Einheit pro Iteration** – ein Tool, ein SEO-Punkt oder ein Fix-Paket. Kleine Commits.
 3. **Nur offene, kostenlose Technik.** Keine Paid-APIs, keine externen Dienste zur Laufzeit,
    alles statisch/clientseitig. Neue npm-Dependencies nur mit starkem Grund.
-4. **Nutzwert vor Masse.** Bevorzugt Features, die woanders Geld kosten
-   (Vorbild: Zuschnittoptimierung ↔ cutlistoptimizer.com-Abo). Kandidaten aus `keywords/` ableiten.
+4. **Ambition vor Bequemlichkeit.** Bevorzugt Werkzeuge, die woanders Geld kosten
+   (Vorbild: Zuschnittoptimierung ↔ cutlistoptimizer.com-Abo). **Ein Werkzeug darf groß sein.**
+   Wenn die ehrliche Antwort auf ein Nutzerproblem ein 3D-Editor ist, dann wird ein 3D-Editor
+   gebaut – nicht ein Rechner, der das Problem streift. Große Werkzeuge werden als **Epic** in
+   Teil-Iterationen zerlegt (siehe unten), jede davon für sich lauffähig und deploybar.
+   Der Maßstab ist: Würde jemand dafür bezahlen? Wenn nein, ist es zu klein gedacht.
 5. **Repo-Konventionen einhalten:** Tools als `src/tools/<kat>/<slug>.ts` mit purem `compute()`,
    `examples` (auto-getestet), FAQ, Keywords aus der Recherche, `related`-Verlinkung,
    `updated` = heutiges Datum. Deutsche Inhalte, deutsche Commit-Messages im Repo-Stil.
@@ -113,6 +117,22 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
       eintragen. **Blockiert durch E5** (DataForSEO kostet Geld) – vorher nichts installieren.
 - [x] ~~**T9 Gridfinity-Baseplate-Generator**~~ → `/generatoren/gridfinity-baseplate` (2026-08-25)
 
+### Epic A – Mesh-Werkstatt im Browser
+
+Das größte ungelöste Problem im 3D-Druck-Alltag: **Das Modell passt nicht auf den Drucker.**
+Die Lösung dafür kostet anderswo Geld (Lychee Pro, früher Meshmixer) oder läuft nur unter Windows.
+Wir bauen sie als Werkzeugkette – jede Stufe für sich nutzbar, zusammen eine kleine Werkstatt.
+Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
+
+- [x] ~~**T10 3D-Viewer als Grundlage**~~ → `src/lib/viewer3d.ts`, eingebaut in die STL-Analyse (2026-08-26)
+- [ ] **T11 STL-Splitter**: Schnittebene frei setzen, Netz sauber trennen, Schnittfläche
+      schließen, beide Hälften einzeln exportieren. Kernstück ist das Kappen der Schnittfläche
+      (Kanten zu Ringen verketten, Polygon triangulieren).
+- [ ] **T12 Passstifte automatisch**: Zapfen und Loch mit einstellbarem Spiel in die Schnittfläche
+      setzen, damit die Hälften beim Verkleben fluchten.
+- [ ] **T13 Mess- und Transformwerkzeuge**: Strecken im Netz messen, skalieren, drehen, auf die
+      Bauplatte legen – das, was man sonst im Slicer sucht.
+
 ### P2 – SEO
 
 - [x] ~~**S1 Sitemap-`lastmod` pro Seite**~~ → `src/lib/lastmod.ts` + `serialize` in der Astro-Config (2026-08-26)
@@ -140,6 +160,13 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
 - [ ] **E2 Zweite Nische:** Garten ist laut Recherche Top-Kandidat – gleiche Domain oder Schwester-Domain?
 - [ ] **E3 EN-Version** (hreflang) für EN-lastige Cluster (Gridfinity, Living Hinge, Board Feet).
 - [ ] **E4 Google Search Console:** Zugang/Export für Claude → Backlog-Priorisierung nach echten Query-Daten.
+- [ ] **E6 Einwilligungsbanner für AdSense (dringend):** Seit 26.08.2026 läuft Google AdSense auf
+      der Seite. Google verlangt für Nutzer im EWR eine **zertifizierte Consent-Management-Plattform
+      (CMP)** nach dem TCF-Standard; ohne sie schaltet Google im EWR nur eingeschränkt oder gar keine
+      Anzeigen, und rechtlich fehlt die Einwilligung nach § 25 TDDDG. Zu entscheiden: welche CMP
+      (Googles eigene ist kostenlos, Alternativen sind Usercentrics oder Cookiebot) und wer sie
+      einrichtet. Die Datenschutzerklärung ist bereits angepasst, das Banner fehlt noch.
+      **Solange kein Banner läuft, ist das ein offenes Risiko – nicht vergessen.**
 - [ ] **E5 OpenSEO + DataForSEO:** OpenSEO selbst ist MIT-lizenziert und kostenlos, die Daten dahinter
       kommen von DataForSEO und werden pro Abfrage abgerechnet. Zu entscheiden: Budget je Monat,
       self-hosted oder Cloud, und wer die Zugangsdaten hinterlegt. Ohne diese Entscheidung bleibt T8
@@ -291,6 +318,32 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
   *Wiederholt aufgetreten:* Die Browser-Session sprang erneut auf `about:blank` und lieferte dabei
   einen unplausiblen Messwert. Bereits in Iteration 5 gesehen – Browser-Messungen bei Auffälligkeiten
   immer gegen Node prüfen, nicht den Code ändern.
+
+- **2026-08-26 · Iteration 11 (T10 + AdSense):** Richtungswechsel auf Bastians Ansage: Werkzeuge
+  dürfen groß sein. Prinzip 4 entsprechend geschärft und **Epic A „Mesh-Werkstatt"** angelegt –
+  das größte ungelöste Alltagsproblem im 3D-Druck ist „Modell passt nicht auf den Drucker", und die
+  Lösung dafür kostet anderswo Geld.
+  Erste Stufe gebaut: **eigener WebGL2-Renderer** (`src/lib/viewer3d.ts`, 25 Tests) mit Orbit, Zoom,
+  Pinch, flacher Schattierung und **beidseitiger Beleuchtung**, damit Netze mit falsch gedrehten
+  Normalen lesbar bleiben statt schwarz zu erscheinen. Bewusst ohne three.js: 600 kB Abhängigkeit
+  auf einer Seite, die von Ladezeit lebt, wäre der falsche Handel. Eingebaut als Vorschau in der
+  STL-Analyse; dafür `analyzeMesh()` von `analyzeStl()` getrennt, damit große Dateien nicht zweimal
+  eingelesen werden. Ab 900 000 Dreiecken wird die Anzeige übersprungen.
+  **Verifikation mit Einschränkung:** Der Screenshot lief zweimal in einen Timeout, die
+  Browser-Session war erneut instabil. Belegt ist stattdessen die Render-Pipeline selbst –
+  Programm gelinkt, zwei Attribute gebunden, ein Zeichenaufruf mit 18 Eckpunkten für ein
+  6-Dreieck-Modell, Tiefentest aktiv, kein GL-Fehler, kein Fallback-Hinweis. Zusammen mit den
+  Matrix-Tests (Ziel landet in der Bildmitte, Einpassung garantiert das Modell im Bild) ist das
+  belastbar; **die Pixel selbst hat niemand gesehen** – beim nächsten Durchlauf nachholen.
+  Nebenbei auf Zuruf: **Google AdSense** eingebunden (mit `preconnect`, damit der Seitenaufbau
+  weniger leidet) und die Datenschutzerklärung korrigiert – dort stand noch „Aktuell wird keine
+  Werbung ausgespielt", was mit dem Snippet schlicht falsch wurde. **E6 angelegt: Ohne
+  zertifizierte Consent-Plattform fehlt im EWR die Einwilligung, und Google schaltet nur
+  eingeschränkt Anzeigen.**
+
+  *Merksatz:* `readPixels` taugt nicht als Nachweis, dass WebGL gezeichnet hat – der Puffer ist nach
+  dem Compositing undefiniert und liest sich als Schwarz. Aussagekräftig sind Link-Status,
+  Zeichenaufrufe und Fehlercode.
 
 ## Start-Prompt (Referenz)
 
