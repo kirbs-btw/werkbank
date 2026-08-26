@@ -77,7 +77,13 @@ export interface Tool {
   compute: (v: InputValues) => ToolResult[];
   /** Längere Einleitung (HTML erlaubt) – erscheint über/unter dem Rechner. */
   intro?: string;
-  /** Schritt-für-Schritt Anleitung (HowTo-Schema). */
+  /**
+   * Schritt-für-Schritt-Anleitung, als nummerierte Liste auf der Seite.
+   *
+   * Bewusst ohne HowTo-JSON-LD: Google hat die HowTo-Rich-Results 2023
+   * abgekündigt, das Markup erzeugt dort kein Suchergebnis mehr. Der sichtbare
+   * Text nutzt Lesern weiterhin – das Schema wäre nur Ballast.
+   */
   howto?: string[];
   /** Formel-Hinweis (Mono dargestellt). */
   formula?: string;

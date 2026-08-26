@@ -33,6 +33,14 @@ export const tool: Tool = {
       { label: 'Vorschub vf', value: vf, unit: 'mm/min', digits: 0 },
     ];
   },
+  intro:
+    'Zwei Formeln tragen die gesamte Fräsbearbeitung. Die Schnittgeschwindigkeit vc ist eine Eigenschaft der Paarung aus Werkstoff und Schneidstoff und bleibt gleich, egal wie groß das Werkzeug ist – die Drehzahl folgt daraus über n = vc · 1000 / (π · d). Ein 3-mm-Fräser braucht deshalb die doppelte Drehzahl eines 6-mm-Fräsers für dieselbe Schnittgeschwindigkeit, und bei kleinen Durchmessern stößt man schnell an die Grenze der Spindel. Der Vorschub ergibt sich anschließend aus dem Zahnvorschub fz – und der ist die eigentlich kritische Größe, weil er die Spandicke bestimmt. Zu klein gewählt, reibt das Werkzeug, statt zu schneiden; das kostet mehr Fräser als ein zu hoher Wert.',
+  howto: [
+      'Schnittgeschwindigkeit vc für die Kombination aus Werkstoff und Werkzeug eintragen – aus der Herstellertabelle oder dem Schnittdaten-Rechner.',
+      'Werkzeugdurchmesser d angeben; daraus ergibt sich die Drehzahl.',
+      'Zähnezahl z des Fräsers eintragen.',
+      'Zahnvorschub fz ergänzen und Drehzahl sowie Vorschub ablesen. Liegt die Drehzahl über dem Maximum deiner Spindel, senke vc – nicht fz.',
+  ],
   faq: [
     {
       q: 'Woher bekomme ich vc und fz?',
@@ -40,7 +48,7 @@ export const tool: Tool = {
     },
   ],
   related: ['schnittdaten-rechner', 'schnittgeschwindigkeit', 'vorschub-fraesen'],
-  updated: '2026-06-15',
+  updated: '2026-08-26',
   examples: [
     {
       values: { vc: 120, d: 6, z: 2, fz: 0.02 },

@@ -21,6 +21,36 @@ describe('Tool-Registry', () => {
   });
 });
 
+describe('Interne Verlinkung', () => {
+  const slugs = new Set(TOOLS.map((t) => t.slug));
+
+  it('jeder related-Verweis zeigt auf ein existierendes Tool', () => {
+    // Ein Tippfehler im Slug erzeugt eine tote interne Verlinkung, die im Build
+    // nicht auffällt: Die Karte fehlt einfach. Gefunden wurde genau so ein Fall
+    // (laser-air-assist statt laser-air-assist-luftverbrauch).
+    const tot: string[] = [];
+    for (const t of TOOLS) for (const r of t.related ?? []) if (!slugs.has(r)) tot.push(`${t.slug} -> ${r}`);
+    expect(tot, tot.join(' | ')).toEqual([]);
+  });
+
+  it('kein Tool verweist auf sich selbst', () => {
+    for (const t of TOOLS) expect(t.related ?? [], t.slug).not.toContain(t.slug);
+  });
+
+  it('jedes Tool hat Einleitung, Anleitung, FAQ und Verweise', () => {
+    // Ohne diese vier Felder ist eine Tool-Seite für Suchmaschinen dünn und für
+    // Leser ein nackter Rechner ohne Einordnung.
+    const luecken: string[] = [];
+    for (const t of TOOLS) {
+      if (!t.intro || t.intro.length < 80) luecken.push(`${t.slug}: intro`);
+      if (!t.howto || t.howto.length < 2) luecken.push(`${t.slug}: howto`);
+      if (!t.faq || t.faq.length < 1) luecken.push(`${t.slug}: faq`);
+      if (!t.related || t.related.length < 1) luecken.push(`${t.slug}: related`);
+    }
+    expect(luecken, luecken.join(' | ')).toEqual([]);
+  });
+});
+
 describe.each(TOOLS.map((t) => [t.slug, t] as const))('Tool: %s', (_slug, tool) => {
   it('hat gültige Grunddaten', () => {
     expect(tool.title.length).toBeGreaterThan(3);

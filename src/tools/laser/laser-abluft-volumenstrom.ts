@@ -59,8 +59,8 @@ export const tool: Tool = {
     { q: 'Reicht ein Umluftfilter statt Abluft nach außen?', a: 'Ein guter Aktivkohle- und Schwebstofffilter kann viele Stoffe binden, muss aber für den Volumenstrom ausgelegt und regelmäßig gewartet werden. Bei stark rauchenden oder gesundheitsschädlichen Materialien ist eine Abluft ins Freie sicherer.' },
     { q: 'Berücksichtigt der Rechner Druckverluste?', a: 'Nein, er liefert den reinen Soll-Volumenstrom. Lange Schläuche, Bögen und Filter erhöhen den Widerstand, sodass die reale Förderleistung sinkt. Plane deshalb beim Lüfter eine Reserve von etwa 30-50 % ein.' },
   ],
-  related: ['laser-air-assist', 'laser-einstellung-material', 'laser-schnittkosten'],
-  updated: '2026-06-16',
+  related: ['laser-air-assist-luftverbrauch', 'laser-einstellung-material', 'laser-schnittkosten'],
+  updated: '2026-08-26',
   examples: [
     { values: { breite: 100, hoehe: 30, tiefe: 60, luftwechsel: 1, rohr: 100 }, expect: [{ label: 'Benötigter Volumenstrom', value: 10.8, tolerance: 0.1 }] },
     { values: { breite: 100, hoehe: 30, tiefe: 60, luftwechsel: 1, rohr: 100 }, expect: [{ label: 'Strömungsgeschwindigkeit im Rohr', value: 0.38, tolerance: 0.05 }] },

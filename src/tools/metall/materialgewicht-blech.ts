@@ -43,13 +43,22 @@ export const tool: Tool = {
       { label: 'Gewicht (Gramm)', value: gewichtG, unit: 'g', digits: 0 },
     ];
   },
+  intro:
+    'Eine Zahl lohnt sich zu merken: Ein Quadratmeter Stahlblech von 1 mm Dicke wiegt 7,85 kg. Alles Weitere skaliert linear – 2 mm sind 15,7 kg, ein halber Quadratmeter die Hälfte davon. Aluminium liegt bei gut einem Drittel (2,7 kg), Kupfer und Messing deutlich darüber. Gerechnet wird mit der Nenndicke; echte Bleche haben Walztoleranzen, die bei dünnem Material einige Prozent ausmachen können. Für Transport, Hebezeug und die Auslegung einer Unterkonstruktion reicht die Rechnung trotzdem allemal.',
+  howto: [
+      'Länge und Breite der Platte in Millimetern eintragen.',
+      'Dicke angeben – bei Blechen die Nenndicke laut Bestellung.',
+      'Material auswählen; dahinter steckt die Dichte.',
+      'Gewicht in Kilogramm ablesen. Für mehrere gleiche Platten einfach multiplizieren.',
+  ],
   faq: [
     {
       q: 'Welche Dichte hat Edelstahl?',
       a: 'Gängiger Edelstahl (V2A/V4A) liegt bei etwa 7,9–8,0 g/cm³, normaler Baustahl bei 7,85 g/cm³.',
     },
   ],
-  updated: '2026-06-15',
+  related: ['flachstahl-gewicht', 'rundmaterial-gewicht', 'blech-abwicklung'],
+  updated: '2026-08-26',
   examples: [
     {
       values: { laenge: 1000, breite: 1000, dicke: 2, dichte: '7.85' },

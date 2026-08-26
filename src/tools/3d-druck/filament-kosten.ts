@@ -41,6 +41,8 @@ export const tool: Tool = {
       { label: 'Gesamtkosten', value: gesamt, unit: '€', digits: 2, primary: true },
     ];
   },
+  intro:
+    'Die Kosten eines Drucks bestehen aus zwei sehr ungleichen Teilen. Das Material dominiert fast immer: Ein 50-Gramm-Druck kostet bei 22 €/kg gut einen Euro, der Strom für vier Stunden bei 120 W dagegen nur rund 17 Cent. Erst bei langen Drucken mit beheiztem Bett und geschlossener Kammer verschiebt sich das Verhältnis spürbar. Nicht enthalten sind Abschreibung des Druckers, Düsenverschleiß und – oft der größte Posten – fehlgeschlagene Drucke. Wer für andere druckt, schlägt darauf noch einen Aufschlag.',
   howto: [
     'Druckgewicht aus dem Slicer (Cura, PrusaSlicer, OrcaSlicer) in Gramm übernehmen.',
     'Filamentpreis pro Kilogramm eintragen.',
@@ -57,7 +59,7 @@ export const tool: Tool = {
     },
   ],
   related: ['filament-gewicht'],
-  updated: '2026-06-15',
+  updated: '2026-08-26',
   examples: [
     {
       values: { gewicht: 50, preis: 22, zeit: 4, leistung: 120, strompreis: 0.35 },

@@ -32,6 +32,8 @@ export const tool: Tool = {
       { label: 'Benötigte Pakete', value: pakete, unit: 'Pakete', digits: 0, primary: true },
     ];
   },
+  intro:
+    'Der Rechner macht zwei Dinge nacheinander, die gern verwechselt werden. Zuerst kommt der Verschnitt-Zuschlag auf die Raumfläche – das Material, das an Wänden, Türzargen und Heizungsrohren als Abschnitt übrig bleibt. Danach wird auf ganze Pakete aufgerundet, und dieses Aufrunden schlägt oft schwerer zu Buche als der Verschnitt selbst: Bei 2,5 m² Paketinhalt können allein dadurch nochmals fast 2,5 m² dazukommen. Ein Rat aus der Praxis: alle Pakete aus derselben Charge kaufen. Farbe und Struktur unterscheiden sich zwischen Produktionschargen sichtbar, und Monate später nachzukaufen gelingt selten.',
   howto: [
     'Raumfläche in m² berechnen (Länge × Breite, ggf. Teilflächen addieren).',
     'Paketinhalt vom Etikett des Bodenbelags ablesen.',
@@ -49,7 +51,7 @@ export const tool: Tool = {
     },
   ],
   related: ['holz-volumen-gewicht'],
-  updated: '2026-06-15',
+  updated: '2026-08-26',
   examples: [
     {
       values: { flaeche: 20, paketinhalt: 2.5, verschnitt: 8 },

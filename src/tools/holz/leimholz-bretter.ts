@@ -33,6 +33,8 @@ export const tool: Tool = {
       { label: 'Überstand zum Besäumen', value: ueberstand, unit: 'mm', digits: 0 },
     ];
   },
+  intro:
+    'Aufgerundet wird immer nach oben – eine halbe Lamelle lässt sich nicht verleimen. Der entstehende Überstand ist dabei kein Verlust, sondern erwünscht: Nach dem Verleimen werden beide Längskanten gerade besäumt, und dafür braucht es Material. Für die Platte selbst gilt eine Faustregel, die mehr bringt als jede Rechnung: lieber viele schmale Lamellen als wenige breite. Schmale Bretter verziehen sich weniger, und wer die Jahresringe benachbarter Lamellen abwechselnd nach oben und unten legt, lässt das verbleibende Schüsseln sich gegenseitig aufheben.',
   howto: [
     'Gewünschte Endbreite der Leimholzplatte eintragen.',
     'Fertige Breite einer einzelnen Lamelle (nach dem Hobeln) angeben.',
@@ -50,7 +52,7 @@ export const tool: Tool = {
     },
   ],
   related: ['holz-volumen-gewicht', 'zuschnitt-laenge'],
-  updated: '2026-06-15',
+  updated: '2026-08-26',
   examples: [
     {
       values: { plattenbreite: 600, brettbreite: 80 },

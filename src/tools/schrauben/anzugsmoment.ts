@@ -30,13 +30,22 @@ export const tool: Tool = {
     const m = k * f * (d / 1000); // Nm
     return [{ label: 'Anzugsmoment', value: m, unit: 'Nm', digits: 1, primary: true }];
   },
+  intro:
+    'Die Formel M = K · F · d ist eine grobe, aber erstaunlich tragfähige Näherung. Ihr Kern ist die Einsicht, dass nur ein kleiner Teil des aufgebrachten Moments überhaupt als Vorspannkraft in der Schraube ankommt – der weitaus größte Teil geht in Gewinde- und Kopfreibung verloren. Genau deshalb steckt die Reibung im Faktor K und beherrscht das Ergebnis: Dieselbe Schraube braucht geölt rund 30 Prozent weniger Drehmoment für dieselbe Vorspannkraft. Eine Drehmomentangabe ohne den zugehörigen Reibungszustand ist deshalb wenig wert. Und weil die Reibung stark streut, trifft man die Vorspannkraft mit dem Drehmomentschlüssel typischerweise nur auf ±25 Prozent genau.',
+  howto: [
+      'Reibungszahl K wählen: trocken etwa 0,20, leicht geölt etwa 0,14.',
+      'Gewinde-Nenndurchmesser d eintragen – bei einer M8 also 8 mm.',
+      'Gewünschte Vorspannkraft F in Newton angeben; sie ergibt sich aus Festigkeitsklasse und Spannungsquerschnitt.',
+      'Anzugsmoment ablesen. Fertige Tabellenwerte nach Festigkeitsklasse liefert die Anzugsmoment-Tabelle.',
+  ],
   faq: [
     {
       q: 'Was bedeutet die Reibungszahl K?',
       a: 'K (Anziehfaktor) fasst Gewinde- und Kopfreibung zusammen. Trocken ca. 0,20, leicht geölt ca. 0,14 – weniger Reibung bedeutet weniger Drehmoment für dieselbe Vorspannkraft.',
     },
   ],
-  updated: '2026-06-15',
+  related: ['anzugsmoment-tabelle', 'vorspannkraft', 'drehmoment-reibungskorrektur'],
+  updated: '2026-08-26',
   examples: [
     {
       values: { k: 0.2, d: 8, f: 15000 },

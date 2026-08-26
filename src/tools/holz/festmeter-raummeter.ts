@@ -37,6 +37,8 @@ export const tool: Tool = {
     const festmeter = raummeter * faktor;
     return [{ label: 'Festmeter', value: festmeter, unit: 'fm', digits: 2, primary: true }];
   },
+  intro:
+    'Im Brennholzhandel kursieren drei Maße für dasselbe Holz, und der Unterschied zwischen ihnen ist bares Geld. Ein Festmeter ist ein Kubikmeter reine Holzmasse. Ein Raummeter (Ster) ist ein Kubikmeter gestapeltes Scheitholz – die Luft zwischen den Scheiten zählt mit, weshalb darin nur rund 0,7 Festmeter stecken. Beim lose geschütteten Schüttraummeter sind es gar nur etwa 0,4. Wer „drei Ster“ bestellt und „drei Festmeter“ erwartet, bekommt rund 30 Prozent weniger Holz als gedacht. Die Faktoren sind übliche Konventionen; wie dicht tatsächlich gestapelt wurde, hängt von Scheitlänge und Sorgfalt ab.',
   howto: [
     'Raummeter (Ster) deines Brennholzstapels eintragen.',
     'Holzform wählen: geschichtetes Scheitholz, Rugelholz oder lose geschüttetes Holz.',
@@ -53,7 +55,7 @@ export const tool: Tool = {
     },
   ],
   related: ['holz-volumen-gewicht'],
-  updated: '2026-06-15',
+  updated: '2026-08-26',
   examples: [
     {
       values: { raummeter: 3, faktor: '0.7' },

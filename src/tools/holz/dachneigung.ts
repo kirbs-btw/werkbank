@@ -33,6 +33,8 @@ export const tool: Tool = {
       { label: 'Sparrenlänge', value: sparren, unit: 'mm', digits: 0 },
     ];
   },
+  intro:
+    'Dachneigung wird in zwei Einheiten angegeben, die leicht durcheinandergeraten. Grad ist der echte Winkel; Prozent ist das Verhältnis von Höhe zu waagerechter Länge – und eben kein Anteil an 90°. 100 % Neigung entsprechen 45°, nicht der Senkrechten. Die Sparrenlänge folgt aus dem Satz des Pythagoras über Firsthöhe und halbe Dachbreite. Wichtig ist, was dabei nicht enthalten ist: Berechnet wird die reine Länge vom Auflager bis zum First. Für den fertigen Sparren kommen Dachüberstand und der Abbund für die Kerve noch hinzu.',
   howto: [
     'Firsthöhe ab Oberkante Auflager (Wand) bis zur Firstmitte messen.',
     'Halbe Dachbreite als horizontalen Abstand von der Außenwand bis zur Firstmitte eintragen.',
@@ -48,8 +50,8 @@ export const tool: Tool = {
       a: 'Prozent = tan(Winkel)·100. 45° entsprechen 100 %, 26,57° entsprechen 50 %.',
     },
   ],
-  related: ['treppen-steigung'],
-  updated: '2026-06-15',
+  related: ['treppen-steigung', 'sparrenlaenge-dachschraege'],
+  updated: '2026-08-26',
   examples: [
     {
       values: { hoehe: 2000, basis: 4000 },

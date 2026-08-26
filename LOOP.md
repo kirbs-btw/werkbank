@@ -138,7 +138,7 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 
 - [x] ~~**S1 Sitemap-`lastmod` pro Seite**~~ → `src/lib/lastmod.ts` + `serialize` in der Astro-Config (2026-08-26)
 - [x] ~~**S2 `dateModified` in JSON-LD** + menschenlesbares Datum~~ → `UpdatedAt.astro`, 162 Seiten (2026-08-26)
-- [ ] **S3 Content-Lücken schließen:** 13 Tools ohne `intro`, 5 ohne `howto`, 4 ohne `related`.
+- [x] ~~**S3 Content-Lücken schließen**~~ → alle 153 Tools vollständig, Testsperre gesetzt (2026-08-26)
 - [ ] **S4 Per-Tool-OG-Bilder** zur Build-Zeit generieren (ohne externe Dienste).
 - [ ] **S5 Cross-Kategorie-`related`-Kuratierung** (z. B. Laser ↔ CNC ↔ Holz sinnvoll verweben).
 - [ ] **S6 Teilen-Links:** Rechner-Eingaben als URL-Parameter, Canonical bleibt sauber.
@@ -408,6 +408,31 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   **Merksatz:** Dichtheit über Kantenzählung ist notwendig, aber nicht hinreichend. Wer wissen will,
   ob ein Netz wirklich geschlossen ist, prüft zusätzlich, ob die Flächenvektoren sich aufheben –
   und die einfachste Probe darauf ist: dasselbe Teil an zwei Orten muss dasselbe Volumen haben.
+
+- **2026-08-26 · Iteration 15 (S3):** **Alle 153 Tools inhaltlich vollständig.** 12 fehlende
+  Einleitungen, 5 Anleitungen und 3 Verweis-Sätze ergänzt. Die Texte erklären jeweils das, was über
+  die Formel hinausgeht und wofür man sonst nachschlagen müsste: warum ein Raummeter Ster rund 30 %
+  weniger Holz enthält als ein Festmeter; warum die Holzfeuchte u über 100 % liegen kann (frische
+  Fichte enthält mehr Wasser als eigene Trockensubstanz); warum beim Anziehen einer Schraube der
+  größte Teil des Moments in Reibung verschwindet und eine Drehmomentangabe ohne Reibungszustand
+  wenig wert ist; dass ein Quadratmeter Stahlblech je Millimeter Dicke 7,85 kg wiegt. Bei den
+  Bodenbelägen der Hinweis, dass das Aufrunden auf ganze Pakete oft schwerer wiegt als der
+  Verschnitt selbst.
+
+  **Nebenbei ein toter interner Link gefunden:** `laser-abluft-volumenstrom` verwies auf
+  `laser-air-assist` statt auf `laser-air-assist-luftverbrauch`. So etwas fällt im Build nicht auf –
+  die Karte fehlt einfach. Drei neue Tests sperren die Fehlerklasse dauerhaft: jeder `related`-Slug
+  muss existieren, kein Tool darf auf sich selbst verweisen, und jedes Tool braucht Einleitung,
+  Anleitung, FAQ und Verweise. Damit kann S3 nicht mehr zurückfallen.
+
+  Berührte Tools haben ein neues `updated`-Datum bekommen – die Sitemap meldet also 13 ehrlich
+  geänderte Seiten und nicht den ganzen Bestand. Korrigiert wurde außerdem ein irreführender
+  Kommentar in `types.ts`: Er versprach für `howto` ein HowTo-Schema, das nie ausgegeben wurde.
+  Nachrüsten lohnt nicht – Google hat die HowTo-Rich-Results 2023 abgekündigt; der sichtbare Text
+  bleibt, das Markup wäre Ballast. Insgesamt 925 Tests.
+
+  **Merksatz:** Vollständigkeit, die man einmal herstellt, zerfällt wieder. Wer eine Lücke schließt,
+  sollte im selben Zug den Test schreiben, der sie nicht zurückkommen lässt.
 
 ## Start-Prompt (Referenz)
 

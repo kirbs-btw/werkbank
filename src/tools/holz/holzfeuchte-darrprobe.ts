@@ -39,6 +39,8 @@ export const tool: Tool = {
       { label: 'Wassergehalt', value: wassergehalt, unit: '%', digits: 1 },
     ];
   },
+  intro:
+    'Die Darrprobe ist das Referenzverfahren, an dem sich jedes elektronische Feuchtemessgerät messen lassen muss: Probe wiegen, bei 103 °C bis zur Gewichtskonstanz trocknen, erneut wiegen. Die Differenz ist das ausgetriebene Wasser. Entscheidend ist der Bezug – und hier trennen sich zwei Zahlen, die oft verwechselt werden. Die Holzfeuchte u bezieht das Wasser auf die trockene Holzmasse und kann deshalb über 100 Prozent liegen: Frisch geschlagene Fichte enthält tatsächlich mehr Wasser, als ihre eigene Trockensubstanz wiegt. Der Wassergehalt bezieht sich dagegen auf die Feuchtmasse und bleibt naturgemäß unter 100 Prozent. Im Brennholzhandel und in der Holztechnik ist immer u gemeint.',
   howto: [
     'Probe wiegen und Feuchtmasse notieren.',
     'Probe bei ca. 103 °C trocknen, bis das Gewicht konstant bleibt (darrtrocken).',
@@ -56,7 +58,7 @@ export const tool: Tool = {
     },
   ],
   related: ['festmeter-raummeter', 'holz-volumen-gewicht'],
-  updated: '2026-06-15',
+  updated: '2026-08-26',
   examples: [
     {
       values: { feucht: 120, darr: 100 },

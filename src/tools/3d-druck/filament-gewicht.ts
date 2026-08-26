@@ -51,6 +51,14 @@ export const tool: Tool = {
       { label: 'Länge pro 1 kg', value: proKg, unit: 'm', digits: 0 },
     ];
   },
+  intro:
+    'Filament ist nichts anderes als ein sehr langer, dünner Zylinder: Querschnittsfläche mal Länge ergibt das Volumen, mal Dichte das Gewicht. Gebraucht wird die Rechnung in beide Richtungen – der Slicer nennt oft nur die Länge in Metern, bezahlt wird aber pro Kilogramm; umgekehrt lässt sich aus dem Gewicht einer angebrochenen Spule abschätzen, wie viele Meter noch darauf sind. Der Durchmesser wirkt dabei quadratisch: 2,85-mm-Filament hat den 2,65-fachen Querschnitt von 1,75 mm, dieselbe Länge wiegt also fast dreimal so viel.',
+  howto: [
+      'Filament-Durchmesser wählen – 1,75 mm ist der Standard, 2,85 mm nutzen vor allem ältere Bowden-Geräte.',
+      'Material auswählen; dahinter steckt die Dichte, die das Gewicht bestimmt.',
+      'Filamentlänge in Metern eintragen – der Wert steht im Slicer neben dem Materialverbrauch.',
+      'Gewicht ablesen. Die Zeile „Länge pro 1 kg“ sagt umgekehrt, wie viele Meter auf einer vollen Spule stecken.',
+  ],
   faq: [
     {
       q: 'Welche Dichte hat mein Filament?',
@@ -58,7 +66,7 @@ export const tool: Tool = {
     },
   ],
   related: ['filament-kosten'],
-  updated: '2026-06-15',
+  updated: '2026-08-26',
   examples: [
     {
       values: { durchmesser: '1.75', material: '1.24', laenge: 100 },

@@ -42,6 +42,8 @@ export const tool: Tool = {
       },
     ];
   },
+  intro:
+    'Die Stufenanzahl muss ganzzahlig sein – die Wunsch-Steigungshöhe ist deshalb nur ein Ausgangswert, aus dem sich nach dem Runden die tatsächliche Steigung ergibt. Bewertet wird das Ergebnis über die Schrittmaßregel 2 · Steigung + Auftritt, die dem natürlichen Schritt von rund 63 cm nachempfunden ist; zwischen 590 und 650 mm läuft sich eine Treppe bequem. Daneben stehen zwei weitere Faustregeln: die Sicherheitsregel (Steigung + Auftritt ≈ 460 mm) und die Bequemlichkeitsregel (Auftritt − Steigung ≈ 120 mm). Verbindliche Grenzwerte für notwendige Treppen stehen allerdings in DIN 18065 und der jeweiligen Landesbauordnung – dieser Rechner ersetzt sie nicht.',
   howto: [
     'Geschosshöhe von Fertigfußboden bis Fertigfußboden messen.',
     'Gewünschte Steigungshöhe (ca. 170–180 mm) eintragen.',
@@ -59,7 +61,7 @@ export const tool: Tool = {
     },
   ],
   related: ['dachneigung'],
-  updated: '2026-06-15',
+  updated: '2026-08-26',
   examples: [
     {
       values: { geschosshoehe: 2600, auftritt: 280, wunschsteigung: 180 },
