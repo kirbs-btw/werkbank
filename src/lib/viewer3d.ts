@@ -228,11 +228,25 @@ export interface ViewerOptions {
   background?: [number, number, number];
 }
 
+/** Ein eingefärbtes Teilnetz. */
+export interface MeshPart {
+  triangles: ArrayLike<number>;
+  color: [number, number, number];
+}
+
 export interface Viewer {
   /** Netz setzen (flaches Dreieck-Array, 9 Werte je Dreieck). */
   setMesh(triangles: ArrayLike<number>): void;
+  /** Mehrere Teilnetze mit eigener Farbe – zeigt etwa beide Hälften eines Schnitts. */
+  setParts(parts: MeshPart[]): void;
   /** Kamera auf das Netz einpassen. */
   resetView(): void;
+  /**
+   * Aktuelle Ansicht als PNG-Datenurl. Zeichnet dafür synchron und liest sofort
+   * aus – nach dem Compositing gibt WebGL den Puffer frei, ein späterer Zugriff
+   * liefert nur Schwarz.
+   */
+  snapshot(): string | null;
   destroy(): void;
   readonly bounds: MeshBounds;
 }
@@ -290,6 +304,8 @@ export function createViewer(canvas: HTMLCanvasElement, opts: ViewerOptions = {}
   gl.enable(gl.DEPTH_TEST);
   gl.clearColor(bg[0], bg[1], bg[2], 1);
 
+  interface Teil { buffer: WebGLBuffer | null; normals: WebGLBuffer | null; count: number; color: [number, number, number] }
+  const teile: Teil[] = [];
   let vertexCount = 0;
   let bounds = meshBounds([]);
   const fovY = (45 * Math.PI) / 180;
@@ -338,10 +354,17 @@ export function createViewer(canvas: HTMLCanvasElement, opts: ViewerOptions = {}
     gl.useProgram(prog);
     gl.uniformMatrix4fv(uMvp, false, new Float32Array(mvp));
     gl.uniform3f(uEye, eye.x, eye.y, eye.z);
-    gl.uniform3f(uColor, color[0], color[1], color[2]);
     gl.uniform3f(uCenter, bounds.center.x, bounds.center.y, bounds.center.z);
     gl.bindVertexArray(vao);
-    gl.drawArrays(gl.TRIANGLES, 0, vertexCount);
+    for (const t of teile) {
+      if (t.count === 0) continue;
+      gl.uniform3f(uColor, t.color[0], t.color[1], t.color[2]);
+      gl.bindBuffer(gl.ARRAY_BUFFER, t.buffer);
+      gl.vertexAttribPointer(locPos, 3, gl.FLOAT, false, 0, 0);
+      gl.bindBuffer(gl.ARRAY_BUFFER, t.normals);
+      gl.vertexAttribPointer(locNormal, 3, gl.FLOAT, false, 0, 0);
+      gl.drawArrays(gl.TRIANGLES, 0, t.count);
+    }
     gl.bindVertexArray(null);
   }
 
@@ -411,20 +434,56 @@ export function createViewer(canvas: HTMLCanvasElement, opts: ViewerOptions = {}
 
   return {
     setMesh(triangles) {
-      bounds = meshBounds(triangles);
-      const positions = triangles instanceof Float32Array ? triangles : Float32Array.from(triangles as ArrayLike<number>);
-      const normals = faceNormals(triangles);
-      vertexCount = Math.floor(positions.length / 3);
-      gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
-      gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
-      gl.bindBuffer(gl.ARRAY_BUFFER, normBuf);
-      gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
-      resetView();
+      this.setParts([{ triangles, color }]);
+    },
+    setParts(parts) {
+      // Alte Puffer freigeben, bevor neue entstehen
+      for (const t of teile) {
+        gl.deleteBuffer(t.buffer);
+        gl.deleteBuffer(t.normals);
+      }
+      teile.length = 0;
+
+      const alle: number[] = [];
+      for (const part of parts) {
+        const positions =
+          part.triangles instanceof Float32Array
+            ? part.triangles
+            : Float32Array.from(part.triangles as ArrayLike<number>);
+        const normals = faceNormals(part.triangles);
+        const pb = gl.createBuffer();
+        const nb = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, pb);
+        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ARRAY_BUFFER, nb);
+        gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
+        teile.push({ buffer: pb, normals: nb, count: Math.floor(positions.length / 3), color: part.color });
+        for (let i = 0; i < part.triangles.length; i++) alle.push(part.triangles[i]);
+      }
+      vertexCount = teile.reduce((n, t) => n + t.count, 0);
+      const vorher = bounds.radius;
+      bounds = meshBounds(alle);
+      // Kamera nur neu einpassen, wenn sich die Größe wirklich ändert –
+      // sonst springt die Ansicht bei jedem Schieberegler-Schritt zurück.
+      if (Math.abs(bounds.radius - vorher) > vorher * 0.01 + 1e-9) resetView();
       schedule();
     },
     resetView() {
       resetView();
       schedule();
+    },
+    snapshot() {
+      if (vertexCount === 0) return null;
+      if (frame) {
+        cancelAnimationFrame(frame);
+        frame = 0;
+      }
+      draw(); // synchron zeichnen, damit der Puffer beim Auslesen noch steht
+      try {
+        return canvas.toDataURL('image/png');
+      } catch {
+        return null;
+      }
     },
     destroy() {
       if (frame) cancelAnimationFrame(frame);
@@ -437,6 +496,10 @@ export function createViewer(canvas: HTMLCanvasElement, opts: ViewerOptions = {}
       canvas.removeEventListener('touchmove', onTouch);
       gl.deleteBuffer(posBuf);
       gl.deleteBuffer(normBuf);
+      for (const t of teile) {
+        gl.deleteBuffer(t.buffer);
+        gl.deleteBuffer(t.normals);
+      }
       gl.deleteVertexArray(vao);
       gl.deleteProgram(prog);
     },

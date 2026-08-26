@@ -107,10 +107,16 @@ const labelCls = 'mb-1 flex items-center justify-between text-sm font-medium tex
       </figcaption>
       <div class="relative">
         <canvas id="stl-canvas" class="block h-80 w-full rounded-lg bg-zinc-50"></canvas>
-        <button id="stl-reset-view" type="button"
-          class="absolute right-2 top-2 rounded-lg border border-zinc-300 bg-white/90 px-2.5 py-1 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-white">
-          Ansicht zurücksetzen
-        </button>
+        <div class="absolute right-2 top-2 flex gap-1.5">
+          <button id="stl-snapshot" type="button"
+            class="rounded-lg border border-zinc-300 bg-white/90 px-2.5 py-1 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-white">
+            Bild speichern
+          </button>
+          <button id="stl-reset-view" type="button"
+            class="rounded-lg border border-zinc-300 bg-white/90 px-2.5 py-1 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-white">
+            Ansicht zurücksetzen
+          </button>
+        </div>
       </div>
       <p id="stl-view-hint" hidden class="mt-2 text-xs text-zinc-500"></p>
     </figure>
@@ -472,6 +478,14 @@ const labelCls = 'mb-1 flex items-center justify-between text-sm font-medium tex
   }
 
   $('stl-reset-view')?.addEventListener('click', () => viewer?.resetView());
+  $('stl-snapshot')?.addEventListener('click', () => {
+    const bild = viewer?.snapshot();
+    if (!bild) return;
+    const a = document.createElement('a');
+    a.href = bild;
+    a.download = 'ansicht.png';
+    a.click();
+  });
 
   function pick(files: FileList | null): void {
     const file = files?.[0];

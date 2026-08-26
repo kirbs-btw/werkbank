@@ -1,0 +1,487 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import UpdatedAt from '../../components/UpdatedAt.astro';
+import { getGenerator } from '../../lib/generators';
+import { generatorAppLd, breadcrumbLd, faqLd } from '../../lib/schema';
+
+const gen = getGenerator('stl-splitter')!;
+const path = '/generatoren/stl-splitter';
+const crumbs = [
+  { name: 'Start', href: '/' },
+  { name: 'Generatoren', href: '/kategorie/generatoren' },
+  { name: gen.shortTitle ?? gen.title, href: path },
+];
+
+const FAQ = [
+  {
+    q: 'Wofür brauche ich einen STL-Splitter?',
+    a: 'Für alles, was nicht auf die Bauplatte passt. Statt das Modell zu verkleinern und damit unbrauchbar zu machen, teilst du es in Stücke, druckst sie einzeln und klebst sie zusammen. Genauso hilfreich ist das Teilen, um Stützstrukturen zu vermeiden: Ein an der richtigen Stelle getrenntes Modell hat plötzlich zwei flache Seiten und druckt sich ohne Überhänge.',
+  },
+  {
+    q: 'Bleiben die Hälften druckbar?',
+    a: 'Ja. Die Schnittfläche wird automatisch geschlossen, sodass beide Hälften wieder geschlossene Körper sind – auch bei hohlen Modellen, wo an der Schnittkante ein Außen- und ein Innenring entsteht. Du kannst das direkt gegenprüfen: Lade eine Hälfte in die STL-Analyse, dort steht, ob das Netz dicht ist.',
+  },
+  {
+    q: 'Wird meine Datei hochgeladen?',
+    a: 'Nein. Einlesen, Anzeigen, Schneiden und Speichern passieren komplett in deinem Browser. Das Modell verlässt dein Gerät nicht – anders als bei Online-Diensten, die dafür einen Upload und oft ein Konto verlangen.',
+  },
+  {
+    q: 'Wie finde ich die beste Schnittstelle?',
+    a: 'Zwei Faustregeln: Schneide dort, wo der Querschnitt klein ist – das spart Klebefläche und fällt weniger auf. Und schneide so, dass beide Hälften eine große flache Fläche zum Aufliegen bekommen. Der Bauraum-Vergleich unten zeigt dir sofort, ob beide Teile passen.',
+  },
+  {
+    q: 'Wie klebe ich die Teile wieder zusammen?',
+    a: 'Bei PLA und PETG funktioniert Sekundenkleber (Cyanacrylat) sehr gut, bei ABS zusätzlich Aceton, das die Oberflächen anlöst. Wichtiger als der Kleber ist die Passung: Beide Schnittflächen sind exakt eben, also vorher entgraten und trocken zusammenstecken, um zu prüfen, ob nichts vorsteht.',
+  },
+  {
+    q: 'Kann ich mehrfach schneiden?',
+    a: 'Ja – speichere eine Hälfte, lade sie erneut und setze den nächsten Schnitt. So zerlegst du auch sehr große Modelle Schritt für Schritt. Passstifte, die das Zusammensetzen erleichtern, sind als nächster Ausbauschritt geplant.',
+  },
+];
+
+const ld: object[] = [
+  generatorAppLd(gen, path),
+  breadcrumbLd(crumbs.map((c) => ({ name: c.name, path: c.href }))),
+  faqLd(FAQ),
+];
+
+const inputCls =
+  'w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-zinc-900 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200';
+const rowCls = 'flex items-baseline justify-between gap-4 border-b border-zinc-100 py-2 last:border-0';
+const labelCls = 'mb-1 flex items-center justify-between text-sm font-medium text-zinc-700';
+---
+
+<BaseLayout
+  title="STL-Splitter – zu großes Modell für den Drucker teilen"
+  description={gen.description}
+  path={path}
+  ogType="article"
+  jsonLd={ld}
+>
+  <div class="mx-auto max-w-5xl px-4 py-8">
+    <Breadcrumbs items={crumbs} />
+
+    <header class="mt-4">
+      <h1 class="text-3xl font-extrabold tracking-tight text-zinc-900">STL-Splitter</h1>
+      <p class="mt-2 text-lg text-zinc-600">
+        Modell zu groß für die Bauplatte? Schnittebene setzen, beide Hälften einzeln speichern –
+        die Schnittfläche wird automatisch geschlossen, auch bei hohlen Modellen.
+      </p>
+      <UpdatedAt date={gen.updated} class="mt-2" />
+    </header>
+
+    <div
+      id="sp-drop"
+      class="mt-8 rounded-xl border-2 border-dashed border-zinc-300 bg-white p-8 text-center transition"
+    >
+      <svg class="mx-auto h-10 w-10 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M4 12h16M8 5l-2 3m12-3l2 3M8 19l-2-3m12 3l2-3" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+      <p class="mt-3 font-medium text-zinc-800">STL-Datei hier ablegen</p>
+      <p class="mt-1 text-sm text-zinc-500">oder</p>
+      <label class="mt-3 inline-block cursor-pointer rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-500">
+        Datei auswählen
+        <input id="sp-file" type="file" accept=".stl,model/stl,application/sla" class="sr-only" />
+      </label>
+      <p class="mt-3 text-xs text-zinc-500">
+        Binär und ASCII · <strong>Die Datei bleibt in deinem Browser</strong> und wird nicht hochgeladen.
+      </p>
+    </div>
+
+    <p id="sp-status" hidden class="mt-4 rounded-lg border px-4 py-3 text-sm"></p>
+
+    <div id="sp-work" hidden class="mt-6 grid gap-6 lg:grid-cols-[300px_1fr]">
+      <form id="sp-form" class="space-y-4" onsubmit="return false">
+        <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Schnitt</h2>
+          <div class="mt-3 space-y-4">
+            <label class="block">
+              <span class="mb-1 block text-sm font-medium text-zinc-700">Achse</span>
+              <select id="sp-axis" class={inputCls}>
+                <option value="z" selected>Z – waagerecht schneiden</option>
+                <option value="x">X – senkrecht, quer</option>
+                <option value="y">Y – senkrecht, längs</option>
+              </select>
+            </label>
+            <label class="block">
+              <span class={labelCls}><span>Position</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <input id="sp-pos" type="number" step="0.5" inputmode="decimal" class={inputCls} />
+              <input id="sp-slider" type="range" step="0.1" aria-label="Schnittposition" class="mt-2 w-full accent-brand-600" />
+              <span id="sp-range" class="mt-1 block text-xs text-zinc-500"></span>
+            </label>
+            <button id="sp-center" type="button" class="w-full rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100">
+              Mittig setzen
+            </button>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm">
+          <h2 class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Bauraum</h2>
+          <div class="mt-3 grid grid-cols-3 gap-2">
+            <input id="sp-bx" type="number" value="220" min="1" step="10" aria-label="Bauraum X in mm" class={inputCls} />
+            <input id="sp-by" type="number" value="220" min="1" step="10" aria-label="Bauraum Y in mm" class={inputCls} />
+            <input id="sp-bz" type="number" value="250" min="1" step="10" aria-label="Bauraum Z in mm" class={inputCls} />
+          </div>
+          <span class="mt-1 block text-xs text-zinc-500">in mm – prüft beide Hälften</span>
+          <div class="mt-5 flex flex-col gap-2">
+            <button id="sp-dl-a" type="button" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-500">
+              Obere Hälfte speichern
+            </button>
+            <button id="sp-dl-b" type="button" class="rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-500">
+              Untere Hälfte speichern
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <div>
+        <div id="sp-warn" hidden class="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"></div>
+
+        <figure class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+          <figcaption class="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+            <span class="text-xs font-semibold uppercase tracking-wide text-zinc-500">Ansicht</span>
+            <span class="text-xs text-zinc-500">
+              <span class="mr-3"><span class="mr-1 inline-block h-2 w-2 rounded-full align-middle" style="background:#d97706"></span>obere Hälfte</span>
+              <span><span class="mr-1 inline-block h-2 w-2 rounded-full align-middle" style="background:#0d9488"></span>untere Hälfte</span>
+            </span>
+          </figcaption>
+          <div class="relative">
+            <canvas id="sp-canvas" class="block h-80 w-full rounded-lg bg-zinc-50"></canvas>
+            <button id="sp-reset-view" type="button"
+              class="absolute right-2 top-2 rounded-lg border border-zinc-300 bg-white/90 px-2.5 py-1 text-xs font-medium text-zinc-700 shadow-sm transition hover:bg-white">
+              Ansicht zurücksetzen
+            </button>
+          </div>
+          <p id="sp-view-hint" hidden class="mt-2 text-xs text-zinc-500"></p>
+        </figure>
+
+        <div class="mt-4 grid gap-4 sm:grid-cols-2">
+          <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+            <h3 class="text-xs font-semibold uppercase tracking-wide text-amber-700">Obere Hälfte</h3>
+            <div class="mt-2">
+              <div class={rowCls}><span class="text-zinc-600">Maße</span><span id="sp-a-size" class="font-mono text-sm font-semibold text-zinc-900">–</span></div>
+              <div class={rowCls}><span class="text-zinc-600">Volumen</span><span id="sp-a-vol" class="font-mono text-sm font-semibold text-zinc-900">–</span></div>
+              <div class={rowCls}><span class="text-zinc-600">Dreiecke</span><span id="sp-a-tris" class="font-mono text-sm font-semibold text-zinc-900">–</span></div>
+              <div class={rowCls}><span class="text-zinc-600">Bauraum</span><span id="sp-a-fit" class="font-mono text-sm font-semibold text-zinc-900">–</span></div>
+            </div>
+          </div>
+          <div class="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm">
+            <h3 class="text-xs font-semibold uppercase tracking-wide text-teal-700">Untere Hälfte</h3>
+            <div class="mt-2">
+              <div class={rowCls}><span class="text-zinc-600">Maße</span><span id="sp-b-size" class="font-mono text-sm font-semibold text-zinc-900">–</span></div>
+              <div class={rowCls}><span class="text-zinc-600">Volumen</span><span id="sp-b-vol" class="font-mono text-sm font-semibold text-zinc-900">–</span></div>
+              <div class={rowCls}><span class="text-zinc-600">Dreiecke</span><span id="sp-b-tris" class="font-mono text-sm font-semibold text-zinc-900">–</span></div>
+              <div class={rowCls}><span class="text-zinc-600">Bauraum</span><span id="sp-b-fit" class="font-mono text-sm font-semibold text-zinc-900">–</span></div>
+            </div>
+          </div>
+        </div>
+        <p class="mt-2 text-xs text-zinc-500">
+          Alles rechnet in deinem Browser – die Datei verlässt dein Gerät nicht.
+        </p>
+      </div>
+    </div>
+
+    <section class="prose-werkbank mt-12 max-w-none">
+      <h2>Wenn das Modell nicht auf die Bauplatte passt</h2>
+      <p>
+        Das ist der häufigste Grund, warum ein Druck nicht zustande kommt: Das Modell ist ein paar
+        Zentimeter zu groß. Es kleiner zu skalieren macht es oft unbrauchbar – ein Gehäuse passt dann
+        nicht mehr um die Elektronik, ein Ersatzteil nicht mehr an seinen Platz. Die richtige Antwort
+        ist, das Modell zu <strong>teilen</strong>, die Stücke einzeln zu drucken und sie zu verkleben.
+      </p>
+      <p>
+        Genau das macht dieser Splitter: Du legst eine Schnittebene fest, das Netz wird sauber
+        getrennt, und beide Hälften bekommen eine <strong>geschlossene Schnittfläche</strong>. Das ist
+        der Teil, an dem einfache Werkzeuge scheitern – wer nur die Dreiecke wegwirft, die auf der
+        falschen Seite liegen, erhält zwei offene Schalen, die kein Slicer korrekt füllt. Hier wird
+        die Schnittkontur nachgezogen und geschlossen, auch bei hohlen Modellen, wo an der Schnittkante
+        gleichzeitig ein Außen- und ein Innenring entsteht.
+      </p>
+      <h3>Teilen hilft auch gegen Stützstrukturen</h3>
+      <p>
+        Ein zweiter, oft übersehener Grund zu schneiden: <strong>Überhänge</strong>. Ein Modell mit
+        einer weit auskragenden Partie braucht Stützen, die Zeit kosten, Material verschwenden und
+        Spuren hinterlassen. Trennt man es an der richtigen Stelle, haben plötzlich beide Teile eine
+        große flache Fläche zum Aufliegen und drucken sich ohne jede Stütze – oft schneller und
+        sauberer als das ungeteilte Original.
+      </p>
+      <h3>Wo schneiden?</h3>
+      <ul>
+        <li><strong>Wo der Querschnitt klein ist</strong> – weniger Klebefläche, unauffälligere Naht.</li>
+        <li><strong>Wo beide Teile flach aufliegen</strong> – das erspart Stützen auf beiden Seiten.</li>
+        <li><strong>Nicht durch Funktionsflächen</strong> – Passungen, Gewinde und Lagerstellen bleiben besser am Stück.</li>
+        <li><strong>Möglichst rechtwinklig zur Belastung</strong> – eine Klebefuge hält auf Druck deutlich mehr aus als auf Zug.</li>
+      </ul>
+      <h3>Danach weiterarbeiten</h3>
+      <p>
+        Ob eine Hälfte wirklich dicht ist, sagt dir die <a href="/generatoren/stl-analyse">STL-Analyse</a> –
+        dort siehst du auch Volumen, Gewicht und Materialkosten je Teil. Für die Kalkulation passen die
+        <a href="/rechner/filament-kosten">Filamentkosten</a> und die
+        <a href="/rechner/druckpreis-kalkulation">Druckpreis-Kalkulation</a>. Wenn du Behälter statt
+        Einzelteile brauchst, erzeugen der <a href="/generatoren/gridfinity-generator">Gridfinity-Generator</a>
+        und die <a href="/generatoren/gridfinity-baseplate">Grundplatte</a> gleich passgenaue Modelle.
+      </p>
+    </section>
+
+    <section class="mt-10">
+      <h2 class="text-2xl font-bold tracking-tight text-zinc-900">Häufige Fragen</h2>
+      <div class="mt-4 space-y-3">
+        {
+          FAQ.map((f) => (
+            <details class="rounded-lg border border-zinc-200 bg-white p-4">
+              <summary class="cursor-pointer font-medium text-zinc-800">{f.q}</summary>
+              <p class="mt-2 text-zinc-600">{f.a}</p>
+            </details>
+          ))
+        }
+      </div>
+    </section>
+  </div>
+</BaseLayout>
+
+<script>
+  import { parseStl, StlError } from '../../lib/stl';
+  import { splitMesh, meshVolume, type SplitResult } from '../../lib/meshsplit';
+  import { createViewer, meshBounds, type Viewer } from '../../lib/viewer3d';
+  import { toStl } from '../../lib/gridfinity';
+
+  const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
+  const statusEl = $('sp-status');
+  const warnEl = $('sp-warn');
+  const workEl = $('sp-work');
+  const form = $('sp-form');
+
+  const OBEN: [number, number, number] = [0.85, 0.47, 0.02];
+  const UNTEN: [number, number, number] = [0.05, 0.58, 0.53];
+  /** Ab dieser Größe wird erst beim Loslassen geschnitten, nicht bei jedem Reglerschritt. */
+  const LIVE_LIMIT = 250_000;
+
+  const nf = (n: number, dig = 1) => n.toLocaleString('de-DE', { maximumFractionDigits: dig });
+  const esc = (s: string) =>
+    s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+  const setText = (id: string, t: string) => {
+    const el = $(id);
+    if (el) el.textContent = t;
+  };
+  const val = (id: string, fb: number) => {
+    const el = $(id) as HTMLInputElement | null;
+    const v = el ? parseFloat(el.value.replace(',', '.')) : NaN;
+    return Number.isFinite(v) ? v : fb;
+  };
+
+  function status(kind: 'info' | 'error' | 'ok', html: string): void {
+    if (!statusEl) return;
+    const styles = {
+      info: 'border-zinc-200 bg-zinc-50 text-zinc-700',
+      ok: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+      error: 'border-red-200 bg-red-50 text-red-800',
+    };
+    statusEl.hidden = false;
+    statusEl.className = `mt-4 rounded-lg border px-4 py-3 text-sm ${styles[kind]}`;
+    statusEl.innerHTML = html;
+  }
+
+  let mesh: Float64Array | null = null;
+  let dateiname = 'modell';
+  let viewer: Viewer | null = null;
+  let viewerFehlt = false;
+  let letztes: SplitResult | null = null;
+
+  const achse = (): 0 | 1 | 2 => {
+    const v = ($('sp-axis') as HTMLSelectElement | null)?.value;
+    return v === 'x' ? 0 : v === 'y' ? 1 : 2;
+  };
+
+  function grenzen(): { min: number; max: number } {
+    if (!mesh) return { min: 0, max: 1 };
+    const b = meshBounds(mesh);
+    const a = achse();
+    const min = [b.min.x, b.min.y, b.min.z][a];
+    const max = [b.max.x, b.max.y, b.max.z][a];
+    return { min, max };
+  }
+
+  function reglerAnpassen(mittig: boolean): void {
+    const { min, max } = grenzen();
+    const slider = $('sp-slider') as HTMLInputElement | null;
+    const pos = $('sp-pos') as HTMLInputElement | null;
+    if (!slider || !pos) return;
+    slider.min = String(min);
+    slider.max = String(max);
+    slider.step = String(Math.max((max - min) / 500, 0.01));
+    if (mittig || !Number.isFinite(parseFloat(pos.value)) || +pos.value < min || +pos.value > max) {
+      const m = (min + max) / 2;
+      pos.value = m.toFixed(2);
+      slider.value = String(m);
+    } else {
+      slider.value = pos.value;
+    }
+    setText('sp-range', `von ${nf(min)} bis ${nf(max)} mm`);
+  }
+
+  function passt(size: [number, number, number]): { ok: boolean; gedreht: boolean } {
+    const bed = [val('sp-bx', 220), val('sp-by', 220), val('sp-bz', 250)];
+    const s = [...size].sort((a, b) => a - b);
+    const b = [...bed].sort((a, b) => a - b);
+    return {
+      ok: s.every((v, i) => v <= b[i] + 1e-9),
+      gedreht: !size.every((v, i) => v <= bed[i] + 1e-9),
+    };
+  }
+
+  function zeigeHaelfte(prefix: 'a' | 'b', tris: Float64Array): void {
+    if (tris.length === 0) {
+      for (const k of ['size', 'vol', 'tris', 'fit']) setText(`sp-${prefix}-${k}`, '–');
+      return;
+    }
+    const b = meshBounds(tris);
+    const size: [number, number, number] = [b.size.x, b.size.y, b.size.z];
+    setText(`sp-${prefix}-size`, `${nf(size[0])} × ${nf(size[1])} × ${nf(size[2])} mm`);
+    setText(`sp-${prefix}-vol`, `${nf(meshVolume(tris) / 1000, 2)} cm³`);
+    setText(`sp-${prefix}-tris`, (tris.length / 9).toLocaleString('de-DE'));
+    const f = passt(size);
+    const el = $(`sp-${prefix}-fit`);
+    if (el) {
+      el.textContent = f.ok ? (f.gedreht ? 'passt gedreht' : 'passt') : 'zu groß';
+      el.className = `font-mono text-sm font-semibold ${f.ok ? (f.gedreht ? 'text-amber-700' : 'text-emerald-700') : 'text-red-700'}`;
+    }
+  }
+
+  function schneiden(): void {
+    if (!mesh) return;
+    const a = achse();
+    const d = val('sp-pos', 0);
+    const r = splitMesh(mesh, {
+      nx: a === 0 ? 1 : 0,
+      ny: a === 1 ? 1 : 0,
+      nz: a === 2 ? 1 : 0,
+      d,
+    });
+    letztes = r;
+
+    zeigeHaelfte('a', r.above);
+    zeigeHaelfte('b', r.below);
+
+    if (viewer) {
+      viewer.setParts([
+        { triangles: r.above, color: OBEN },
+        { triangles: r.below, color: UNTEN },
+      ]);
+    }
+
+    if (warnEl) {
+      warnEl.hidden = r.stats.warnings.length === 0;
+      warnEl.innerHTML = r.stats.warnings.map((w) => `<p>${esc(w)}</p>`).join('');
+    }
+  }
+
+  let raf = 0;
+  const planen = (): void => {
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(schneiden);
+  };
+
+  async function laden(file: File): Promise<void> {
+    status('info', `<strong>${esc(file.name)}</strong> wird gelesen …`);
+    try {
+      const { verts } = parseStl(await file.arrayBuffer());
+      mesh = verts;
+      dateiname = file.name.replace(/\.stl$/i, '') || 'modell';
+      if (workEl) workEl.hidden = false;
+
+      const canvas = $('sp-canvas') as HTMLCanvasElement | null;
+      if (canvas && !viewer && !viewerFehlt) {
+        viewer = createViewer(canvas, { background: [0.98, 0.98, 0.99] });
+        if (!viewer) {
+          viewerFehlt = true;
+          canvas.hidden = true;
+          const hint = $('sp-view-hint');
+          if (hint) {
+            hint.hidden = false;
+            hint.textContent = 'Dein Browser unterstützt kein WebGL2 – Schneiden und Speichern funktionieren trotzdem.';
+          }
+        }
+      }
+
+      reglerAnpassen(true);
+      schneiden();
+      const b = meshBounds(verts);
+      status(
+        'ok',
+        `<strong>${esc(file.name)}</strong> geladen – ${(verts.length / 9).toLocaleString('de-DE')} Dreiecke, ${nf(b.size.x)} × ${nf(b.size.y)} × ${nf(b.size.z)} mm.`,
+      );
+    } catch (err) {
+      mesh = null;
+      if (workEl) workEl.hidden = true;
+      status('error', esc(err instanceof StlError ? err.message : 'Die Datei konnte nicht gelesen werden.'));
+    }
+  }
+
+  const waehlen = (files: FileList | null) => {
+    const f = files?.[0];
+    if (f) void laden(f);
+  };
+  const fileInput = $('sp-file') as HTMLInputElement | null;
+  fileInput?.addEventListener('change', () => waehlen(fileInput.files));
+
+  const drop = $('sp-drop');
+  const aktiv = ['border-brand-400', 'bg-brand-50'];
+  drop?.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    drop.classList.add(...aktiv);
+  });
+  drop?.addEventListener('dragleave', () => drop.classList.remove(...aktiv));
+  drop?.addEventListener('drop', (e) => {
+    e.preventDefault();
+    drop.classList.remove(...aktiv);
+    waehlen((e as DragEvent).dataTransfer?.files ?? null);
+  });
+
+  // Regler und Zahlenfeld halten sich gegenseitig aktuell
+  const slider = $('sp-slider') as HTMLInputElement | null;
+  const posFeld = $('sp-pos') as HTMLInputElement | null;
+  slider?.addEventListener('input', () => {
+    if (posFeld) posFeld.value = (+slider.value).toFixed(2);
+    // Große Netze erst beim Loslassen schneiden, sonst ruckelt der Regler
+    if (!mesh || mesh.length / 9 <= LIVE_LIMIT) planen();
+  });
+  slider?.addEventListener('change', () => {
+    if (posFeld) posFeld.value = (+slider.value).toFixed(2);
+    planen();
+  });
+  posFeld?.addEventListener('input', () => {
+    if (slider) slider.value = posFeld.value;
+    planen();
+  });
+  $('sp-axis')?.addEventListener('change', () => {
+    reglerAnpassen(true);
+    planen();
+  });
+  $('sp-center')?.addEventListener('click', () => {
+    reglerAnpassen(true);
+    planen();
+  });
+  for (const id of ['sp-bx', 'sp-by', 'sp-bz']) {
+    $(id)?.addEventListener('input', () => {
+      if (letztes) {
+        zeigeHaelfte('a', letztes.above);
+        zeigeHaelfte('b', letztes.below);
+      }
+    });
+  }
+  $('sp-reset-view')?.addEventListener('click', () => viewer?.resetView());
+
+  function speichern(tris: Float64Array, suffix: string): void {
+    if (!tris || tris.length === 0) return;
+    const blob = new Blob([toStl(tris, 'Werkbank STL-Splitter')], { type: 'model/stl' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${dateiname}-${suffix}.stl`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+  $('sp-dl-a')?.addEventListener('click', () => letztes && speichern(letztes.above, 'oben'));
+  $('sp-dl-b')?.addEventListener('click', () => letztes && speichern(letztes.below, 'unten'));
+</script>

@@ -125,9 +125,7 @@ Wir bauen sie als Werkzeugkette – jede Stufe für sich nutzbar, zusammen eine 
 Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 
 - [x] ~~**T10 3D-Viewer als Grundlage**~~ → `src/lib/viewer3d.ts`, eingebaut in die STL-Analyse (2026-08-26)
-- [ ] **T11 STL-Splitter**: Schnittebene frei setzen, Netz sauber trennen, Schnittfläche
-      schließen, beide Hälften einzeln exportieren. Kernstück ist das Kappen der Schnittfläche
-      (Kanten zu Ringen verketten, Polygon triangulieren).
+- [x] ~~**T11 STL-Splitter**~~ → `/generatoren/stl-splitter` (2026-08-26)
 - [ ] **T12 Passstifte automatisch**: Zapfen und Loch mit einstellbarem Spiel in die Schnittfläche
       setzen, damit die Hälften beim Verkleben fluchten.
 - [ ] **T13 Mess- und Transformwerkzeuge**: Strecken im Netz messen, skalieren, drehen, auf die
@@ -344,6 +342,26 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   *Merksatz:* `readPixels` taugt nicht als Nachweis, dass WebGL gezeichnet hat – der Puffer ist nach
   dem Compositing undefiniert und liest sich als Schwarz. Aussagekräftig sind Link-Status,
   Zeichenaufrufe und Fehlercode.
+
+- **2026-08-26 · Iteration 12 (T11):** **STL-Splitter live** (`/generatoren/stl-splitter`) – das
+  Kernstück von Epic A. Schnittebene auf X, Y oder Z frei setzen, Netz trennen, beide Hälften
+  einzeln als STL speichern. Die Schnittfläche wird geschlossen, auch bei hohlen Modellen: Kanten
+  zu Ringen verketten, Ringe in die Ebene projizieren, Löcher an ihrer Verschachtelungstiefe
+  erkennen, per Brücke in den Außenrand einfügen und ear-clippen (`src/lib/meshsplit.ts`, 24 Tests).
+  Der Viewer zeigt beide Hälften in unterschiedlicher Farbe – dafür `setParts()` ergänzt.
+  **Beweisführung über das eigene Werkzeug:** Als komplexes Hohlmodell dient ein Bin aus dem
+  eigenen Gridfinity-Generator; nach dem Schnitt prüft der eigene STL-Analyzer beide Hälften auf
+  Dichtheit, und das Volumen muss dem Original entsprechen. Auf vier Schnitthöhen bestanden.
+  **Ein echter Fehler gefunden:** Brücken erzeugen bewusst doppelte Punkte; das Ear-Clipping schloss
+  Punkte nur nach Index aus, nicht nach Lage – dadurch blockierte jeder Doppelpunkt jedes Ohr und
+  es entstand gar keine Deckfläche. Behoben durch Positionsvergleich.
+  Zusätzlich die aus Iteration 11 offene Pixel-Prüfung nachgeholt: `snapshot()` im Viewer ergänzt
+  (zeichnet synchron und liest sofort aus) – das PNG enthält 19 795 Modellpixel auf hellem Grund.
+  Nebenbei ein echtes Feature: Knopf „Bild speichern" in der STL-Analyse.
+
+  *Merksatz:* Browser-Messungen brauchen einen Verlauf, keinen Einzelwert. Mehrere „Fehler" dieser
+  Iteration waren Ablesungen vor dem nächsten Animationsrahmen – erst das Protokollieren über
+  mehrere Zeitpunkte zeigte, dass alles stimmte.
 
 ## Start-Prompt (Referenz)
 

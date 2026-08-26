@@ -15,6 +15,23 @@ export interface Generator {
 
 export const GENERATORS: Generator[] = [
   {
+    slug: 'stl-splitter',
+    title: 'STL-Splitter – Modell für den Drucker teilen',
+    shortTitle: 'STL-Splitter',
+    description:
+      'Zu großes Modell? Schnittebene setzen, Netz sauber trennen und beide Hälften einzeln als STL speichern – die Schnittfläche wird automatisch geschlossen. Alles im Browser.',
+    keywords: [
+      'stl teilen',
+      'stl schneiden online',
+      'modell zu groß für drucker',
+      'stl zerschneiden',
+      '3d modell teilen drucken',
+      'stl in teile zerlegen',
+      'stl splitter kostenlos',
+    ],
+    updated: '2026-08-26',
+  },
+  {
     slug: 'living-hinge',
     title: 'Living-Hinge-Generator (Biegescharnier für Laser)',
     shortTitle: 'Living Hinge',
