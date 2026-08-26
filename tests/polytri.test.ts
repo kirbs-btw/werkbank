@@ -255,4 +255,32 @@ describe('Konturen aus echten Schnitten', () => {
     }
     expect(benutzt.size, 'jede Ecke muss in mindestens einem Dreieck vorkommen').toBe(points.length);
   });
+  /**
+   * Eine zweite gemessene Kontur, 40 Punkte – davon 13 auf einer und 15 auf
+   * einer zweiten Höhe. Bei so vielen Ecken auf gleicher Höhe zieht der Sweep
+   * Diagonalen zwischen Punkten **derselben Linie**. Solche Strecken trennen
+   * nichts, sie liegen auf der Kontur. Beim Ablaufen der Flächen richten sie
+   * trotzdem Schaden an: An ihren Endpunkten stehen zwei Nachbarn unter
+   * demselben Winkel, die Reihenfolge wird beliebig, und benachbarte Flächen
+   * verschmelzen. Vorher entstand statt acht Teilflächen eine einzige mit
+   * 72 Kanten; 23 von 40 Ecken blieben ungenutzt und von 265,8 Flächeneinheiten
+   * kamen 4,1 heraus.
+   */
+  const langeReihen: Pt[] = [[-19.445436482630058,3.306811152757291],[-20.51436153886531,2.6896669837963327],[-21.142492757477775,2.3270152556440196],[-22.08871327914451,0.6881132369529066],[-22.41528496361356,0.1224744871391592],[-26.551859633554862,-2.265778012074439],[-26.925404005060543,-2.510726986352758],[-23.845997684214332,-2.510726986352758],[-2.368807716974934,-2.5107269863527586],[-0.23531202486506042,-2.5107269863527577],[-0.18170882108370856,-2.510726986352758],[-0.12358634137672686,-2.5107269863527577],[-0.06251874184572803,-2.510726986352758],[-6.661338147750939e-16,-2.510726986352758],[0.0625187418457267,-2.510726986352758],[0.1235863413767253,-2.5107269863527577],[0.18170882108370723,-2.510726986352758],[0.23531202486505887,-2.510726986352758],[2.3688077169749318,-2.5107269863527586],[23.845997684214332,-2.5107269863527573],[26.92540400506054,-2.5107269863527573],[26.579446752927737,-2.2838680627060186],[26.551859633554862,-2.265778012074439],[23.250368112944436,-0.35966099392274087],[22.41528496361356,0.1224744871391592],[21.52839252210405,1.6586172566824404],[21.142492757477775,2.3270152556440196],[20.11148545071545,2.9222676017397164],[19.445436482630058,3.306811152757291],[5.727564927611036,3.3068111527572914],[0.13166815925542608,3.306811152757291],[0.10303442862653212,3.306811152757291],[0.07075962121571955,3.306811152757291],[0.03600679412191177,3.30681115275729],[-4.440892098500626e-16,3.306811152757291],[-0.03600679412191221,3.306811152757291],[-0.07075962121571955,3.306811152757291],[-0.103034428626533,3.306811152757291],[-0.13166815925542652,3.306811152757291],[-5.727564927611036,3.3068111527572914]].map(([x, y]) => ({ x, y }));
+
+  it('zerlegt eine Kontur mit langen Reihen auf gleicher Höhe vollständig', () => {
+    pruefe('lange Reihen', langeReihen);
+  });
+
+  it('nutzt auch dort jede Ecke', () => {
+    const { points, triangles } = triangulateWithHoles(langeReihen, []);
+    const benutzt = new Set<number>();
+    for (const [i, j, k] of triangles) {
+      benutzt.add(i);
+      benutzt.add(j);
+      benutzt.add(k);
+    }
+    expect(benutzt.size).toBe(points.length);
+    expect(triangles.length).toBe(points.length - 2);
+  });
 });

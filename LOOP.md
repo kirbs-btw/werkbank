@@ -131,15 +131,11 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
       Kreuzungsprüfung (2026-08-26)
 - [x] ~~**T17 Ohrenschneiden an Berührstellen**~~ → Sweep-Zerlegung in `polytri.ts`, mit Probe
       gegen das Brückenverfahren (2026-08-26)
-- [ ] **T18 Sweep-Zerlegung: lange Reihen auf gleicher Höhe** – Zwei Ursachen sind behoben
-      (fast waagerechte Kanten, flächenlose Teilstücke), die Fehlfälle auf Splitter-Querschnitten
-      sanken damit von 352 auf 190. **Offen bleibt der Fall langer Punktreihen auf identischer
-      Höhe:** Eine gemessene Kontur aus 40 Punkten hat 13 auf einer und 15 auf einer zweiten Höhe
-      – das Verfahren liefert dort nur 10 von 38 Dreiecken und 4,1 statt 265,8 Flächeneinheiten.
-      Zu prüfen ist die Statusstruktur bei vielen Ecken auf derselben Sweep-Höhe: Welche Kante
-      gilt dann als „links von v", und werden Kanten korrekt ein- und ausgetragen?
-      Solange das offen ist, bleibt das Brückenverfahren der erste Weg im Splitter und die
-      Sweep-Zerlegung der zweite; die Konturkanten-Probe entscheidet.
+- [x] ~~**T18 Sweep-Zerlegung: waagerechte Kanten und lange Reihen**~~ → drei Ursachen behoben,
+      Fehlfälle auf Splitter-Querschnitten von 352 auf 80 (2026-08-26). Restliche 80 sind kein
+      Nutzerproblem: Das Brückenverfahren schafft in der gesamten Testmenge jeden Querschnitt,
+      der zweite Weg greift nur, wo es das nicht tut. **Weiteres Feilen daran hat keinen
+      messbaren Nutzen mehr – siehe E7.**
 - [ ] **T8 OpenSEO anbinden** (siehe Abschnitt oben): MCP-Server in `.mcp.json` eintragen, Zugang
       testen, erste Ranking- und Keyword-Abfrage machen und das Ergebnis als neue P1/P2-Punkte
       eintragen. **Blockiert durch E5** (DataForSEO kostet Geld) – vorher nichts installieren.
@@ -191,6 +187,18 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
       (Googles eigene ist kostenlos, Alternativen sind Usercentrics oder Cookiebot) und wer sie
       einrichtet. Die Datenschutzerklärung ist bereits angepasst, das Banner fehlt noch.
       **Solange kein Banner läuft, ist das ein offenes Risiko – nicht vergessen.**
+- [ ] **E7 Wohin als Nächstes? (Priorisierung):** Die letzten vier Iterationen steckten in der
+      Zerlegungs-Geometrie des STL-Splitters (T15–T18). Die Bauteile sind messbar deutlich besser
+      geworden, **aber drei dieser vier Iterationen haben kein nutzerseitiges Maß bewegt** – der
+      Splitter liefert schon vorher in jedem geprüften Fall dichte Hälften. Der P1-Strang ist
+      damit erschöpft: Was dort noch offen ist, betrifft einen Ersatzweg, der in der gesamten
+      Testmenge nie gebraucht wird.
+      **Vorschlag:** P1 vorerst als abgearbeitet betrachten (T8 bleibt durch E5 blockiert) und den
+      Loop auf P2/P3 laufen lassen – S5 (Cross-Kategorie-Verlinkung), S6 (Teilen-Links), Q2
+      (interner Link-Check), Q3 (A11y), Q4 (Umlaute). Das sind Punkte mit unmittelbarer Wirkung
+      auf Auffindbarkeit und Bedienbarkeit. Alternativ: ein neues großes Werkzeug als T19 – dann
+      bitte Richtung nennen.
+      Ohne Antwort nimmt der Loop ab der nächsten Iteration P2.
 - [ ] **E5 OpenSEO + DataForSEO:** OpenSEO selbst ist MIT-lizenziert und kostenlos, die Daten dahinter
       kommen von DataForSEO und werden pro Abfrage abgerechnet. Zu entscheiden: Budget je Monat,
       self-hosted oder Cloud, und wer die Zugangsdaten hinterlegt. Ohne diese Entscheidung bleibt T8
@@ -702,6 +710,30 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 
   **Merksatz:** „Entartet" ist kein Grund zum Wegwerfen. Ein flächenloses Stück trägt keine
   Fläche, aber sehr wohl Kanten – und die Kantenbilanz ist hier die eigentliche Zusage.
+
+- **2026-08-26 · Iteration 24 (T18):** **Diagonalen, die auf dem Rand liegen, werden übergangen –
+  Fehlfälle von 190 auf 80.** Bei vielen Ecken auf gleicher Höhe zieht der Sweep Diagonalen
+  zwischen Punkten **derselben Linie**. Solche Strecken trennen nichts, sie liegen auf der Kontur.
+  Beim Ablaufen der Flächen richten sie trotzdem Schaden an: An ihren Endpunkten stehen zwei
+  Nachbarn unter demselben Winkel, die Reihenfolge wird beliebig, und benachbarte Flächen
+  verschmelzen. An der gemessenen Kontur mit 13 und 15 Punkten auf zwei Höhen entstand statt acht
+  Teilflächen **eine einzige mit 72 Kanten**; 23 von 40 Ecken blieben ungenutzt, und von 265,8
+  Flächeneinheiten kamen 4,1 heraus. Jetzt: 38 von 38 Dreiecken, Fläche exakt.
+
+  Auf dem Weg dorthin habe ich die Abbiegerichtung beim Flächenablauf verdächtigt und
+  umgedreht – **das kippte nur alle Vorzeichen**, die 72-Kanten-Fläche blieb. Aufschlussreich war
+  daran etwas anderes: Bei Ecken mit nur zwei Nachbarn sind beide Richtungen identisch, und alle
+  meine einfachen Tests haben genau solche Ecken. Die Regel war also nie geprüft, sie fiel nur
+  nicht auf.
+
+  **Und der Befund, der zählt:** Eine Zählung zeigt, dass das Brückenverfahren in der gesamten
+  Testmenge **kein einziges Mal** scheitert. Der zweite Weg wird dort nie gebraucht. Damit ist
+  weiteres Feilen an der Sweep-Zerlegung ohne messbaren Nutzen – als E7 zur Entscheidung gestellt,
+  mit dem Vorschlag, den Loop auf P2/P3 umzustellen. 2 neue Tests, insgesamt 985.
+
+  **Merksatz:** Eine Regel, die in allen Tests denselben Wert liefert, egal wie sie lautet, ist
+  nicht geprüft – sie ist nur unauffällig. Wer eine Verzweigung testen will, braucht einen Fall,
+  in dem sich die Zweige unterscheiden.
 
 ## Start-Prompt (Referenz)
 

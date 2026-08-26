@@ -232,7 +232,39 @@ export function triangulateWithHoles(
     addKante(i, next[i]);
     addKante(next[i], i);
   }
+  /**
+   * Läuft die Strecke a–b auf dem Rand statt durch die Fläche?
+   *
+   * Bei mehreren Ecken auf gleicher Höhe zieht der Sweep Diagonalen zwischen
+   * Punkten, die auf derselben Linie liegen. Solche Strecken **trennen nichts** –
+   * sie liegen auf der Kontur. Beim Ablaufen der Flächen richten sie trotzdem
+   * Schaden an: An ihren Endpunkten stehen dann zwei Nachbarn unter demselben
+   * Winkel, die Reihenfolge wird beliebig, und benachbarte Flächen verschmelzen.
+   * Gemessen an einer Kontur mit 13 und 15 Punkten auf zwei Höhen: statt acht
+   * Teilflächen entstand eine mit 72 Kanten, und 23 von 40 Ecken blieben ungenutzt.
+   */
+  const aufDemRand = (a: number, b: number): boolean => {
+    const A = points[a];
+    const B = points[b];
+    const m = { x: (A.x + B.x) / 2, y: (A.y + B.y) / 2 };
+    const grenze = Math.max(spanne, 1) * 1e-9;
+    for (let i = 0; i < n; i++) {
+      const u = points[i];
+      const v = points[next[i]];
+      const dx = v.x - u.x;
+      const dy = v.y - u.y;
+      const len2 = dx * dx + dy * dy;
+      if (len2 <= 0) continue;
+      let t = ((m.x - u.x) * dx + (m.y - u.y) * dy) / len2;
+      t = Math.min(1, Math.max(0, t));
+      const abstand = Math.hypot(m.x - (u.x + t * dx), m.y - (u.y + t * dy));
+      if (abstand <= grenze) return true;
+    }
+    return false;
+  };
+
   for (const [a, b] of diagonalen) {
+    if (aufDemRand(a, b)) continue;
     addKante(a, b);
     addKante(b, a);
   }
