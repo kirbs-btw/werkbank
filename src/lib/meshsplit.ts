@@ -16,6 +16,9 @@
  * umgeht: Ein aufgeschnittener Behälter liefert einen Außen- und einen Innenring.
  */
 
+
+import { triangulateWithHoles } from './polytri';
+
 export interface Plane {
   /** Normale, muss nicht normiert sein. */
   nx: number;
@@ -684,12 +687,68 @@ function splitEinzeln(triangles: ArrayLike<number>, plane: Plane, pins?: PinOpti
       const zu3 = (p: V2): V3 => karte.get(key(p)) ?? to3(p.x, p.y, 0);
 
       /** Deckfläche eines Halbteils erzeugen. `oben` dreht die Normale um. */
-      const deckel = (ziel: number[], loecher: V2[][], oben: boolean): void => {
+      /**
+       * Zerlegt die Schnittfläche in Dreiecke.
+       *
+       * Es gibt zwei Verfahren mit **verschiedenen** Schwächen, und keines
+       * taugt für alles: Das Einfädeln der Löcher über Brücken mit
+       * anschließendem Ohrenschneiden scheitert, sobald zwei Brücken an
+       * derselben Ecke hängen; die Sweep-Zerlegung (`polytri.ts`) kommt damit
+       * mühelos zurecht, stolpert aber über waagerechte Kanten – und die sind
+       * im Querschnitt einer flachen Fläche der Normalfall.
+       *
+       * Deshalb wird gerechnet und **nachgeprüft**: Die Dreiecksfläche muss der
+       * Fläche der Kontur abzüglich ihrer Löcher entsprechen. Das erste
+       * Verfahren, das diese Probe besteht, gewinnt. Fällt keines durch, wird
+       * das bessere genommen – ein unvollständiges Ergebnis meldet der Splitter
+       * ohnehin über `openEdges`.
+       */
+      const zerlegen = (loecher: V2[][]): { punkte: V2[]; teile: [number, number, number][] } => {
+        const pk = (p: V2) => `${Math.round(p.x / CHAIN_TOL)},${Math.round(p.y / CHAIN_TOL)}`;
+        const kantenId = (a: V2, b: V2) => {
+          const ka = pk(a);
+          const kb = pk(b);
+          return ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`;
+        };
+        // Die Konturkanten, die am Ende genau einmal als Rand dastehen müssen.
+        const soll = new Set<string>();
+        for (const ring of [outer2, ...loecher])
+          for (let i = 0; i < ring.length; i++) soll.add(kantenId(ring[i], ring[(i + 1) % ring.length]));
+
+        /**
+         * Wie viele Konturkanten fehlen? Null heißt: Die Deckfläche passt
+         * kantengenau auf die beschnittenen Seitenwände. Fläche allein reicht
+         * als Probe nicht – eine Zerlegung kann flächenrichtig sein und den Rand
+         * trotzdem anders führen.
+         */
+        const fehlend = (punkte: V2[], teile: [number, number, number][]): number => {
+          const zaehler = new Map<string, number>();
+          for (const [a, b, c] of teile)
+            for (const [x, y] of [[a, b], [b, c], [c, a]]) {
+              const id = kantenId(punkte[x], punkte[y]);
+              zaehler.set(id, (zaehler.get(id) ?? 0) + 1);
+            }
+          let n = 0;
+          for (const id of soll) if (zaehler.get(id) !== 1) n++;
+          return n;
+        };
+
         const merged = loecher.length > 0 ? bridgeHoles(outer2, loecher) : outer2;
-        for (const [a, b, c] of earClip(merged)) {
-          const pa = zu3(merged[a]);
-          const pb = zu3(merged[b]);
-          const pc = zu3(merged[c]);
+        const ueberBruecken = { punkte: merged, teile: earClip(merged) };
+        const fehlerA = fehlend(ueberBruecken.punkte, ueberBruecken.teile);
+        if (fehlerA === 0) return ueberBruecken;
+
+        const gestrichen = triangulateWithHoles(outer2, loecher);
+        const perSweep = { punkte: gestrichen.points, teile: gestrichen.triangles };
+        return fehlend(perSweep.punkte, perSweep.teile) < fehlerA ? perSweep : ueberBruecken;
+      };
+
+      const deckel = (ziel: number[], loecher: V2[][], oben: boolean): void => {
+        const { punkte, teile } = zerlegen(loecher);
+        for (const [a, b, c] of teile) {
+          const pa = zu3(punkte[a]);
+          const pb = zu3(punkte[b]);
+          const pc = zu3(punkte[c]);
           // Ear-Clipping liefert gegen den Uhrzeigersinn in (u,v) – die Normale
           // zeigt damit in +n. Für die untere Hälfte ist das die Oberseite,
           // für die obere Hälfte muss sie gespiegelt werden.

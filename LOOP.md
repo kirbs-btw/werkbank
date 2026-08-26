@@ -129,24 +129,17 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
       Ohrenschneiden (2026-08-26)
 - [x] ~~**T16 `bridgeHoles` bei mehreren Löchern**~~ → Sichtbarkeitsprüfung nach Eberly plus
       Kreuzungsprüfung (2026-08-26)
-- [ ] **T17 Ohrenschneiden an Berührstellen** – Betrifft Querschnitte mit mehreren Hohlräumen.
-      **Der Mechanismus ist jetzt verstanden:** Ein Loch wird über eine Brücke aus *zwei* Kanten
-      angebunden; solange beide da sind, kommt das Ohrenschneiden damit zurecht. Wird das Ohr am
-      Brückenpunkt geschnitten, verschmelzen die beiden Kanten zu einer Berührung in einem
-      einzigen Punkt – und **auf so einem Ring ist das Ohrenschneiden grundsätzlich nicht mehr
-      korrekt**: Es findet „konvexe Ohren", die gar kein Material sind. Belegt: Der Rest eines
-      solchen Rings hatte am Ende die Fläche −606, war also längst verkehrt herum.
-      **Gemessen** über 717 zufällige Lochanordnungen: 712 Verschmelzungen korrekt, davon 659
-      vollständig zerlegbar. Die Lücke von 53 ist genau dieser Effekt.
-      **Vier Ansätze geprüft, alle wirkungslos oder schlechter – nicht noch einmal versuchen:**
-      an der Berührstelle auftrennen (Schutzbedingung greift zu Recht, die eine Schleife ist das
-      Loch und hat negative Fläche); Diagonale suchen und dort teilen (Einzelfall 15 → 26 von 30
-      Dreiecken, Messstand unverändert 659 – verschiebt das Problem nur); Brückenpunkte meiden,
-      an denen schon ein Loch hängt (659 → 658); Ohren an Brückenpunkten zurückstellen (659 → 0,
-      die müssen irgendwann geschnitten werden).
-      **Nötig ist ein anderes Verfahren**, kein weiterer Rückfall im Ohrenschneiden – etwa eine
-      Zerlegung, die Löcher direkt behandelt, statt sie über Brücken einzufädeln. Im Splitter
-      weist `stats.openEdges` das Problem aus und die Seite warnt.
+- [x] ~~**T17 Ohrenschneiden an Berührstellen**~~ → Sweep-Zerlegung in `polytri.ts`, mit Probe
+      gegen das Brückenverfahren (2026-08-26)
+- [ ] **T18 Sweep-Zerlegung: waagerechte Kanten** – `polytri.ts` behandelt Löcher direkt und ist
+      dem Brückenverfahren fast überall überlegen (714 von 717 zufälligen Lochanordnungen gegen
+      659), stolpert aber über **waagerechte Kanten** – und die sind im Querschnitt einer flachen
+      Fläche der Normalfall. Deshalb rechnet der Splitter derzeit beide Verfahren und nimmt das,
+      das die Konturkanten-Probe besteht.
+      Zu klären: die Sonderfälle bei gleicher y-Höhe im Sweep (Statuskante suchen, Ecken
+      einordnen). Danach ließe sich das Brückenverfahren als zweiter Weg vermutlich ganz
+      ablösen. Die drei verbliebenen Fehlfälle im Messstand betreffen alle die sternförmige
+      Außenkontur mit vier bis fünf Löchern.
 - [ ] **T8 OpenSEO anbinden** (siehe Abschnitt oben): MCP-Server in `.mcp.json` eintragen, Zugang
       testen, erste Ranking- und Keyword-Abfrage machen und das Ergebnis als neue P1/P2-Punkte
       eintragen. **Blockiert durch E5** (DataForSEO kostet Geld) – vorher nichts installieren.
@@ -645,6 +638,38 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   danach feststeht, welcher Weg *nicht* gangbar ist – vorausgesetzt, das steht so im Backlog, dass
   niemand die Sackgassen erneut abläuft. Was nichts bringt, gehört aus dem Code heraus, nicht
   auskommentiert hinein.
+
+- **2026-08-26 · Iteration 22 (T17):** **Ein zweites Zerlegungsverfahren, das Löcher direkt
+  behandelt.** Nach der letzten Iteration stand fest, dass kein weiterer Rückfall im
+  Ohrenschneiden hilft. Also `polytri.ts`: ein Sweep von oben nach unten, der an den kritischen
+  Ecken Diagonalen einzieht, bis nur noch y-monotone Teilstücke übrig sind. Löcher brauchen dabei
+  **keine Sonderbehandlung** – sie sind einfach weitere Ringe im Kantensatz, gegenläufig
+  orientiert. Entscheidend für den Einsatz als Deckfläche: Es entstehen **keine neuen Punkte**,
+  nur Diagonalen zwischen vorhandenen Ecken, und die heben sich in der Kantenbilanz auf.
+
+  **Gemessen:** 714 von 717 zufälligen Lochanordnungen sauber zerlegt, gegen 659 beim
+  Brückenverfahren. An echten Schnitten durch solche Platten: 179 von 180 dicht statt 177.
+
+  Zwei Fehler auf dem Weg, beide durch Messung gefunden statt durch Nachdenken: Zuerst kamen
+  **null** Dreiecke heraus – ich hatte je Kante nur eine Halbkante in die Nachbarschaft
+  eingetragen, zum Ablaufen der Flächen braucht es beide. Danach wurde das **Loch gefüllt**: Der
+  Hohlraum ist ebenfalls eine Fläche des Kantennetzes und läuft gegen den Uhrzeigersinn, sieht
+  also aus wie Material. Seitdem entscheidet die Umlaufzahl an einem Punkt im Inneren.
+
+  **Das neue Verfahren ersetzt das alte aber nicht** – es stolpert über waagerechte Kanten, und
+  die sind im Querschnitt einer flachen Fläche der Normalfall. Beim Verdrahten fielen prompt drei
+  vorher grüne Tests um. Deshalb rechnet der Splitter jetzt beide und prüft nach: **Jede
+  Konturkante muss genau einmal am Rand stehen.** Das erste Verfahren, das besteht, gewinnt.
+  Erst diese Probe – nicht die zuerst gewählte Flächenprobe – machte alle Tests grün: Eine
+  Zerlegung kann flächenrichtig sein und den Rand trotzdem anders führen.
+
+  Zwei Vorversuche zum Ohrenschneiden gingen wie erwartet ins Leere und sind wieder draußen
+  (Brückenpunkte hintanstellen statt verbieten: unverändert 659). 9 neue Tests für das Modul,
+  insgesamt 979.
+
+  **Merksatz:** Zwei Verfahren mit verschiedenen Schwächen und einer nachprüfbaren Abnahme sind
+  ehrlicher als ein Verfahren mit einer Kette von Rückfällen. Voraussetzung ist, dass die Abnahme
+  genau das prüft, worauf es ankommt – hier die Kantenbilanz, nicht die Fläche.
 
 ## Start-Prompt (Referenz)
 
