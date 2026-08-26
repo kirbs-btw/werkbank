@@ -3,7 +3,7 @@
   "type": "module",
   "version": "0.1.0",
   "private": true,
-  "description": "Werkbank – Rechner, Tabellen & Generatoren für Werkstatt & Maker (3D-Druck, CNC, Laser, Holz, Metall)",
+  "description": "Werkbank \u2013 Rechner, Tabellen & Generatoren f\u00fcr Werkstatt & Maker (3D-Druck, CNC, Laser, Holz, Metall)",
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
@@ -23,6 +23,10 @@
     "sharp": "^0.34.5",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vite": "^6.4.3",
+    "vitest": "^3.2.7"
+  },
+  "overrides": {
+    "vite": "$vite"
   }
 }

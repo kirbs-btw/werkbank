@@ -673,7 +673,10 @@ function pathPoints(d: string, curveSteps = 24): { points: Pt[]; closed: boolean
       }
       case 'T': {
         const p0 = cur;
-        const c1 = prevCtrl ? { x: 2 * p0.x - prevCtrl.x, y: 2 * p0.y - prevCtrl.y } : p0;
+        // Typ ausdrücklich: Weiter unten wird `prevCtrl = c1` gesetzt, damit
+        // hängt der Typ von `c1` an `prevCtrl` und umgekehrt. TypeScript bricht
+        // solche Ringschlüsse ab und macht daraus stillschweigend `any`.
+        const c1: Pt = prevCtrl ? { x: 2 * p0.x - prevCtrl.x, y: 2 * p0.y - prevCtrl.y } : p0;
         const p2 = { x: base.x + num(), y: base.y + num() };
         bezier2(p0, c1, p2);
         prevCtrl = c1;

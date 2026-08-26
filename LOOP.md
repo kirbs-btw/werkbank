@@ -44,7 +44,10 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
       Impressions/Klicks bringt oder wo ein Ranking abrutscht, kommt vor geplanten Neubauten.
 4. **Implementieren** nach den Prinzipien oben. Bei neuen Tools: Keywords/Titel/Description aus den
    passenden Zeilen in `keywords/*.txt` übernehmen, interne Links von 1–2 bestehenden Tools setzen.
-5. **Verifizieren:** `npm test` und `npm run build` müssen grün sein. Bei UI-Änderungen zusätzlich
+5. **Verifizieren:** `npm test`, `npm run build` **und `npm run check`** müssen grün sein.
+   Der Typcheck gehört seit Iteration 27 dazu, weil er Fehler sieht, die zur Laufzeit stumm
+   bleiben: In Iteration 16 hatte er einen Test entlarvt, der 40 Minuten lang grün lief, ohne
+   irgendetwas zu prüfen – die Schnittebene war falsch benannt und damit komplett `undefined`. Bei UI-Änderungen zusätzlich
    Smoke-Test im Browser (Preview-Server + Screenshot/Interaktion).
    **Browser-Messungen immer über mehrere Zeitpunkte protokollieren, nie einen Einzelwert lesen.**
    Die Seite rechnet in `requestAnimationFrame`; eine Ablesung direkt nach dem Ereignis zeigt den
@@ -164,7 +167,7 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 
 ### P3 – Qualität & Bugs
 
-- [ ] **Q1 `npm run check` komplett grün:** vite-Typkonflikt in `astro.config.mjs` beheben.
+- [x] ~~**Q1 `npm run check` komplett grün**~~ → eine gemeinsame Vite-Version statt zweier (2026-08-26)
 - [ ] **Q2 Interner Link-Check** über `dist/` (Script, findet 404s/Waisen).
 - [ ] **Q3 A11y-Durchgang** der Kernseiten (Labels, Fokusreihenfolge, Kontraste).
 - [ ] **Q4 Umlaute reparieren:** ~20 Tool-Dateien nutzen transliterierte Umlaute im sichtbaren Text
@@ -789,6 +792,34 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 
   **Merksatz:** Eine URL mit Parametern ist eine Eingabe wie jede andere. Wer sie ungeprüft in
   Felder schreibt, hat sich eine Hintertür in den eigenen Rechner gebaut.
+
+- **2026-08-26 · Iteration 27 (Q1):** **`npm run check` ist grün – 0 Fehler, 0 Warnungen.** Die
+  beiden Meldungen begleiteten den Loop seit Iteration 16.
+
+  Die erste war eine echte Kleinigkeit mit lehrreichem Grund: In `dxfsvg.ts` steht im `T`-Zweig des
+  Pfad-Parsers `const c1 = prevCtrl ? … : p0` und weiter unten `prevCtrl = c1`. Damit hängt der Typ
+  von `c1` an `prevCtrl` und umgekehrt; TypeScript bricht solche Ringschlüsse ab und macht daraus
+  stillschweigend `any`. Der `S`-Zweig darüber hat dasselbe Muster, weist aber `c2` zu – deshalb
+  war nur einer von beiden auffällig. Eine ausdrückliche Typangabe löst den Ring.
+
+  Die zweite war **zwei Vite-Versionen im selben Baum**: Astro brachte vite 6 mit,
+  `@tailwindcss/vite` und vitest brachten vite 5. Zur Laufzeit passte das zusammen, aber `Plugin`
+  aus dem einen Paket gilt nicht als `PluginOption` aus dem anderen. Ein Cast hätte das zugedeckt –
+  stattdessen jetzt **eine** Version: vitest von 2 auf 3 gehoben (2 verlangt vite 5), vite als
+  ausdrückliche Abhängigkeit auf 6.4.3 und ein `overrides`-Eintrag, der alle darauf zieht. Der
+  Zwischenstand war lehrreich: vitest 3 zog von sich aus vite 7 – aus zwei Versionen wurden zwei
+  andere. Erst der Override vereinheitlicht wirklich.
+
+  Weil der Umbau die Build-Kette selbst betrifft, habe ich das Ergebnis genauer geprüft als sonst:
+  1004 Tests grün, 176 Seiten, 171 Vorschaubilder, 174 Sitemap-Einträge, CSS vorhanden,
+  Tailwind-Klassen greifen, Teilen-Knopf und Querverweise stehen.
+
+  **`npm run check` ist ab sofort Teil des Prüfschritts.** Es sieht Fehler, die zur Laufzeit stumm
+  bleiben – in Iteration 16 entlarvte es einen Test, der 40 Minuten grün lief, ohne irgendetwas zu
+  prüfen. Ohne IndexNow-Meldung: An den Seiten hat sich inhaltlich nichts geändert.
+
+  **Merksatz:** Ein Cast ist eine Behauptung. Wo sich zwei Typpakete widersprechen, ist die Frage
+  nicht, wie man den Prüfer überzeugt, sondern warum es zwei sind.
 
 ## Start-Prompt (Referenz)
 
