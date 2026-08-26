@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { splitMesh, meshVolume, chainSegments, earClip, bridgeHoles, pointInPolygon, type Plane } from '../src/lib/meshsplit';
 import { analyzeStl } from '../src/lib/stl';
 import { toStl, buildBin } from '../src/lib/gridfinity';
+import { closureError } from '../src/lib/meshtransform';
 
 /** Würfel von (0,0,0) bis (s,s,s) mit nach außen zeigenden Normalen. */
 function cube(s = 20): Float64Array {
@@ -376,5 +377,25 @@ describe('pinPositions', () => {
   it('gibt bei unmöglichen Vorgaben nichts zurück', () => {
     expect(pinPositions(quadrat, [], 50, 2)).toEqual([]);
     expect(pinPositions(quadrat, [], 3, 0)).toEqual([]);
+  });
+});
+
+describe('Schnittflächen sind einheitlich gewickelt', () => {
+  // Dichtheit über die Kantenzählung reicht nicht: Eine verdrehte Deckfläche
+  // hätte dieselbe Kantenbilanz. Erst die Vektorfläche zeigt, dass beide
+  // Hälften wirklich geschlossene Körper sind.
+  it('bei Würfel, Bin und mit Passstiften', () => {
+    const bin = buildBin({ unitsX: 1, unitsY: 1, unitsZ: 4, wall: 1.2, floor: 1.2, compartmentsX: 1, compartmentsY: 1, lip: true, holes: 'keine' });
+    const faelle: [string, Float64Array, Plane, { count: number; radius: number; length: number; clearance: number } | undefined][] = [
+      ['Würfel', cube(20), { axis: 'z', position: 10 }, undefined],
+      ['Würfel mit Stiften', cube(20), { axis: 'z', position: 10 }, { count: 2, radius: 2, length: 4, clearance: 0.15 }],
+      ['Bin quer', bin.triangles, { axis: 'z', position: 12 }, undefined],
+      ['Bin längs', bin.triangles, { axis: 'x', position: 0 }, undefined],
+    ];
+    for (const [name, t, ebene, stifte] of faelle) {
+      const r = splitMesh(t, ebene, stifte);
+      expect(closureError(r.below), `${name} unten`).toBeLessThan(1e-9);
+      expect(closureError(r.above), `${name} oben`).toBeLessThan(1e-9);
+    }
   });
 });

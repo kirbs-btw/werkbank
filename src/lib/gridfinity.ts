@@ -360,8 +360,10 @@ export function buildBin(spec: BinSpec): BinResult {
     );
     // z vertauscht: Innenflächen zeigen in den Hohlraum
     m.loft(innerWall, bodyH, innerWall, zBody);
-    // Absatz vom Wandinneren auf die dickere Lippe
-    m.ring(innerWall, lipLoops[0], bodyH, true);
+    // Absatz vom Wandinneren auf die dickere Lippe. Zeigt nach unten: Darüber
+    // liegt das Material der Lippe, darunter der Hohlraum – es ist die
+    // Unterseite des Überhangs, die man beim Blick von innen nach oben sieht.
+    m.ring(innerWall, lipLoops[0], bodyH, false);
     for (let i = 0; i < lipLoops.length - 1; i++) {
       // z vertauscht: die Lippeninnenseite zeigt zur Bin-Mitte
       m.loft(lipLoops[i + 1], bodyH + LIP_PROFILE[i + 1].dz, lipLoops[i], bodyH + LIP_PROFILE[i].dz);

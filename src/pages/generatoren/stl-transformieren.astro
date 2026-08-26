@@ -1,0 +1,650 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import UpdatedAt from '../../components/UpdatedAt.astro';
+import { getGenerator } from '../../lib/generators';
+import { generatorAppLd, breadcrumbLd, faqLd } from '../../lib/schema';
+
+const gen = getGenerator('stl-transformieren')!;
+const path = '/generatoren/stl-transformieren';
+const crumbs = [
+  { name: 'Start', href: '/' },
+  { name: 'Generatoren', href: '/kategorie/generatoren' },
+  { name: gen.shortTitle ?? gen.title, href: path },
+];
+
+const FAQ = [
+  {
+    q: 'Warum nicht einfach im Slicer skalieren?',
+    a: 'Weil Slicer meist nur Prozente kennen. „Mach das Teil exakt 100 mm lang“ heißt dort: nachmessen, Faktor ausrechnen, eintippen, nachmessen. Hier gibst du das Zielmaß direkt ein. Dazu kommt: Die Änderung steckt danach in der STL-Datei selbst, du kannst sie also weitergeben oder archivieren, statt sie in jedem Slicer-Projekt neu einzustellen.',
+  },
+  {
+    q: 'Wird meine Datei hochgeladen?',
+    a: 'Nein. Lesen, Umrechnen, Anzeigen und Speichern passieren vollständig in deinem Browser. Die Datei verlässt dein Gerät nicht – anders als bei Online-Diensten, die dafür einen Upload und oft ein Konto verlangen.',
+  },
+  {
+    q: 'Bleibt das Modell nach dem Spiegeln druckbar?',
+    a: 'Ja. Beim Spiegeln kehrt sich der Umlaufsinn jedes Dreiecks um – ohne Korrektur zeigten danach alle Flächennormalen nach innen, und der Slicer hielte das Modell für hohl und die Luft ringsum für Material. Der Generator dreht deshalb die Eckreihenfolge mit. Du kannst das gegenprüfen: Lade das Ergebnis in die STL-Analyse, dort steht, ob das Netz dicht ist.',
+  },
+  {
+    q: 'Wofür ist „Auf Bauplatte legen“?',
+    a: 'Nach jeder Drehung und nach jedem Schnitt schwebt oder steckt das Modell irgendwo im Raum. Der Knopf setzt den tiefsten Punkt auf z = 0 und zentriert die Grundfläche über dem Ursprung. Viele Slicer machen das automatisch – aber nicht alle, und für Werkzeugketten wie OctoPrint oder eigene Skripte ist eine sauber abgelegte Datei Gold wert.',
+  },
+  {
+    q: 'Wie genau ist das Messen?',
+    a: 'Der Klick trifft die Oberfläche auf den Bruchteil eines Millimeters genau – gemessen wird der echte Schnittpunkt mit dem getroffenen Dreieck, nicht ein gerundeter Rasterpunkt. Die Grenze liegt beim Zielen, nicht beim Rechnen: Zoome heran, bevor du einen Punkt setzt. Neben dem Abstand werden die drei Achsanteile angezeigt – bei einem Lochabstand ist oft genau die eine Achse die gesuchte Zahl.',
+  },
+  {
+    q: 'Ändert das Skalieren die Wandstärken mit?',
+    a: 'Ja, alles wird mitskaliert – auch Wände, Bohrungen und Passungen. Bei kleinen Faktoren ist das gewollt, bei großen selten: Ein auf 50 % verkleinertes Gehäuse hat 0,6 mm statt 1,2 mm Wand und passt nicht mehr zu M3-Schrauben. Für Passungen ist eine Neukonstruktion besser als eine Skalierung.',
+  },
+  {
+    q: 'Kann ich mehrere Schritte hintereinander machen?',
+    a: 'Ja, beliebig viele – und jeder einzelne lässt sich mit „Rückgängig“ zurücknehmen. Gerechnet wird dabei immer auf dem echten Netz weiter, nicht auf einer Vorschau. „Alles zurücksetzen“ stellt den Ausgangszustand wieder her, ohne dass du die Datei neu laden musst.',
+  },
+];
+
+const ld: object[] = [
+  generatorAppLd(gen, path),
+  breadcrumbLd(crumbs.map((c) => ({ name: c.name, path: c.href }))),
+  faqLd(FAQ),
+];
+
+const inputCls =
+  'w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-zinc-900 shadow-sm outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-200';
+const labelCls = 'mb-1 flex items-center justify-between text-sm font-medium text-zinc-700';
+const cardCls = 'rounded-xl border border-zinc-200 bg-white p-5 shadow-sm';
+const headCls = 'text-xs font-semibold uppercase tracking-wide text-zinc-500';
+const btnCls =
+  'rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40';
+const rowCls = 'flex items-baseline justify-between gap-4 border-b border-zinc-100 py-2 last:border-0';
+---
+
+<BaseLayout
+  title="STL skalieren, drehen und ausrichten – kostenlos im Browser"
+  description={gen.description}
+  path={path}
+  ogType="article"
+  jsonLd={ld}
+>
+  <div class="mx-auto max-w-5xl px-4 py-8">
+    <Breadcrumbs items={crumbs} />
+
+    <header class="mt-4">
+      <h1 class="text-3xl font-extrabold tracking-tight text-zinc-900">STL transformieren</h1>
+      <p class="mt-2 text-lg text-zinc-600">
+        Auf ein exaktes Zielmaß skalieren, drehen, spiegeln und auf die Bauplatte legen – und
+        Strecken direkt im Modell messen. Ohne Upload, ohne Konto.
+      </p>
+      <UpdatedAt date={gen.updated} class="mt-2" />
+    </header>
+
+    <div
+      id="tf-drop"
+      class="mt-8 rounded-xl border-2 border-dashed border-zinc-300 bg-white p-8 text-center transition"
+    >
+      <svg class="mx-auto h-10 w-10 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M12 3v18M3 12h18M7 7l10 10M17 7L7 17" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+      <p class="mt-3 font-medium text-zinc-800">STL-Datei hier ablegen</p>
+      <p class="mt-1 text-sm text-zinc-500">oder</p>
+      <label class="mt-3 inline-block cursor-pointer rounded-lg bg-brand-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-500">
+        Datei auswählen
+        <input id="tf-file" type="file" accept=".stl,model/stl,application/sla" class="sr-only" />
+      </label>
+      <p class="mt-3 text-xs text-zinc-500">
+        Binär und ASCII · <strong>Die Datei bleibt in deinem Browser</strong> und wird nicht hochgeladen.
+      </p>
+    </div>
+
+    <p id="tf-status" hidden class="mt-4 rounded-lg border px-4 py-3 text-sm"></p>
+
+    <div id="tf-work" hidden class="mt-6 grid gap-6 lg:grid-cols-[320px_1fr]">
+      <form id="tf-form" class="space-y-4" onsubmit="return false">
+        <div class={cardCls}>
+          <h2 class={headCls}>Größe</h2>
+          <dl class="mt-3 text-sm">
+            <div class={rowCls}><dt class="text-zinc-600">Breite (X)</dt><dd id="tf-sx" class="font-mono font-semibold text-zinc-900">–</dd></div>
+            <div class={rowCls}><dt class="text-zinc-600">Tiefe (Y)</dt><dd id="tf-sy" class="font-mono font-semibold text-zinc-900">–</dd></div>
+            <div class={rowCls}><dt class="text-zinc-600">Höhe (Z)</dt><dd id="tf-sz" class="font-mono font-semibold text-zinc-900">–</dd></div>
+          </dl>
+          <div class="mt-4 space-y-3">
+            <div>
+              <span class={labelCls}><span>Zielmaß</span><span class="text-xs font-normal text-zinc-500">mm</span></span>
+              <div class="flex gap-2">
+                <select id="tf-ziel-achse" aria-label="Achse für das Zielmaß" class={inputCls + ' w-20'}>
+                  <option value="x">X</option>
+                  <option value="y">Y</option>
+                  <option value="z">Z</option>
+                </select>
+                <input id="tf-ziel" type="number" step="0.1" min="0.01" inputmode="decimal" class={inputCls} />
+                <button id="tf-ziel-go" type="button" class="shrink-0 rounded-lg bg-brand-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-brand-500">
+                  Setzen
+                </button>
+              </div>
+              <label class="mt-2 flex items-center gap-2 text-sm text-zinc-700">
+                <input id="tf-seiten" type="checkbox" checked class="h-4 w-4 rounded border-zinc-300 accent-brand-600" />
+                Seitenverhältnis beibehalten
+              </label>
+            </div>
+            <div>
+              <span class={labelCls}><span>Gleichmäßig skalieren</span><span class="text-xs font-normal text-zinc-500">%</span></span>
+              <div class="flex gap-2">
+                <input id="tf-prozent" type="number" step="1" value="100" inputmode="decimal" class={inputCls} />
+                <button id="tf-prozent-go" type="button" class={btnCls + ' shrink-0'}>Anwenden</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class={cardCls}>
+          <h2 class={headCls}>Drehen</h2>
+          <div class="mt-3 space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="w-16 text-sm font-medium text-zinc-700">X-Achse</span>
+              <button type="button" data-dreh="x" data-grad="-90" class={btnCls + ' flex-1'}>−90°</button>
+              <button type="button" data-dreh="x" data-grad="90" class={btnCls + ' flex-1'}>+90°</button>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-16 text-sm font-medium text-zinc-700">Y-Achse</span>
+              <button type="button" data-dreh="y" data-grad="-90" class={btnCls + ' flex-1'}>−90°</button>
+              <button type="button" data-dreh="y" data-grad="90" class={btnCls + ' flex-1'}>+90°</button>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-16 text-sm font-medium text-zinc-700">Z-Achse</span>
+              <button type="button" data-dreh="z" data-grad="-90" class={btnCls + ' flex-1'}>−90°</button>
+              <button type="button" data-dreh="z" data-grad="90" class={btnCls + ' flex-1'}>+90°</button>
+            </div>
+            <div class="flex gap-2 pt-1">
+              <select id="tf-frei-achse" aria-label="Achse für freien Winkel" class={inputCls + ' w-20'}>
+                <option value="x">X</option>
+                <option value="y">Y</option>
+                <option value="z">Z</option>
+              </select>
+              <input id="tf-frei" type="number" step="1" value="45" inputmode="decimal" aria-label="Freier Winkel in Grad" class={inputCls} />
+              <button id="tf-frei-go" type="button" class={btnCls + ' shrink-0'}>Drehen</button>
+            </div>
+            <p class="text-xs text-zinc-500">
+              Gedreht wird um den Mittelpunkt des Modells – so bleibt das Teil an Ort und Stelle.
+            </p>
+          </div>
+        </div>
+
+        <div class={cardCls}>
+          <h2 class={headCls}>Spiegeln &amp; Ausrichten</h2>
+          <div class="mt-3 space-y-2">
+            <div class="flex gap-2">
+              <button type="button" data-spiegel="x" class={btnCls + ' flex-1'}>An X</button>
+              <button type="button" data-spiegel="y" class={btnCls + ' flex-1'}>An Y</button>
+              <button type="button" data-spiegel="z" class={btnCls + ' flex-1'}>An Z</button>
+            </div>
+            <button id="tf-plate" type="button" class="w-full rounded-lg border border-brand-300 bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-800 transition hover:bg-brand-100">
+              Auf die Bauplatte legen
+            </button>
+            <p class="text-xs text-zinc-500">
+              Setzt den tiefsten Punkt auf z&nbsp;=&nbsp;0 und zentriert die Grundfläche.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex gap-2">
+          <button id="tf-undo" type="button" disabled class={btnCls + ' flex-1'}>Rückgängig</button>
+          <button id="tf-reset" type="button" disabled class={btnCls + ' flex-1'}>Alles zurücksetzen</button>
+        </div>
+        <p id="tf-schritte" class="text-xs text-zinc-500">Noch keine Änderung.</p>
+      </form>
+
+      <div class="space-y-4">
+        <div class={cardCls + ' p-3'}>
+          <canvas
+            id="tf-canvas"
+            class="block h-[420px] w-full rounded-lg bg-zinc-50"
+            aria-label="3D-Vorschau des Modells"
+          ></canvas>
+          <p id="tf-view-hint" hidden class="px-2 py-8 text-center text-sm text-zinc-600"></p>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <button id="tf-mess" type="button" class={btnCls}>Messen</button>
+            <button id="tf-mess-clear" type="button" hidden class={btnCls}>Punkte löschen</button>
+            <button id="tf-reset-view" type="button" class={btnCls}>Ansicht zurücksetzen</button>
+            <button id="tf-shot" type="button" class={btnCls}>Bild speichern</button>
+            <span class="ml-auto text-xs text-zinc-500">Ziehen dreht · Rad zoomt</span>
+          </div>
+          <p id="tf-mess-out" hidden class="mt-3 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-900"></p>
+        </div>
+
+        <div class={cardCls}>
+          <h2 class={headCls}>Ergebnis</h2>
+          <dl class="mt-3 text-sm">
+            <div class={rowCls}><dt class="text-zinc-600">Abmessungen</dt><dd id="tf-masse" class="font-mono font-semibold text-zinc-900">–</dd></div>
+            <div class={rowCls}><dt class="text-zinc-600">Dreiecke</dt><dd id="tf-tris" class="font-mono text-zinc-900">–</dd></div>
+            <div class={rowCls}><dt class="text-zinc-600">Volumen</dt><dd id="tf-vol" class="font-mono text-zinc-900">–</dd></div>
+            <div class={rowCls}><dt class="text-zinc-600">Tiefster Punkt</dt><dd id="tf-zmin" class="font-mono text-zinc-900">–</dd></div>
+          </dl>
+          <button id="tf-dl" type="button" class="mt-4 w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-500">
+            Als STL speichern
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <section class="prose prose-zinc mt-12 max-w-none">
+      <h2>Was dieses Werkzeug macht</h2>
+      <p>
+        Skalieren, Drehen und Ausrichten sind die drei Handgriffe, die zwischen einem
+        heruntergeladenen Modell und einem brauchbaren Druck stehen. In CAD-Programmen sind sie
+        selbstverständlich, in Slicern nur halb vorhanden – und wer nur schnell ein Maß ändern
+        will, öffnet dafür ungern ein 400-MB-Programm oder legt ein Konto bei einem Online-Dienst
+        an, der die Datei erst auf einen fremden Server lädt.
+      </p>
+      <p>
+        Der wichtigste Unterschied zum Slicer steckt im <strong>Zielmaß</strong>: Slicer rechnen in
+        Prozent, hier gibst du an, wie lang das Teil werden soll. Der Rest ergibt sich – wahlweise
+        unter Beibehaltung der Seitenverhältnisse oder nur für die eine Achse.
+      </p>
+
+      <h2>Messen im Modell</h2>
+      <p>
+        Ein Klick setzt einen Punkt auf die Oberfläche, der zweite spannt die Strecke auf. Angezeigt
+        werden der Abstand und die drei Achsanteile. Letztere sind oft die eigentlich gesuchte Zahl:
+        Beim Lochabstand einer Montageplatte interessiert nicht die Raumdiagonale, sondern das Maß
+        in X. Gemessen wird der echte Schnittpunkt mit dem getroffenen Dreieck, nicht ein
+        gerundeter Rasterpunkt – die Genauigkeit hängt also am Zielen, nicht am Rechnen. Zoome
+        heran, bevor du klickst.
+      </p>
+
+      <h2>Warum Spiegeln heikel ist</h2>
+      <p>
+        Ein gespiegeltes Netz ist mehr als vertauschte Vorzeichen. Mit der Spiegelung kehrt sich der
+        Umlaufsinn jedes Dreiecks um, und damit die Richtung, in die seine Normale zeigt. Ohne
+        Korrektur zeigten nach dem Spiegeln alle Normalen nach innen; ein Slicer hielte das Modell
+        für hohl und die Luft ringsum für Material. Deshalb wird beim Spiegeln die Eckreihenfolge
+        mitgedreht. Prüfen kannst du das Ergebnis mit der
+        <a href="/generatoren/stl-analyse">STL-Analyse</a>, die dir sagt, ob das Netz dicht ist.
+      </p>
+
+      <h2>Passt zusammen mit</h2>
+      <ul>
+        <li>
+          <a href="/generatoren/stl-splitter">STL-Splitter</a> – wenn das Modell auch nach dem
+          Ausrichten nicht auf die Bauplatte passt. Danach hierher zurück und beide Hälften ablegen.
+        </li>
+        <li>
+          <a href="/generatoren/stl-analyse">STL-Analyse</a> – Dichtheit, Volumen und Maße prüfen,
+          bevor du druckst.
+        </li>
+        <li>
+          <a href="/rechner/3d-druck-kosten">3D-Druck-Kosten</a> – aus dem neuen Volumen wird direkt
+          der Materialpreis.
+        </li>
+      </ul>
+
+      <h2>Häufige Fragen</h2>
+      {FAQ.map((f) => (
+        <details class="rounded-lg border border-zinc-200 bg-white p-4">
+          <summary class="cursor-pointer font-medium text-zinc-900">{f.q}</summary>
+          <p class="mt-2 text-zinc-700">{f.a}</p>
+        </details>
+      ))}
+    </section>
+  </div>
+</BaseLayout>
+
+<script>
+  import { parseStl, StlError } from '../../lib/stl';
+  import { createViewer, meshBounds, type Viewer } from '../../lib/viewer3d';
+  import { meshVolume } from '../../lib/meshsplit';
+  import { toStl } from '../../lib/gridfinity';
+  import {
+    scaleMesh,
+    rotateMesh,
+    mirrorMesh,
+    layOnPlate,
+    scaleFactorForSize,
+    pixelRay,
+    rayMesh,
+    measure,
+    markerMesh,
+    lineMesh,
+    type Achse,
+  } from '../../lib/meshtransform';
+
+  const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
+  const statusEl = $('tf-status');
+  const workEl = $('tf-work');
+
+  const MODELL: [number, number, number] = [0.92, 0.55, 0.25];
+  const MARKE: [number, number, number] = [0.05, 0.45, 0.75];
+
+  const nf = (n: number, dig = 2) => n.toLocaleString('de-DE', { maximumFractionDigits: dig });
+  const esc = (s: string) =>
+    s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+  const setText = (id: string, t: string) => {
+    const el = $(id);
+    if (el) el.textContent = t;
+  };
+  const val = (id: string, fb: number) => {
+    const el = $(id) as HTMLInputElement | null;
+    const v = el ? parseFloat(el.value.replace(',', '.')) : NaN;
+    return Number.isFinite(v) ? v : fb;
+  };
+  const achsWahl = (id: string): Achse => (($(id) as HTMLSelectElement | null)?.value as Achse) ?? 'x';
+
+  function status(kind: 'info' | 'error' | 'ok', html: string): void {
+    if (!statusEl) return;
+    const styles = {
+      info: 'border-zinc-200 bg-zinc-50 text-zinc-700',
+      ok: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+      error: 'border-red-200 bg-red-50 text-red-800',
+    };
+    statusEl.hidden = false;
+    statusEl.className = `mt-4 rounded-lg border px-4 py-3 text-sm ${styles[kind]}`;
+    statusEl.innerHTML = html;
+  }
+
+  /** Ein Bearbeitungsschritt. Gespeichert wird die fertige Rechenvorschrift,
+   *  damit „Rückgängig" den Rest exakt nachvollziehen kann. */
+  type Schritt =
+    | { art: 'drehen'; achse: Achse; grad: number }
+    | { art: 'skalieren'; sx: number; sy: number; sz: number }
+    | { art: 'spiegeln'; achse: Achse }
+    | { art: 'bauplatte' };
+
+  let original: Float64Array | null = null;
+  let aktuell: Float64Array | null = null;
+  let schritte: Schritt[] = [];
+  let dateiname = 'modell';
+  let viewer: Viewer | null = null;
+  let viewerFehlt = false;
+
+  let messen = false;
+  let punkte: { x: number; y: number; z: number }[] = [];
+
+  function anwenden(t: Float64Array, s: Schritt): Float64Array {
+    if (s.art === 'drehen') return rotateMesh(t, s.achse, s.grad);
+    if (s.art === 'skalieren') return scaleMesh(t, s.sx, s.sy, s.sz);
+    if (s.art === 'spiegeln') return mirrorMesh(t, s.achse);
+    return layOnPlate(t);
+  }
+
+  function beschreibung(s: Schritt): string {
+    if (s.art === 'drehen') return `${s.grad > 0 ? '+' : ''}${nf(s.grad, 1)}° um ${s.achse.toUpperCase()}`;
+    if (s.art === 'skalieren')
+      return s.sx === s.sy && s.sy === s.sz
+        ? `Skaliert ×${nf(s.sx, 4)}`
+        : `Skaliert ${nf(s.sx, 3)}/${nf(s.sy, 3)}/${nf(s.sz, 3)}`;
+    if (s.art === 'spiegeln') return `Gespiegelt an ${s.achse.toUpperCase()}`;
+    return 'Auf Bauplatte gelegt';
+  }
+
+  /** Schritt ausführen: ein Durchlauf über das Netz, nicht die ganze Kette neu. */
+  function schritt(s: Schritt): void {
+    if (!aktuell) return;
+    aktuell = anwenden(aktuell, s);
+    schritte.push(s);
+    punkte = []; // Messpunkte gehören zur alten Lage
+    zeichnen();
+  }
+
+  /** Nur beim Rückgängigmachen: vom Original aus neu rechnen. */
+  function neuRechnen(): void {
+    if (!original) return;
+    let t: Float64Array = original;
+    for (const s of schritte) t = anwenden(t, s);
+    aktuell = t;
+    punkte = [];
+    zeichnen();
+  }
+
+  function zeichnen(): void {
+    if (!aktuell) return;
+    const b = meshBounds(aktuell);
+    setText('tf-sx', `${nf(b.size.x)} mm`);
+    setText('tf-sy', `${nf(b.size.y)} mm`);
+    setText('tf-sz', `${nf(b.size.z)} mm`);
+    setText('tf-masse', `${nf(b.size.x, 1)} × ${nf(b.size.y, 1)} × ${nf(b.size.z, 1)} mm`);
+    setText('tf-tris', (aktuell.length / 9).toLocaleString('de-DE'));
+    setText('tf-vol', `${nf(meshVolume(aktuell) / 1000, 2)} cm³`);
+    setText('tf-zmin', `z = ${nf(b.min.z)} mm`);
+
+    const undo = $('tf-undo') as HTMLButtonElement | null;
+    const reset = $('tf-reset') as HTMLButtonElement | null;
+    if (undo) undo.disabled = schritte.length === 0;
+    if (reset) reset.disabled = schritte.length === 0;
+    setText(
+      'tf-schritte',
+      schritte.length === 0
+        ? 'Noch keine Änderung.'
+        : `${schritte.length} Schritt${schritte.length === 1 ? '' : 'e'}: ${schritte.map(beschreibung).join(' · ')}`,
+    );
+
+    if (viewer) {
+      const teile: { triangles: ArrayLike<number>; color: [number, number, number]; helper?: boolean }[] = [
+        { triangles: aktuell, color: MODELL },
+      ];
+      if (punkte.length > 0) {
+        // helper: true – sonst verschöbe jede Marke den Kameramittelpunkt und
+        // der nächste Messklick träfe daneben.
+        // Größe am Modell ausgerichtet, nicht fest: Die halbe Marke steckt im
+        // Material, sichtbar bleibt nur die äußere Hälfte.
+        const gr = Math.max(b.radius / 25, 0.05);
+        teile.push({ triangles: markerMesh(punkte, gr), color: MARKE, helper: true });
+        if (punkte.length === 2)
+          teile.push({ triangles: lineMesh(punkte[0], punkte[1], gr * 0.45), color: MARKE, helper: true });
+      }
+      viewer.setParts(teile);
+    }
+    messAusgabe();
+  }
+
+  function messAusgabe(): void {
+    const out = $('tf-mess-out');
+    const clear = $('tf-mess-clear');
+    if (clear) clear.hidden = punkte.length === 0;
+    if (!out) return;
+    if (punkte.length === 0) {
+      out.hidden = !messen;
+      if (messen) out.textContent = 'Klicke einen Punkt auf dem Modell an.';
+      return;
+    }
+    out.hidden = false;
+    if (punkte.length === 1) {
+      out.textContent = 'Erster Punkt gesetzt – jetzt den zweiten anklicken.';
+      return;
+    }
+    const m = measure(punkte[0], punkte[1]);
+    out.innerHTML =
+      `<strong>${nf(m.dist)} mm</strong> Abstand · ` +
+      `ΔX ${nf(m.dx)} · ΔY ${nf(m.dy)} · ΔZ ${nf(m.dz)} mm`;
+  }
+
+  function messModus(an: boolean): void {
+    messen = an;
+    const b = $('tf-mess');
+    if (b) {
+      b.textContent = an ? 'Messen beenden' : 'Messen';
+      b.className = an
+        ? 'rounded-lg border border-sky-400 bg-sky-50 px-3 py-1.5 text-sm font-semibold text-sky-800 transition hover:bg-sky-100'
+        : 'rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100';
+    }
+    const c = $('tf-canvas');
+    if (c) c.style.cursor = an ? 'crosshair' : '';
+    messAusgabe();
+  }
+
+  /** Klick in einen Strahl umrechnen und den nächsten Treffer suchen. */
+  function klickPunkt(ev: PointerEvent): void {
+    if (!messen || !viewer || !aktuell) return;
+    const canvas = $('tf-canvas') as HTMLCanvasElement | null;
+    if (!canvas) return;
+    const r = canvas.getBoundingClientRect();
+    const cam = viewer.camera();
+    const strahl = pixelRay(
+      ev.clientX - r.left,
+      ev.clientY - r.top,
+      cam.width || r.width,
+      cam.height || r.height,
+      cam.fovY,
+      cam.eye,
+      cam.target,
+    );
+    const treffer = rayMesh(aktuell, strahl);
+    const out = $('tf-mess-out');
+    if (!treffer) {
+      if (out) {
+        out.hidden = false;
+        out.textContent = 'Daneben – bitte auf das Modell klicken.';
+      }
+      return;
+    }
+    if (punkte.length >= 2) punkte = [];
+    punkte.push(treffer.point);
+    zeichnen();
+  }
+
+  async function laden(file: File): Promise<void> {
+    status('info', `<strong>${esc(file.name)}</strong> wird gelesen …`);
+    try {
+      const { verts } = parseStl(await file.arrayBuffer());
+      original = verts;
+      aktuell = verts;
+      schritte = [];
+      punkte = [];
+      dateiname = file.name.replace(/\.stl$/i, '') || 'modell';
+      if (workEl) workEl.hidden = false;
+
+      const canvas = $('tf-canvas') as HTMLCanvasElement | null;
+      if (canvas && !viewer && !viewerFehlt) {
+        viewer = createViewer(canvas, { color: MODELL, background: [0.98, 0.98, 0.99] });
+        if (!viewer) {
+          viewerFehlt = true;
+          canvas.hidden = true;
+          const hint = $('tf-view-hint');
+          if (hint) {
+            hint.hidden = false;
+            hint.textContent =
+              'Dein Browser unterstützt kein WebGL2 – Drehen, Skalieren und Speichern funktionieren trotzdem, nur die Vorschau und das Messen per Klick fehlen.';
+          }
+          const mb = $('tf-mess') as HTMLButtonElement | null;
+          if (mb) mb.disabled = true;
+        } else {
+          canvas.addEventListener('pointerdown', (e) => {
+            zeigerStart = { x: e.clientX, y: e.clientY };
+          });
+          canvas.addEventListener('pointerup', (e) => {
+            const d = Math.hypot(e.clientX - zeigerStart.x, e.clientY - zeigerStart.y);
+            if (d < 5) klickPunkt(e); // Klick, kein Drehen
+          });
+        }
+      }
+
+      const b = meshBounds(verts);
+      const ziel = $('tf-ziel') as HTMLInputElement | null;
+      if (ziel && !ziel.value) ziel.value = b.size.x.toFixed(1);
+      zeichnen();
+      status(
+        'ok',
+        `<strong>${esc(file.name)}</strong> geladen – ${(verts.length / 9).toLocaleString('de-DE')} Dreiecke, ${nf(b.size.x, 1)} × ${nf(b.size.y, 1)} × ${nf(b.size.z, 1)} mm.`,
+      );
+    } catch (e) {
+      const msg = e instanceof StlError ? e.message : 'Die Datei konnte nicht gelesen werden.';
+      status('error', esc(msg));
+    }
+  }
+
+  let zeigerStart = { x: 0, y: 0 };
+
+  /* --- Bedienung --- */
+  const drop = $('tf-drop');
+  const fileInput = $('tf-file') as HTMLInputElement | null;
+  fileInput?.addEventListener('change', () => {
+    const f = fileInput.files?.[0];
+    if (f) void laden(f);
+  });
+  drop?.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    drop.classList.add('border-brand-500', 'bg-brand-50');
+  });
+  drop?.addEventListener('dragleave', () => drop.classList.remove('border-brand-500', 'bg-brand-50'));
+  drop?.addEventListener('drop', (e) => {
+    e.preventDefault();
+    drop.classList.remove('border-brand-500', 'bg-brand-50');
+    const f = (e as DragEvent).dataTransfer?.files?.[0];
+    if (f) void laden(f);
+  });
+
+  for (const b of document.querySelectorAll<HTMLElement>('[data-dreh]')) {
+    b.addEventListener('click', () =>
+      schritt({ art: 'drehen', achse: b.dataset.dreh as Achse, grad: parseFloat(b.dataset.grad ?? '90') }),
+    );
+  }
+  for (const b of document.querySelectorAll<HTMLElement>('[data-spiegel]')) {
+    b.addEventListener('click', () => schritt({ art: 'spiegeln', achse: b.dataset.spiegel as Achse }));
+  }
+  $('tf-frei-go')?.addEventListener('click', () => {
+    const g = val('tf-frei', 0);
+    if (g !== 0) schritt({ art: 'drehen', achse: achsWahl('tf-frei-achse'), grad: g });
+  });
+  $('tf-plate')?.addEventListener('click', () => schritt({ art: 'bauplatte' }));
+
+  $('tf-ziel-go')?.addEventListener('click', () => {
+    if (!aktuell) return;
+    const achse = achsWahl('tf-ziel-achse');
+    const ziel = val('tf-ziel', 0);
+    if (!(ziel > 0)) {
+      status('error', 'Bitte ein Zielmaß größer als null eingeben.');
+      return;
+    }
+    const f = scaleFactorForSize(meshBounds(aktuell), achse, ziel);
+    const alle = ($('tf-seiten') as HTMLInputElement | null)?.checked !== false;
+    schritt({
+      art: 'skalieren',
+      sx: alle || achse === 'x' ? f : 1,
+      sy: alle || achse === 'y' ? f : 1,
+      sz: alle || achse === 'z' ? f : 1,
+    });
+  });
+
+  $('tf-prozent-go')?.addEventListener('click', () => {
+    const p = val('tf-prozent', 100) / 100;
+    if (!(p > 0)) {
+      status('error', 'Bitte einen Prozentwert größer als null eingeben.');
+      return;
+    }
+    if (p !== 1) schritt({ art: 'skalieren', sx: p, sy: p, sz: p });
+  });
+
+  $('tf-undo')?.addEventListener('click', () => {
+    if (schritte.length === 0) return;
+    schritte.pop();
+    neuRechnen();
+  });
+  $('tf-reset')?.addEventListener('click', () => {
+    schritte = [];
+    neuRechnen();
+  });
+
+  $('tf-mess')?.addEventListener('click', () => messModus(!messen));
+  $('tf-mess-clear')?.addEventListener('click', () => {
+    punkte = [];
+    zeichnen();
+  });
+  $('tf-reset-view')?.addEventListener('click', () => viewer?.resetView());
+  $('tf-shot')?.addEventListener('click', () => {
+    const url = viewer?.snapshot();
+    if (!url) return;
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${dateiname}-ansicht.png`;
+    a.click();
+  });
+
+  $('tf-dl')?.addEventListener('click', () => {
+    if (!aktuell) return;
+    const blob = new Blob([toStl(aktuell, 'Werkbank STL transformieren')], { type: 'model/stl' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${dateiname}-transformiert.stl`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  });
+</script>

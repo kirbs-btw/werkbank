@@ -15,6 +15,24 @@ export interface Generator {
 
 export const GENERATORS: Generator[] = [
   {
+    slug: 'stl-transformieren',
+    title: 'STL skalieren, drehen und ausrichten',
+    shortTitle: 'STL transformieren',
+    description:
+      'Modell auf ein exaktes Zielmaß skalieren, in 90°-Schritten drehen, spiegeln und auf die Bauplatte legen. Dazu Strecken direkt im Modell messen – alles im Browser, ohne Upload.',
+    keywords: [
+      'stl skalieren',
+      'stl drehen online',
+      'stl spiegeln',
+      'stl größe ändern',
+      'stl auf maß skalieren',
+      'stl messen online',
+      'stl ausrichten bauplatte',
+      '3d modell skalieren online',
+    ],
+    updated: '2026-08-26',
+  },
+  {
     slug: 'stl-splitter',
     title: 'STL-Splitter – Modell für den Drucker teilen',
     shortTitle: 'STL-Splitter',

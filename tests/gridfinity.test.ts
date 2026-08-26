@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { buildBin, toStl, previewSvg, roundedRect, GF, type BinSpec } from '../src/lib/gridfinity';
 import { analyzeStl } from '../src/lib/stl';
+import { closureError, vectorArea } from '../src/lib/meshtransform';
 
 const spec = (over: Partial<BinSpec> = {}): BinSpec => ({
   unitsX: 1,
@@ -429,5 +430,55 @@ describe('Grundplatte – Vorschau', () => {
       expect(vb.every(Number.isFinite)).toBe(true);
       expect(vb[2]).toBeGreaterThan(0);
     }
+  });
+});
+
+describe('Flächen zeigen alle nach außen', () => {
+  // Aufgefallen ist das erst beim Transformieren: Eine reine Verschiebung
+  // änderte das gemeldete Volumen um 5 %. Das kann nur passieren, wenn die
+  // Vektorfläche nicht null ist – und die ist genau dann nicht null, wenn eine
+  // Fläche verkehrt herum gewickelt ist. Der Absatz unter dem Stapelrand war
+  // es: Er zeigte nach oben statt nach unten. Die Kantenzählung hatte das
+  // durchgewinkt, weil sie die Richtung der Kanten wegsortiert.
+  it('lässt bei allen Bauformen keine offene Vektorfläche übrig', () => {
+    for (const over of [
+      {},
+      { lip: false },
+      { lip: true, unitsZ: 6 },
+      { unitsX: 2, unitsY: 3 },
+      { compartmentsX: 3, compartmentsY: 2 },
+      { holes: 'magnet' as const },
+      { holes: 'magnet-schraube' as const },
+      { wall: 2.4, floor: 3 },
+      { unitsX: 2, unitsY: 2, unitsZ: 2, compartmentsX: 2, compartmentsY: 2, holes: 'magnet' as const },
+    ]) {
+      const s = spec(over);
+      expect(closureError(buildBin(s).triangles), JSON.stringify(over)).toBeLessThan(1e-9);
+    }
+  });
+
+  it('meldet dasselbe Volumen, egal wo das Teil liegt', () => {
+    const t = buildBin(spec()).triangles;
+    const verschoben = Float64Array.from(t);
+    for (let i = 0; i < verschoben.length; i += 3) {
+      verschoben[i] += 137.5;
+      verschoben[i + 1] -= 42;
+      verschoben[i + 2] += 900;
+    }
+    const a = analyzeStl(toStl(t, 'binary'));
+    const b = analyzeStl(toStl(verschoben, 'binary'));
+    // Nicht auf die letzte Stelle: STL speichert float32, und bei z = 900 mm
+    // liegt dessen Auflösung schon bei rund 6·10⁻⁵ mm. Übrig bleiben 3 ppm
+    // Rundung. Der behobene Fehler lag bei 5 % – diese Schranke fängt ihn mit
+    // 500-fachem Abstand.
+    expect(Math.abs(b.volume - a.volume) / a.volume).toBeLessThan(1e-4);
+  });
+
+  it('der Absatz unter dem Stapelrand zeigt nach unten', () => {
+    const mit = vectorArea(buildBin(spec({ lip: true })).triangles);
+    const ohne = vectorArea(buildBin(spec({ lip: false })).triangles);
+    expect(Math.abs(mit.z)).toBeLessThan(1e-9);
+    expect(Math.abs(ohne.z)).toBeLessThan(1e-9);
+    expect(mit.area).toBeGreaterThan(ohne.area); // die Lippe bringt Fläche mit
   });
 });

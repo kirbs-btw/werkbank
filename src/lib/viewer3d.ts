@@ -232,6 +232,17 @@ export interface ViewerOptions {
 export interface MeshPart {
   triangles: ArrayLike<number>;
   color: [number, number, number];
+  /**
+   * Hilfsgeometrie – Messmarken, Strecken, Markierungen. Wird gezeichnet, zählt
+   * aber nicht für die Modellgrenzen.
+   *
+   * Der Unterschied ist nicht kosmetisch: Aus den Grenzen ergibt sich der
+   * Mittelpunkt, um den die Kamera kreist. Zählten die Marken mit, verschöbe
+   * jede gesetzte Marke die Kamera ein Stück – und der nächste Messklick träfe
+   * daneben. Genau das war messbar: zweimal dasselbe Pixel ergab 0,26 mm
+   * Abstand statt null.
+   */
+  helper?: boolean;
 }
 
 export interface Viewer {
@@ -247,6 +258,11 @@ export interface Viewer {
    * liefert nur Schwarz.
    */
   snapshot(): string | null;
+  /**
+   * Kamera in Modellkoordinaten samt Bildgröße – die Angaben, aus denen sich
+   * ein Klick in einen Strahl durch die Szene umrechnen lässt.
+   */
+  camera(): { eye: Vec3; target: Vec3; fovY: number; width: number; height: number };
   destroy(): void;
   readonly bounds: MeshBounds;
 }
@@ -433,6 +449,18 @@ export function createViewer(canvas: HTMLCanvasElement, opts: ViewerOptions = {}
   schedule();
 
   return {
+    camera() {
+      // Gezeichnet wird um bounds.center verschoben; für die Rückrechnung in
+      // Modellkoordinaten muss der Mittelpunkt wieder dazu.
+      const e = orbitPosition(yaw, pitch, distance, target);
+      return {
+        eye: { x: e.x + bounds.center.x, y: e.y + bounds.center.y, z: e.z + bounds.center.z },
+        target: { ...bounds.center },
+        fovY,
+        width: canvas.clientWidth,
+        height: canvas.clientHeight,
+      };
+    },
     setMesh(triangles) {
       this.setParts([{ triangles, color }]);
     },
@@ -458,7 +486,7 @@ export function createViewer(canvas: HTMLCanvasElement, opts: ViewerOptions = {}
         gl.bindBuffer(gl.ARRAY_BUFFER, nb);
         gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
         teile.push({ buffer: pb, normals: nb, count: Math.floor(positions.length / 3), color: part.color });
-        for (let i = 0; i < part.triangles.length; i++) alle.push(part.triangles[i]);
+        if (!part.helper) for (let i = 0; i < part.triangles.length; i++) alle.push(part.triangles[i]);
       }
       vertexCount = teile.reduce((n, t) => n + t.count, 0);
       const vorher = bounds.radius;

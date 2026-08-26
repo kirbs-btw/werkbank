@@ -132,8 +132,7 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 - [x] ~~**T10 3D-Viewer als Grundlage**~~ → `src/lib/viewer3d.ts`, eingebaut in die STL-Analyse (2026-08-26)
 - [x] ~~**T11 STL-Splitter**~~ → `/generatoren/stl-splitter` (2026-08-26)
 - [x] ~~**T12 Passstifte automatisch**~~ → im STL-Splitter (2026-08-26)
-- [ ] **T13 Mess- und Transformwerkzeuge**: Strecken im Netz messen, skalieren, drehen, auf die
-      Bauplatte legen – das, was man sonst im Slicer sucht.
+- [x] ~~**T13 Mess- und Transformwerkzeuge**~~ → `/generatoren/stl-transformieren` (2026-08-26)
 
 ### P2 – SEO
 
@@ -381,6 +380,34 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   (1,6 % weniger Volumen als die Kreisformel), und die Ablehnung von Stiften in einer 2,4-mm-Wand
   ist die gewünschte Schutzfunktion.
   Nebenbei ein Grammatikfehler behoben („1 Stifte gesetzt").
+
+- **2026-08-26 · Iteration 14 (T13):** **STL transformieren – und ein Fund im Gridfinity-Generator.**
+  Neue Seite `/generatoren/stl-transformieren`: auf ein exaktes Zielmaß skalieren (das, was Slicer
+  nicht können – die rechnen in Prozent), in 90°-Schritten oder frei drehen, spiegeln, auf die
+  Bauplatte legen, dazu Strecken per Klick im Modell messen. Jeder Schritt einzeln rückgängig.
+  **Damit ist Epic A vollständig.**
+
+  Der eigentliche Gewinn der Iteration war ein Nebenprodukt: Ein Test stellte fest, dass eine
+  **reine Verschiebung** das gemeldete Volumen eines Gridfinity-Bins um 5 % änderte. Das ist bei
+  einem geschlossenen Netz unmöglich – die Volumenformel ist nur dann verschiebungsinvariant, wenn
+  die Summe aller Flächenvektoren null ist. War sie nicht: Der Absatz unter dem Stapelrand
+  (`gridfinity.ts:364`) zeigte nach oben statt nach unten. Betroffen war die Voreinstellung, also
+  fast jedes erzeugte Bin. **Die Kantenzählung konnte das prinzipiell nicht finden** – sie sortiert
+  die Kantenrichtung weg und hält ein Netz mit verdrehter Fläche für dicht. Neu ist deshalb
+  `closureError()` als schärfere Prüfung, samt Regressionssperre für neun Bin-Bauformen und für
+  alle Splitter-Ergebnisse.
+
+  Zwei weitere Dinge fielen erst im Zusammenspiel auf, nicht im Test: Die Messmarken zählten für die
+  Modellgrenzen mit und verschoben damit den Kameramittelpunkt – zweimal derselbe Bildpunkt ergab
+  0,26 mm statt 0. Seitdem gibt es `helper: true` für Hilfsgeometrie. Und die Marken waren mit
+  74 sichtbaren Pixeln schlicht zu klein; gemessen wurde das, indem der eigene Schnappschuss
+  ausgewertet und Modell- gegen Markenpixel gezählt wurden.
+
+  7 neue Tests im Bestand, 56 für das neue Modul, insgesamt 922.
+
+  **Merksatz:** Dichtheit über Kantenzählung ist notwendig, aber nicht hinreichend. Wer wissen will,
+  ob ein Netz wirklich geschlossen ist, prüft zusätzlich, ob die Flächenvektoren sich aufheben –
+  und die einfachste Probe darauf ist: dasselbe Teil an zwei Orten muss dasselbe Volumen haben.
 
 ## Start-Prompt (Referenz)
 
