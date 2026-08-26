@@ -131,15 +131,15 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
       Kreuzungsprüfung (2026-08-26)
 - [x] ~~**T17 Ohrenschneiden an Berührstellen**~~ → Sweep-Zerlegung in `polytri.ts`, mit Probe
       gegen das Brückenverfahren (2026-08-26)
-- [ ] **T18 Sweep-Zerlegung: waagerechte Kanten** – `polytri.ts` behandelt Löcher direkt und ist
-      dem Brückenverfahren fast überall überlegen (714 von 717 zufälligen Lochanordnungen gegen
-      659), stolpert aber über **waagerechte Kanten** – und die sind im Querschnitt einer flachen
-      Fläche der Normalfall. Deshalb rechnet der Splitter derzeit beide Verfahren und nimmt das,
-      das die Konturkanten-Probe besteht.
-      Zu klären: die Sonderfälle bei gleicher y-Höhe im Sweep (Statuskante suchen, Ecken
-      einordnen). Danach ließe sich das Brückenverfahren als zweiter Weg vermutlich ganz
-      ablösen. Die drei verbliebenen Fehlfälle im Messstand betreffen alle die sternförmige
-      Außenkontur mit vier bis fünf Löchern.
+- [ ] **T18 Sweep-Zerlegung: lange Reihen auf gleicher Höhe** – Zwei Ursachen sind behoben
+      (fast waagerechte Kanten, flächenlose Teilstücke), die Fehlfälle auf Splitter-Querschnitten
+      sanken damit von 352 auf 190. **Offen bleibt der Fall langer Punktreihen auf identischer
+      Höhe:** Eine gemessene Kontur aus 40 Punkten hat 13 auf einer und 15 auf einer zweiten Höhe
+      – das Verfahren liefert dort nur 10 von 38 Dreiecken und 4,1 statt 265,8 Flächeneinheiten.
+      Zu prüfen ist die Statusstruktur bei vielen Ecken auf derselben Sweep-Höhe: Welche Kante
+      gilt dann als „links von v", und werden Kanten korrekt ein- und ausgetragen?
+      Solange das offen ist, bleibt das Brückenverfahren der erste Weg im Splitter und die
+      Sweep-Zerlegung der zweite; die Konturkanten-Probe entscheidet.
 - [ ] **T8 OpenSEO anbinden** (siehe Abschnitt oben): MCP-Server in `.mcp.json` eintragen, Zugang
       testen, erste Ranking- und Keyword-Abfrage machen und das Ergebnis als neue P1/P2-Punkte
       eintragen. **Blockiert durch E5** (DataForSEO kostet Geld) – vorher nichts installieren.
@@ -670,6 +670,38 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   **Merksatz:** Zwei Verfahren mit verschiedenen Schwächen und einer nachprüfbaren Abnahme sind
   ehrlicher als ein Verfahren mit einer Kette von Rückfällen. Voraussetzung ist, dass die Abnahme
   genau das prüft, worauf es ankommt – hier die Kantenbilanz, nicht die Fläche.
+
+- **2026-08-26 · Iteration 23 (T18, teilweise):** **Zwei Ursachen in der Sweep-Zerlegung behoben,
+  Fehlfälle auf Splitter-Querschnitten von 352 auf 190 gesenkt.**
+
+  Die erste war ein Rechenfehler mit Ansage: Ich prüfte auf `a.y === b.y`, um waagerechte Kanten
+  zu erkennen. Schnittkonturen entstehen aber durch Interpolation, und eine eigentlich waagerechte
+  Kante hat dann Endpunkte, deren y sich im **letzten Bit** unterscheidet – gemessen
+  −7,2872319847799565 gegen −7,287231984779956. Der Test greift dort nicht, und die Interpolation
+  teilt durch rund 10⁻¹⁵.
+
+  Die zweite war ein Denkfehler: Teilstücke ohne Flächeninhalt habe ich zusammen mit der
+  Außenfläche über „Fläche ≤ 0" verworfen. Solche Stücke entstehen an Reihen gerader Punkte – und
+  **mit ihnen fielen ihre Randkanten weg.** An einer gemessenen Kontur aus 28 Punkten: drei Ecken
+  ungenutzt, vier Konturkanten fehlend, obwohl die Gesamtfläche stimmte. Flächenlos heißt eben
+  nicht wertlos: Diese Stücke tragen nichts zur Fläche bei, halten aber die Kantenbilanz zusammen.
+
+  **Ehrlich zur Wirkung:** Kein nutzerseitiges Maß hat sich bewegt. Der Splitter rechnet weiter
+  zuerst über Brücken, und dessen Tests waren schon vorher grün. Besser geworden ist der zweite
+  Weg – der greift genau dort, wo Brücken versagen. Beide Korrekturen sind mit der exakten
+  Fehlerkontur als Regressionstest hinterlegt.
+
+  Offen bleibt der schwerere Fall: lange Punktreihen auf identischer Höhe (40 Punkte, davon 13 und
+  15 auf zwei Höhen → 10 von 38 Dreiecken). Steht in T18.
+
+  Zwei Dinge zum Vorgehen: Der **Messstand ist jetzt ein fester Test** statt einer Wegwerfdatei –
+  er hat in drei Iterationen jede Vermutung entschieden. Und ich bin beim Sichern der Dateien
+  gestolpert: Beim Vorher-Nachher-Vergleich spielte ich am Ende die ältere Sicherung zurück und
+  überschrieb damit eine fertige Korrektur. Aufgefallen ist es nur, weil der Regressionstest
+  sofort rot wurde. 2 neue Tests, insgesamt 982.
+
+  **Merksatz:** „Entartet" ist kein Grund zum Wegwerfen. Ein flächenloses Stück trägt keine
+  Fläche, aber sehr wohl Kanten – und die Kantenbilanz ist hier die eigentliche Zusage.
 
 ## Start-Prompt (Referenz)
 

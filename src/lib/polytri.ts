@@ -100,11 +100,37 @@ export function triangulateWithHoles(
   /** Kanten, die die Sweep-Linie gerade schneiden – Kante i geht von i nach next[i]. */
   const status: { kante: number; helfer: number }[] = [];
 
-  const xBei = (kante: number, y: number): number => {
+  /**
+   * x-Wert einer Kante auf Höhe des Punktes `v`.
+   *
+   * Waagerechte Kanten sind der Sonderfall: Auf ihrer Höhe hat die Kante kein
+   * einzelnes x, sondern eine ganze Strecke. Gefragt ist dann der Punkt der
+   * Kante, der `v` am nächsten liegt – also der auf die Kante beschränkte
+   * x-Wert. Ohne das lieferte die Kante irgendeinen ihrer Endpunkte, und die
+   * Suche nach der Kante links von `v` griff daneben.
+   */
+  let spanne = 0;
+  for (const p of points) spanne = Math.max(spanne, Math.abs(p.x), Math.abs(p.y));
+  /**
+   * Ab dieser Höhendifferenz gilt eine Kante als waagerecht.
+   *
+   * Nicht auf exakte Gleichheit prüfen: Schnittkonturen entstehen aus
+   * Interpolation, und eine eigentlich waagerechte Kante hat dann Endpunkte,
+   * deren y sich im letzten Bit unterscheidet – gemessen etwa
+   * −7,2872319847799565 gegen −7,287231984779956. Der Test auf Gleichheit
+   * greift dort nicht, und die Interpolation teilt durch rund 10⁻¹⁵. Heraus
+   * kommt ein x-Wert von astronomischer Größe, und die Suche nach der Kante
+   * links davon liegt völlig daneben.
+   */
+  const FLACH_Y = Math.max(spanne, 1) * 1e-12;
+
+  const xBei = (kante: number, v: Pt): number => {
     const a = points[kante];
     const b = points[next[kante]];
-    if (a.y === b.y) return Math.min(a.x, b.x);
-    return a.x + ((y - a.y) / (b.y - a.y)) * (b.x - a.x);
+    if (Math.abs(a.y - b.y) <= FLACH_Y) {
+      return Math.min(Math.max(v.x, Math.min(a.x, b.x)), Math.max(a.x, b.x));
+    }
+    return a.x + ((v.y - a.y) / (b.y - a.y)) * (b.x - a.x);
   };
   const einfuegen = (kante: number, helfer: number): void => {
     status.push({ kante, helfer });
@@ -119,7 +145,15 @@ export function triangulateWithHoles(
     let beste: { kante: number; helfer: number } | undefined;
     let besteX = -Infinity;
     for (const e of status) {
-      const x = xBei(e.kante, points[v].y);
+      // Nur Kanten berücksichtigen, die auf der Höhe von v tatsächlich noch
+      // laufen. In lexikografischer Ordnung heißt das: oberer Endpunkt über v,
+      // unterer darunter. Ohne diese Prüfung zählten auch Kanten mit, die genau
+      // auf derselben Höhe beginnen oder enden – bei waagerechten Kanten und
+      // gemeinsamen Höhen also ständig.
+      const a = points[e.kante];
+      const b = points[next[e.kante]];
+      if (!(hoeher(a, points[v]) && hoeher(points[v], b))) continue;
+      const x = xBei(e.kante, points[v]);
       if (x <= points[v].x + 1e-12 && x > besteX) {
         besteX = x;
         beste = e;
@@ -228,9 +262,26 @@ export function triangulateWithHoles(
       }
       if (flaeche.length < 3) continue;
       const ecken = flaeche.map((i) => points[i]);
-      if (ringArea(ecken) <= 0) continue; // Außenfläche oder entartet
+      const flaechenInhalt = ringArea(ecken);
+      // Nur die Außenfläche und Hohlräume verwerfen – die laufen im
+      // Uhrzeigersinn und haben deutlich negative Fläche.
+      //
+      // **Flächenlose Teilstücke bleiben drin.** Sie entstehen an Reihen
+      // gerader Punkte: Mehrere Ecken auf einer Linie bilden mit einer
+      // Diagonale ein Stück ohne Inhalt. Wer es wegwirft, verliert seine
+      // Randkanten – gemessen an einem dünnen Band aus 28 Punkten: drei Ecken
+      // fielen weg und vier Konturkanten fehlten, obwohl die Fläche stimmte.
+      const winzig = Math.max(spanne, 1) ** 2 * 1e-12;
+      if (flaechenInhalt < -winzig) continue;
       const teile = ohrenSchneiden(ecken);
       if (teile.length === 0) continue;
+      if (flaechenInhalt <= winzig) {
+        // Flächenlos: Die Umlaufprüfung unten liefe auf einem Punkt genau am
+        // Rand und entschiede zufällig. Solche Stücke tragen nichts zur Fläche
+        // bei, halten aber die Kantenbilanz zusammen.
+        for (const [x, y, z] of teile) triangles.push([flaeche[x], flaeche[y], flaeche[z]]);
+        continue;
+      }
       // Der Hohlraum eines Lochs ist ebenfalls eine Fläche des Kantennetzes und
       // läuft gegen den Uhrzeigersinn – sieht also aus wie Material. Deshalb
       // wird an einem Punkt im Inneren geprüft, ob die Fläche wirklich Material

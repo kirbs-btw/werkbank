@@ -130,3 +130,129 @@ describe('Zerlegung ohne Brücken', () => {
     ]);
   });
 });
+
+describe('Zerlegung über viele zufällige Formen', () => {
+  const kreisN = (cx: number, cy: number, r: number, n: number): Pt[] =>
+    Array.from({ length: n }, (_, i) => {
+      const w = (-2 * Math.PI * i) / n;
+      return { x: cx + r * Math.cos(w), y: cy + r * Math.sin(w) };
+    });
+
+  /** Beide Zusagen in einem: Fläche stimmt **und** jede Konturkante steht genau einmal am Rand. */
+  function inOrdnung(aussen: Pt[], loecher: Pt[][]): boolean {
+    const { points, triangles } = triangulateWithHoles(aussen, loecher);
+    const soll = Math.abs(ringArea(aussen)) - loecher.reduce((s, h) => s + Math.abs(ringArea(h)), 0);
+    const ist = triangles.reduce((s, [i, j, k]) => {
+      const A = points[i], B = points[j], C = points[k];
+      return s + ((B.x - A.x) * (C.y - A.y) - (C.x - A.x) * (B.y - A.y)) / 2;
+    }, 0);
+    if (Math.abs(ist - soll) > 1e-6 * Math.max(1, soll)) return false;
+    const zaehler = new Map<string, number>();
+    for (const [i, j, k] of triangles)
+      for (const [a, b] of [[i, j], [j, k], [k, i]]) {
+        const id = a < b ? `${a}|${b}` : `${b}|${a}`;
+        zaehler.set(id, (zaehler.get(id) ?? 0) + 1);
+      }
+    let start = 0;
+    for (const ring of [aussen, ...loecher]) {
+      for (let i = 0; i < ring.length; i++) {
+        const a = start + i;
+        const b = start + ((i + 1) % ring.length);
+        if (zaehler.get(a < b ? `${a}|${b}` : `${b}|${a}`) !== 1) return false;
+      }
+      start += ring.length;
+    }
+    return true;
+  }
+
+  /** Deterministische Testmenge – dieselbe Folge in jedem Lauf. */
+  function menge(): [Pt[], Pt[][]][] {
+    let seed = 12345;
+    const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+    const innen = (p: Pt, ring: Pt[]) => {
+      let d = false;
+      for (let i = 0, j = ring.length - 1; i < ring.length; j = i++)
+        if (ring[i].y > p.y !== ring[j].y > p.y &&
+            p.x < ((ring[j].x - ring[i].x) * (p.y - ring[i].y)) / (ring[j].y - ring[i].y) + ring[i].x) d = !d;
+      return d;
+    };
+    const lForm: Pt[] = [{ x: -20, y: -20 }, { x: 20, y: -20 }, { x: 20, y: 0 }, { x: 0, y: 0 }, { x: 0, y: 20 }, { x: -20, y: 20 }];
+    const stern: Pt[] = Array.from({ length: 12 }, (_, i) => {
+      const w = (2 * Math.PI * i) / 12;
+      const r = i % 2 === 0 ? 22 : 12;
+      return { x: r * Math.cos(w), y: r * Math.sin(w) };
+    });
+    const out: [Pt[], Pt[][]][] = [];
+    for (const aussen of [quadrat(20), lForm, stern]) {
+      for (let n = 1; n <= 6; n++)
+        for (let v = 0; v < 40; v++) {
+          const loecher: Pt[][] = [];
+          let ok = true;
+          for (let k = 0; k < n && ok; k++) {
+            let gesetzt = false;
+            for (let t = 0; t < 60 && !gesetzt; t++) {
+              const r = 1.2 + rnd() * 3;
+              const cx = (rnd() - 0.5) * 34;
+              const cy = (rnd() - 0.5) * 34;
+              const kandidat = kreisN(cx, cy, r, 8 + Math.floor(rnd() * 8));
+              if (!kandidat.every((q) => innen(q, aussen))) continue;
+              if (loecher.some((h) => {
+                const c = h.reduce((s, q) => ({ x: s.x + q.x / h.length, y: s.y + q.y / h.length }), { x: 0, y: 0 });
+                return Math.hypot(c.x - cx, c.y - cy) < r + 5;
+              })) continue;
+              loecher.push(kandidat);
+              gesetzt = true;
+            }
+            if (!gesetzt) ok = false;
+          }
+          if (ok && loecher.length === n) out.push([aussen, loecher]);
+        }
+    }
+    return out;
+  }
+
+  it('liefert fast durchgehend eine vollständige Zerlegung', () => {
+    const f = menge();
+    let gut = 0;
+    for (const [a, l] of f) if (inOrdnung(a, l)) gut++;
+    expect(f.length).toBeGreaterThan(500);
+    // Das Brückenverfahren schafft auf derselben Menge 659. Die Schranke hält
+    // den erreichten Stand fest, ohne bei Kleinigkeiten rot zu werden.
+    expect(gut, `${gut}/${f.length}`).toBeGreaterThan(710);
+  });
+});
+
+describe('Konturen aus echten Schnitten', () => {
+  /**
+   * Ein dünnes Band aus einem Schnitt durch einen Gridfinity-Bin: 28 Punkte,
+   * fast alle auf zwei Höhen. Zwei Eigenheiten stecken darin, an denen die
+   * Zerlegung nacheinander scheiterte.
+   *
+   * **Erstens sind die „waagerechten" Kanten nicht exakt waagerecht.** Die
+   * Punkte entstehen durch Interpolation, ihre y-Werte unterscheiden sich im
+   * letzten Bit – hier −7,2872319847799565 gegen −7,287231984779956. Ein Test
+   * auf Gleichheit greift dort nicht, und die Interpolation teilt dann durch
+   * rund 10⁻¹⁵.
+   *
+   * **Zweitens entstehen flächenlose Teilstücke.** Mehrere Punkte auf einer
+   * Linie bilden mit einer Diagonale ein Stück ohne Inhalt. Wer es als
+   * „entartet" wegwirft, verliert seine Randkanten: Drei Ecken fielen weg und
+   * vier Konturkanten fehlten, obwohl die Gesamtfläche stimmte.
+   */
+  const band: Pt[] = [[-24.310331137193508,-5.8052906903961325],[-24.192205344450386,-6.00989056511157],[-23.454731931957784,-7.2872319847799565],[-4.207285348059957,-7.287231984779956],[-0.2946020375009166,-7.287231984779955],[-0.22865146069654796,-7.287231984779955],[-0.15608689445461144,-7.287231984779955],[-0.07913583848127548,-7.287231984779955],[0,-7.287231984779954],[0.07913583848127681,-7.287231984779954],[0.15608689445461144,-7.287231984779955],[0.22865146069654796,-7.287231984779955],[0.2946020375009166,-7.287231984779955],[4.207285348059956,-7.287231984779956],[23.454731931957784,-7.2872319847799565],[23.614011520411882,-7.0113516449688],[24.310331137193508,-5.8052906903961325],[3.351686142824234,-5.8052906903961325],[0.23469137105115045,-5.805290690396134],[0.18215259221876168,-5.8052906903961325],[0.12434485373359028,-5.8052906903961325],[0.06304266796659874,-5.805290690396134],[0,-5.805290690396134],[-0.06304266796659874,-5.805290690396134],[-0.12434485373359028,-5.8052906903961325],[-0.18215259221876168,-5.8052906903961325],[-0.23469137105115045,-5.805290690396134],[-3.351686142824234,-5.8052906903961325]].map(([x, y]) => ({ x, y }));
+
+  it('zerlegt ein dünnes Band mit fast waagerechten Kanten vollständig', () => {
+    pruefe('dünnes Band', band);
+  });
+
+  it('lässt dabei keine Ecke ungenutzt', () => {
+    const { points, triangles } = triangulateWithHoles(band, []);
+    const benutzt = new Set<number>();
+    for (const [i, j, k] of triangles) {
+      benutzt.add(i);
+      benutzt.add(j);
+      benutzt.add(k);
+    }
+    expect(benutzt.size, 'jede Ecke muss in mindestens einem Dreieck vorkommen').toBe(points.length);
+  });
+});
