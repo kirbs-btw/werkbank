@@ -5,6 +5,7 @@ import UpdatedAt from '../../components/UpdatedAt.astro';
 import Calculator from '../../components/Calculator.astro';
 import ToolCard from '../../components/ToolCard.astro';
 import { TOOLS, getTool, relatedTools } from '../../lib/registry';
+import { crossTools } from '../../lib/crosslinks';
 import { getCategory } from '../../lib/categories';
 import { softwareAppLd, breadcrumbLd, faqLd } from '../../lib/schema';
 
@@ -17,6 +18,7 @@ const tool = getTool(slug as string)!;
 const cat = getCategory(tool.category)!;
 const path = `/rechner/${tool.slug}`;
 const related = relatedTools(tool);
+const quer = crossTools(tool);
 
 const crumbs = [
   { name: 'Start', href: '/' },
@@ -82,6 +84,21 @@ if (tool.faq && tool.faq.length > 0) ld.push(faqLd(tool.faq));
           <h2 class="text-2xl font-bold tracking-tight text-zinc-900">Verwandte Rechner</h2>
           <div class="mt-4 grid gap-5 sm:grid-cols-2">
             {related.map((t) => (
+              <ToolCard tool={t} />
+            ))}
+          </div>
+        </section>
+      )
+    }
+    {
+      quer.length > 0 && (
+        <section class="mt-12">
+          <h2 class="text-2xl font-bold tracking-tight text-zinc-900">Passt auch dazu</h2>
+          <p class="mt-1 text-zinc-600">
+            Aus anderen Bereichen der Werkbank – dieselbe Frage, anderes Material oder Verfahren.
+          </p>
+          <div class="mt-4 grid gap-5 sm:grid-cols-2">
+            {quer.map((t) => (
               <ToolCard tool={t} />
             ))}
           </div>

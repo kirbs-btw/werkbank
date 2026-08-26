@@ -159,7 +159,7 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 - [x] ~~**S2 `dateModified` in JSON-LD** + menschenlesbares Datum~~ → `UpdatedAt.astro`, 162 Seiten (2026-08-26)
 - [x] ~~**S3 Content-Lücken schließen**~~ → alle 153 Tools vollständig, Testsperre gesetzt (2026-08-26)
 - [x] ~~**S4 Per-Tool-OG-Bilder**~~ → 171 Karten zur Build-Zeit, Text als Pfade (2026-08-26)
-- [ ] **S5 Cross-Kategorie-`related`-Kuratierung** (z. B. Laser ↔ CNC ↔ Holz sinnvoll verweben).
+- [x] ~~**S5 Cross-Kategorie-Verlinkung**~~ → 41 kuratierte Paare in `src/lib/crosslinks.ts` (2026-08-26)
 - [ ] **S6 Teilen-Links:** Rechner-Eingaben als URL-Parameter, Canonical bleibt sauber.
 
 ### P3 – Qualität & Bugs
@@ -734,6 +734,34 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   **Merksatz:** Eine Regel, die in allen Tests denselben Wert liefert, egal wie sie lautet, ist
   nicht geprüft – sie ist nur unauffällig. Wer eine Verzweigung testen will, braucht einen Fall,
   in dem sich die Zweige unterscheiden.
+
+- **2026-08-26 · Iteration 25 (S5):** **Die sechs Inseln sind verbunden.** Eine Zählung zu Beginn
+  war ernüchternd: Von 409 `related`-Verweisen führte **genau einer** über eine Kategoriegrenze.
+  Wer am Laser Blech schnitt und dessen Gewicht brauchte, fand von dort keinen Weg dorthin,
+  obwohl beides längst da war – weder als Leser noch als Suchmaschine, die dem Linkgraph folgt.
+
+  Jetzt: **41 kuratierte Paare**, 82 gerichtete Verweise, 59 von 153 Rechnern mit Anschluss an
+  einen anderen Bereich. Alle 15 möglichen Bereichspaare sind belegt, und ein Test prüft, dass das
+  Netz zusammenhängend bleibt – jede Kategorie muss von jeder anderen erreichbar sein.
+
+  **Automatisch ging es nicht.** Ein Versuch über Stichwort-Überschneidung lieferte neben Treffern
+  wie „Bohrer-Drehzahl ↔ Drehzahl beim Stahlbohren" (Überschneidung 10) eben auch „Dachneigung ↔
+  Stützmaterial-Anteil". Für eine Seite, die von echtem Nutzen lebt, ist das zu grob. Also von
+  Hand, geordnet nach tatsächlichen Arbeitswegen: Drehzahl und Vorschub, Gewinde, Blech, Kosten
+  und Zeit, Plattenausnutzung, Schrauben ins Holz, Gewicht, Gehrung, Oberfläche.
+
+  Zwei Entwurfsentscheidungen: Die Paare liegen in **einer** Tabelle statt verstreut in sechzig
+  Tool-Dateien – so lassen sie sich an einer Stelle überprüfen. Und sie bekommen einen **eigenen
+  Abschnitt** („Passt auch dazu"), weil die Rechner-Seite nur vier verwandte Rechner zeigt; ein
+  fünfter Eintrag in `related` wäre unsichtbar geblieben.
+
+  Die `updated`-Daten der Rechner bleiben unangetastet: Der Abschnitt ist eine Ergänzung an der
+  Vorlage, keine inhaltliche Änderung am jeweiligen Rechner. Ehrliche Datumsangaben sind mehr wert
+  als 153 frische Zeitstempel. 8 neue Tests, insgesamt 992.
+
+  **Merksatz:** Interne Verlinkung, die nur innerhalb ihrer Kategorie bleibt, ist keine Verlinkung,
+  sondern eine Sackgasse mit Karten drin. Erst der Weg nach draußen macht aus Einzelseiten eine
+  Seite.
 
 ## Start-Prompt (Referenz)
 
