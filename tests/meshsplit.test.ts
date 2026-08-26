@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { splitMesh, meshVolume, chainSegments, earClip, bridgeHoles, pointInPolygon, type Plane } from '../src/lib/meshsplit';
+import { splitMesh, meshVolume, chainSegments, earClip, bridgeHoles, pointInPolygon, connectedComponents, type Plane } from '../src/lib/meshsplit';
 import { analyzeStl } from '../src/lib/stl';
 import { toStl, buildBin } from '../src/lib/gridfinity';
-import { closureError } from '../src/lib/meshtransform';
+import { closureError, scaleMesh } from '../src/lib/meshtransform';
 
 /** Würfel von (0,0,0) bis (s,s,s) mit nach außen zeigenden Normalen. */
 function cube(s = 20): Float64Array {
@@ -423,21 +423,137 @@ describe('Schnittflächen sind einheitlich gewickelt', () => {
     }
   });
 
-  it('bekannte Grenze: senkrechter Schnitt durch überlappende Mehrkörper-Netze', () => {
-    // Der Gridfinity-Bin besteht aus mehreren geschlossenen Körpern, die sich
-    // leicht überlappen. Ein senkrechter Schnitt trifft mehrere davon auf
-    // einmal; die Deckflächen-Erzeugung kommt mit den dabei entstehenden,
-    // einander überlappenden Schnittkonturen noch nicht zurecht.
+  it('auch senkrecht und schräg durch überlappende Mehrkörper-Netze', () => {
+    // Das war der Fehler aus T14: Ein senkrechter Schnitt trifft mehrere der
+    // einander überlappenden Körper eines Gridfinity-Bins auf einmal. Solange
+    // alle Konturen gemeinsam betrachtet wurden, hielt die Verschachtelungs-
+    // prüfung den Umriss des einen Körpers für ein Loch im anderen. Jetzt wird
+    // jeder Körper für sich geschnitten.
+    const ebenen: [string, Plane][] = [
+      ['x mittig', { nx: 1, ny: 0, nz: 0, d: 0 }],
+      ['x versetzt', { nx: 1, ny: 0, nz: 0, d: 10 }],
+      ['x am Rand', { nx: 1, ny: 0, nz: 0, d: 20.5 }],
+      ['y mittig', { nx: 0, ny: 1, nz: 0, d: 0 }],
+      ['schräg', { nx: 1, ny: 1, nz: 1, d: 5 }],
+      ['schräg flach', { nx: 0.2, ny: 0, nz: 1, d: 8 }],
+    ];
+    for (const [name, ebene] of ebenen) {
+      const r = splitMesh(bin.triangles, ebene);
+      expect(r.below.length, `${name}: unten leer`).toBeGreaterThan(0);
+      expect(r.above.length, `${name}: oben leer`).toBeGreaterThan(0);
+      expect(closureError(r.below), `${name} unten offen`).toBeLessThan(1e-9);
+      expect(closureError(r.above), `${name} oben offen`).toBeLessThan(1e-9);
+      expect(analyzeStl(toStl(r.below, 'binary')).watertight, `${name} unten`).toBe(true);
+      expect(analyzeStl(toStl(r.above, 'binary')).watertight, `${name} oben`).toBe(true);
+    }
+  });
+
+  it('erhält das Volumen über den Schnitt hinweg', () => {
+    for (const ebene of [{ nx: 1, ny: 0, nz: 0, d: 10 }, { nx: 0, ny: 0, nz: 1, d: 12 }] as Plane[]) {
+      const r = splitMesh(bin.triangles, ebene);
+      expect(meshVolume(r.below) + meshVolume(r.above)).toBeCloseTo(meshVolume(bin.triangles), 3);
+    }
+  });
+
+  it('setzt Passstifte auch im Mehrkörper-Netz nur einmal', () => {
+    // Ohne Sonderbehandlung bekäme jeder der Körper die volle Stiftzahl.
+    const r = splitMesh(bin.triangles, { nx: 0, ny: 0, nz: 1, d: 12 }, { count: 2, radius: 1.5, length: 4, clearance: 0.15 });
+    expect(r.stats.pins).toBeLessThanOrEqual(2);
+    expect(closureError(r.below)).toBeLessThan(1e-9);
+    expect(closureError(r.above)).toBeLessThan(1e-9);
+  });
+});
+
+describe('Mehrkörper-Netze und Sonderlagen der Ebene', () => {
+  const bin = (o: Record<string, unknown> = {}) =>
+    buildBin({ unitsX: 1, unitsY: 1, unitsZ: 4, wall: 1.2, floor: 1.2, compartmentsX: 1, compartmentsY: 1, lip: true, holes: 'keine', ...o } as Parameters<typeof buildBin>[0]).triangles;
+
+  it('erkennt die einzelnen Körper', () => {
+    expect(connectedComponents(bin()).length).toBe(3); // Boden, Wand, Lippe
+    expect(connectedComponents(cube(20)).length).toBe(1);
+    expect(connectedComponents(new Float64Array(0)).length).toBe(0);
+    // Zwei getrennte Würfel weit auseinander
+    const zwei = new Float64Array([...cube(10), ...Array.from(cube(10), (v, i) => (i % 3 === 0 ? v + 500 : v))]);
+    expect(connectedComponents(zwei).length).toBe(2);
+  });
+
+  it('schneidet Mehrkörper-Netze über Maßstäbe und Richtungen hinweg sauber', () => {
+    // Der Kern von T14: Vor der Zerlegung in einzelne Körper war **jeder**
+    // senkrechte oder schräge Schnitt durch ein Mehrkörper-Netz undicht.
+    const modelle: [string, Float64Array][] = [
+      ['1x1x4', bin()],
+      ['ohne Lippe', bin({ lip: false })],
+      ['zehnfach', scaleMesh(bin(), 10)],
+      ['ein Zehntel', scaleMesh(bin(), 0.1)],
+    ];
+    let geprueft = 0;
+    for (const [name, t] of modelle) {
+      let maxAbs = 1;
+      for (const v of t) if (Math.abs(v) > maxAbs) maxAbs = Math.abs(v);
+      for (const [an, n] of [['x', { nx: 1, ny: 0, nz: 0 }], ['y', { nx: 0, ny: 1, nz: 0 }], ['z', { nx: 0, ny: 0, nz: 1 }], ['diagonal', { nx: 1, ny: 1, nz: 1 }]] as [string, Omit<Plane, 'd'>][]) {
+        for (const f of [-0.5, -0.25, 0, 0.13, 0.25, 0.4, 0.5]) {
+          const r = splitMesh(t, { ...n, d: f * maxAbs });
+          if (r.below.length === 0 || r.above.length === 0) continue;
+          geprueft++;
+          const wo = `${name} ${an} ${f}`;
+          expect(r.stats.openEdges, `${wo}: offene Kanten`).toBe(0);
+          expect(closureError(r.below), `${wo} unten`).toBeLessThan(1e-9);
+          expect(closureError(r.above), `${wo} oben`).toBeLessThan(1e-9);
+        }
+      }
+    }
+    expect(geprueft).toBeGreaterThan(70); // sonst prüft der Test zu wenig
+  });
+
+  it('bleibt entweder dicht – oder sagt es', () => {
+    // Zwei Fälle bekommt die Deckflächen-Erzeugung noch nicht dicht: Netze mit
+    // Loch-Überbrückung an der Schnittstelle (Magnetlöcher) und Trennwände,
+    // die genau in der Ebene liegen. Beide sind in T15 festgehalten.
     //
-    // Waagerecht geht es gut, weil die Ebene dort nur einen Körper trifft.
-    // Einkörper-Netze sind in jeder Richtung sauber – siehe Test darüber.
+    // Zusichern lässt sich hier deshalb nicht „immer dicht", wohl aber das,
+    // worauf sich ein Nutzer verlassen können muss: **Ein undichtes Ergebnis
+    // wird nie stillschweigend ausgeliefert.**
+    const schwierig: [string, Float64Array, Plane][] = [
+      ['Magnetlöcher', bin({ holes: 'magnet' }), { nx: 1, ny: 0, nz: 0, d: 2.7 }],
+      ['Trennwand in der Ebene', bin({ unitsX: 2, unitsY: 3, compartmentsX: 2, compartmentsY: 2 }), { nx: 0, ny: 1, nz: 0, d: 0 }],
+    ];
+    for (const [name, t, ebene] of schwierig) {
+      const r = splitMesh(t, ebene);
+      if (r.stats.openEdges === 0) {
+        expect(closureError(r.below), `${name}: dicht gemeldet, aber offen`).toBeLessThan(1e-9);
+      } else {
+        expect(r.stats.warnings.join(' '), `${name}: undicht ohne Warnung`).toContain('Kanten offen');
+      }
+    }
+  });
+
+  it('weist offene Kanten aus, statt sie zu verschweigen', () => {
+    // Die Magnetlöcher machen die Bodenfläche mit Loch-Überbrückung nötig, und
+    // die hinterlässt nullbreite Schlitze. Läuft die Ebene durch so einen
+    // Schlitz, entstehen entartete Konturstücke und die Deckfläche schließt
+    // nicht ganz. Bekannt und offen – siehe T15 im Backlog.
     //
-    // WIRD DIESER TEST ROT, IST DER FEHLER BEHOBEN: Dann Backlog-Punkt T14
-    // abhaken und die Erwartungen hier auf `true` bzw. `< 1e-9` umstellen.
-    const r = splitMesh(bin.triangles, { nx: 1, ny: 0, nz: 0, d: 10 });
-    expect(r.below.length).toBeGreaterThan(0);
-    expect(r.above.length).toBeGreaterThan(0);
-    expect(analyzeStl(toStl(r.below, 'binary')).watertight).toBe(false);
-    expect(closureError(r.below)).toBeGreaterThan(1e-6);
+    // Entscheidend ist hier nicht, dass es klappt, sondern dass es **auffällt**:
+    // Die Zahl steht in den Kennzahlen und die Seite warnt.
+    const r = splitMesh(bin({ holes: 'magnet' }), { nx: 1, ny: 0, nz: 0, d: 2.7 });
+    expect(r.stats.openEdges).toBeGreaterThan(0);
+    expect(r.stats.warnings.join(' ')).toContain('offen');
+  });
+
+  it('meldet bei sauberem Schnitt keine offenen Kanten und keine Warnung dazu', () => {
+    const r = splitMesh(bin(), { nx: 0, ny: 0, nz: 1, d: 12 });
+    expect(r.stats.openEdges).toBe(0);
+    expect(r.stats.warnings.join(' ')).not.toContain('Kanten offen');
+  });
+
+  it('kommt mit einer Ebene genau auf den Kanten des Modells zurecht', () => {
+    // Ein senkrechter Schnitt genau durch die Mitte eines symmetrischen Teils
+    // durchtrennt womöglich kein einziges Dreieck – dann entsteht ohne
+    // Ausweichebene gar keine Schnittkontur.
+    for (const p of [{ nx: 1, ny: 0, nz: 0, d: 0 }, { nx: 0, ny: 1, nz: 0, d: 0 }] as Plane[]) {
+      const r = splitMesh(bin(), p);
+      expect(r.stats.openEdges, JSON.stringify(p)).toBe(0);
+      expect(closureError(r.below), JSON.stringify(p)).toBeLessThan(1e-9);
+    }
   });
 });

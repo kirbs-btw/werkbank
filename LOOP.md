@@ -117,16 +117,19 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
 - [x] ~~**T5 Gridfinity-Bin-Generator**~~ → `/generatoren/gridfinity-generator` (2026-08-25)
 - [x] ~~**T6 Living-Hinge-Generator**~~ → `/generatoren/living-hinge` (2026-08-25)
 - [x] ~~**T7 Zuschnittoptimierung v2**~~ → Schnittliste + mehrere Plattenformate (2026-08-25)
-- [ ] **T14 Splitter: senkrechte Schnitte durch Mehrkörper-Netze** – Beim Schnitt quer durch
-      mehrere einander überlappende Körper überlappen sich auch die Schnittkonturen, und die
-      Deckflächen-Erzeugung liefert kein dichtes Netz mehr (gemessen: 0,4 % bis 95 % offene
-      Fläche). Waagerecht ist sauber, Einkörper-Netze sind in jeder Richtung sauber – betroffen
-      sind Mehrkörper-STLs, wie sie unter anderem der eigene Gridfinity-Generator erzeugt.
-      Nötig ist eine 2D-Vereinigung der Schnittkonturen vor dem Triangulieren.
-      **Zwischenschritt, falls die Vereinigung länger dauert:** Ergebnis im Splitter prüfen und
-      den Nutzer warnen, statt still ein kaputtes Netz auszugeben.
-      Der Test `bekannte Grenze: senkrechter Schnitt …` in `tests/meshsplit.test.ts` hält den
-      Ist-Zustand fest und wird rot, sobald der Fehler behoben ist.
+- [x] ~~**T14 Splitter: senkrechte Schnitte durch Mehrkörper-Netze**~~ → jeder Körper wird
+      einzeln geschnitten (2026-08-26)
+- [ ] **T15 Splitter: Deckflächen bei entarteten Schnittkonturen** – Zwei Fälle bleiben undicht,
+      beide mit derselben Wurzel: Die Ebene erzeugt Konturstücke, die kein sauberes Polygon mehr
+      ergeben. (a) **Loch-Überbrückung an der Schnittstelle** – bei Magnetlöchern ist die
+      Bodenfläche über nullbreite Schlitze trianguliert; läuft die Ebene durch so einen Schlitz,
+      entstehen entartete Konturstücke (gemessen: 8 offene Kanten, alle am Boden um y ≈ 17,4).
+      (b) **Trennwand genau in der Ebene** – beim 2×3-Bin mit Fächern bei y = 0 bleiben 104 Kanten
+      offen; keine der Ausweichebenen erreicht dort einen sauberen Schnitt.
+      Nötig ist eine Bereinigung der Schnittkontur vor dem Triangulieren: Punkte unterhalb einer
+      Toleranz zusammenfassen und Nullflächen-Spitzen entfernen – **wobei die Deckfläche danach
+      weiterhin exakt auf die beschnittenen Seitenwände passen muss**, sonst entstehen erst recht
+      offene Kanten. Bis dahin weist `stats.openEdges` das Problem aus und die Seite warnt.
 - [ ] **T8 OpenSEO anbinden** (siehe Abschnitt oben): MCP-Server in `.mcp.json` eintragen, Zugang
       testen, erste Ranking- und Keyword-Abfrage machen und das Ergebnis als neue P1/P2-Punkte
       eintragen. **Blockiert durch E5** (DataForSEO kostet Geld) – vorher nichts installieren.
@@ -475,6 +478,39 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   hat. Wo eine Kennzahl bei leerer Eingabe „gut" meldet, gehört eine Prüfung auf nichtleere
   Eingabe davor. Und: `npm test` allein reicht als Netz nicht – `astro check` sieht Fehler, die
   zur Laufzeit stumm bleiben.
+
+- **2026-08-26 · Iteration 17 (T14):** **Mehrkörper-Netze werden jetzt körperweise geschnitten.**
+  Vorher war *jeder* senkrechte oder schräge Schnitt durch ein Gridfinity-Bin undicht. Die Ursache:
+  Ein solches Netz besteht aus mehreren einander leicht überlappenden Vollkörpern; ein senkrechter
+  Schnitt trifft mehrere davon auf einmal, und die Frage „außen oder Loch?" wurde über die
+  Verschachtelungstiefe entschieden. Bei **ineinander** liegenden Konturen trägt das, bei
+  **einander überlappenden** nicht – der Umriss des einen Körpers galt als Loch im anderen.
+  Getrennt betrachtet ist jede Kontur wieder eindeutig, und die Überlappungen bleiben erhalten, so
+  wie sie gemeint sind.
+
+  Dazu zwei Ergänzungen aus der Fehlersuche. **Eine Ausweichebene:** Liegt die Ebene genau auf
+  Kanten des Modells – etwa mittig durch ein symmetrisches Teil –, durchtrennt sie kein einziges
+  Dreieck, es entsteht keine Schnittkontur und beide Hälften bleiben offen. Dann wird die Ebene um
+  einen Bruchteil eines Mikrometers verschoben; derselbe Kniff, den Slicer für ihre Schichtebenen
+  benutzen. Und **eine ehrliche Kennzahl:** `stats.openEdges` weist offene Kanten aus, die Seite
+  warnt. Ein undichtes Ergebnis wird nicht mehr stillschweigend ausgeliefert.
+
+  **Eine wichtige Korrektur an mir selbst unterwegs:** Als Abnahmekriterium hatte ich zuerst nur
+  die Vektorfläche genommen. Die reicht nicht – ein Riss, dessen beide Ränder sich gegenseitig
+  aufheben, hat Vektorfläche null und ist trotzdem offen. Gemessen: 64 offene Kanten bei
+  rechnerisch perfekt geschlossener Fläche. Seitdem zählt die Kantenbilanz mit.
+
+  Ebenso irreführend war eine Zwischenmessung: Ich prüfte einzelne Ausweichebenen mit
+  `splitMesh(…, d)` und sah überall 0 offene Kanten – **weil jeder dieser Aufrufe seine eigene
+  Leiter durchläuft**. Erst eine Instrumentierung der Leiter selbst zeigte, dass sie in einem Fall
+  gar nicht ans Ziel kommt. Daraus wurde T15, mit genauer Diagnose statt Vermutung.
+
+  Neu: 21 Tests, darunter eine Kontrolle über 70+ Schnitte in vier Richtungen, drei Maßstäben und
+  mehreren Bauformen, jeweils gegen die eigene STL-Analyse geprüft. Insgesamt 962.
+
+  **Merksatz:** Wer eine Zusicherung nicht halten kann, sagt es dem Nutzer – statt die Zusicherung
+  leise zu senken. Und: Ein Messwert aus einer Funktion, die selbst schon korrigiert, misst die
+  Korrektur mit, nicht den Zustand.
 
 ## Start-Prompt (Referenz)
 
