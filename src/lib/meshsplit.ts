@@ -388,6 +388,19 @@ function splitEinzeln(triangles: ArrayLike<number>, plane: Plane, pins?: PinOpti
   const below: number[] = [];
   const segments: [V3, V3][] = [];
 
+  /**
+   * Kanten, die genau in der Ebene liegen, mit Zähler.
+   *
+   * Ein Dreieck mit zwei Ecken auf der Ebene und der dritten darüber gilt als
+   * vollständig oben und steuert keine Schnittstrecke bei. Liegt das
+   * Nachbardreieck unten, ist die gemeinsame Kante trotzdem Rand des Schnitts –
+   * und fehlte bisher in der Kontur. Deshalb werden solche Kanten von der
+   * Oberseite aus gesammelt: Kommt eine Kante nur einmal vor, liegt genau ein
+   * Nachbar oben, sie ist also echter Rand. Kommt sie zweimal vor, liegen beide
+   * Nachbarn oben und sie liegt mitten im Material.
+   */
+  const ebenenKanten = new Map<string, { a: V3; b: V3; n: number }>();
+
   const push = (target: number[], a: V3, b: V3, c: V3): void => {
     target.push(a.x, a.y, a.z, b.x, b.y, b.z, c.x, c.y, c.z);
   };
@@ -405,6 +418,21 @@ function splitEinzeln(triangles: ArrayLike<number>, plane: Plane, pins?: PinOpti
 
     if (s[0] >= -EPS && s[1] >= -EPS && s[2] >= -EPS) {
       push(above, v[0], v[1], v[2]);
+      // Kante in der Ebene? Merken – sie könnte Rand des Schnitts sein.
+      const aufEbene = [0, 1, 2].filter((k) => Math.abs(s[k]) <= EPS);
+      if (aufEbene.length === 2) {
+        const [i1, i2] = aufEbene;
+        const kq = (q: V3) =>
+          `${Math.round(q.x / CHAIN_TOL)},${Math.round(q.y / CHAIN_TOL)},${Math.round(q.z / CHAIN_TOL)}`;
+        const ka = kq(v[i1]);
+        const kb = kq(v[i2]);
+        if (ka !== kb) {
+          const id = ka < kb ? `${ka}|${kb}` : `${kb}|${ka}`;
+          const vorher = ebenenKanten.get(id);
+          if (vorher) vorher.n++;
+          else ebenenKanten.set(id, { a: v[i1], b: v[i2], n: 1 });
+        }
+      }
       continue;
     }
     if (s[0] <= EPS && s[1] <= EPS && s[2] <= EPS) {
@@ -442,6 +470,9 @@ function splitEinzeln(triangles: ArrayLike<number>, plane: Plane, pins?: PinOpti
       if (p1) segments.push([p0, p1]);
     }
   }
+
+  // Kanten, die nur von einer Seite gesehen wurden, sind Rand des Schnitts.
+  for (const k of ebenenKanten.values()) if (k.n % 2 === 1) segments.push([k.a, k.b]);
 
   /* --- Deckfläche --- */
   const { loops, open } = chainSegments(segments, CHAIN_TOL);

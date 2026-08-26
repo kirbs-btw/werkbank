@@ -125,17 +125,20 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
 - [x] ~~**T7 Zuschnittoptimierung v2**~~ → Schnittliste + mehrere Plattenformate (2026-08-25)
 - [x] ~~**T14 Splitter: senkrechte Schnitte durch Mehrkörper-Netze**~~ → jeder Körper wird
       einzeln geschnitten (2026-08-26)
-- [ ] **T15 Splitter: Deckflächen bei entarteten Schnittkonturen** – Zwei Fälle bleiben undicht,
-      beide mit derselben Wurzel: Die Ebene erzeugt Konturstücke, die kein sauberes Polygon mehr
-      ergeben. (a) **Loch-Überbrückung an der Schnittstelle** – bei Magnetlöchern ist die
-      Bodenfläche über nullbreite Schlitze trianguliert; läuft die Ebene durch so einen Schlitz,
-      entstehen entartete Konturstücke (gemessen: 8 offene Kanten, alle am Boden um y ≈ 17,4).
-      (b) **Trennwand genau in der Ebene** – beim 2×3-Bin mit Fächern bei y = 0 bleiben 104 Kanten
-      offen; keine der Ausweichebenen erreicht dort einen sauberen Schnitt.
-      Nötig ist eine Bereinigung der Schnittkontur vor dem Triangulieren: Punkte unterhalb einer
-      Toleranz zusammenfassen und Nullflächen-Spitzen entfernen – **wobei die Deckfläche danach
-      weiterhin exakt auf die beschnittenen Seitenwände passen muss**, sonst entstehen erst recht
-      offene Kanten. Bis dahin weist `stats.openEdges` das Problem aus und die Seite warnt.
+- [ ] **T15 Splitter: Flächen, die über Brücken trianguliert sind** – Eine flache Fläche mit
+      Löchern (etwa die Bodenfläche eines Bins mit Magnetlöchern) wird über nullbreite Schlitze
+      trianguliert, die vom Rand zu jedem Loch führen. Quert die Schnittebene so einen Schlitz,
+      entstehen entartete Konturstücke und die Deckfläche schließt nicht ganz.
+      **Gemessen:** konstant 4 offene Kanten je Brücke (16 bei vier Magnetlöchern), unabhängig von
+      der Schnittposition, solange die Ebene die Brücken quert; im Bereich der Löcher selbst
+      40–110. Die offenen Kanten liegen alle auf der Schnittlinie der flachen Fläche, sechs Punkte
+      innerhalb von 0,17 mm.
+      **Zwei Wege wurden geprüft und verworfen:** Richtung der Schnittstrecken beim Verketten
+      bevorzugen (keine Wirkung – die Verkettung biegt dort nicht falsch ab) und Punkte
+      zusammenfassen (die Punkte liegen mit 0,04 mm weit über jeder sinnvollen Toleranz).
+      Nötig ist vermutlich eine echte Reparatur der Kontur in 2D – wobei die Deckfläche danach
+      exakt auf die beschnittenen Seitenwände passen muss, sonst entstehen erst recht offene
+      Kanten. Bis dahin weist `stats.openEdges` das Problem aus und die Seite warnt.
 - [ ] **T8 OpenSEO anbinden** (siehe Abschnitt oben): MCP-Server in `.mcp.json` eintragen, Zugang
       testen, erste Ranking- und Keyword-Abfrage machen und das Ergebnis als neue P1/P2-Punkte
       eintragen. **Blockiert durch E5** (DataForSEO kostet Geld) – vorher nichts installieren.
@@ -517,6 +520,33 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   **Merksatz:** Wer eine Zusicherung nicht halten kann, sagt es dem Nutzer – statt die Zusicherung
   leise zu senken. Und: Ein Messwert aus einer Funktion, die selbst schon korrigiert, misst die
   Korrektur mit, nicht den Zustand.
+
+- **2026-08-26 · Iteration 18 (T15, halb):** **Schnitte entlang von Trennwänden sind dicht.**
+  T15 umfasste zwei Fälle, die ich in der Notiz auf eine Wurzel zurückgeführt hatte – die Diagnose
+  zeigte, dass es zwei verschiedene sind: Beim Trennwand-Fall lagen 444 Punkte exakt auf der Ebene
+  bei nur 16 durchtrennten Dreiecken, beim Magnetloch-Fall kein einziger bei 141 durchtrennten.
+
+  Behoben ist der erste. Die Ursache war eine echte Lücke: **Ein Dreieck mit zwei Ecken auf der
+  Ebene und der dritten darüber galt als vollständig oben und steuerte keine Schnittstrecke bei.**
+  Lag das Nachbardreieck unten, war die gemeinsame Kante trotzdem Rand des Schnitts – und fehlte in
+  der Kontur. 104 Kanten blieben so offen. Solche Kanten werden jetzt von der Oberseite aus
+  gesammelt und gezählt: einmal gesehen heißt echter Rand, zweimal gesehen heißt mitten im
+  Material. Das ist keine Sonderbehandlung, sondern schließt eine Fallunterscheidung, die vorher
+  einfach fehlte.
+
+  Der zweite Fall bleibt offen und ist jetzt genau vermessen statt vermutet – siehe T15. Zwei
+  Ansätze habe ich geprüft und wieder verworfen, weil sie nichts brachten: die Richtung der
+  Schnittstrecken beim Verketten zu bevorzugen und nahe Punkte zusammenzufassen. **Beide sind
+  zurückgenommen, nicht auskommentiert** – eine unbelegte Vermutung gehört nicht in den Code, auch
+  wenn sie plausibel klingt.
+
+  Neu: der 2×3-Bin mit Trennwänden in der harten Kontrolle, dazu vier Ebenen genau entlang der
+  Wände. Insgesamt 963 Tests.
+
+  **Merksatz:** Wenn zwei Symptome gleich aussehen, heißt das nicht, dass sie dieselbe Ursache
+  haben. Erst messen, was am jeweiligen Ort tatsächlich anders ist – hier: Punkte auf der Ebene
+  gegen durchtrennte Dreiecke. Das trennte in einer Minute, was ich vorher in einen Backlog-Punkt
+  zusammengeschrieben hatte.
 
 ## Start-Prompt (Referenz)
 

@@ -483,6 +483,7 @@ describe('Mehrkörper-Netze und Sonderlagen der Ebene', () => {
     const modelle: [string, Float64Array][] = [
       ['1x1x4', bin()],
       ['ohne Lippe', bin({ lip: false })],
+      ['2x3 mit Trennwänden', bin({ unitsX: 2, unitsY: 3, compartmentsX: 2, compartmentsY: 2 })],
       ['zehnfach', scaleMesh(bin(), 10)],
       ['ein Zehntel', scaleMesh(bin(), 0.1)],
     ];
@@ -505,25 +506,43 @@ describe('Mehrkörper-Netze und Sonderlagen der Ebene', () => {
     expect(geprueft).toBeGreaterThan(70); // sonst prüft der Test zu wenig
   });
 
+  it('schneidet auch entlang einer Trennwand sauber', () => {
+    // Läuft die Ebene genau durch Trennwände, liegen ganze Kanten des Netzes in
+    // ihr. Ein Dreieck mit zwei Ecken auf der Ebene und der dritten darüber galt
+    // als vollständig oben und steuerte keine Schnittstrecke bei – lag der
+    // Nachbar unten, fehlte diese Kante in der Kontur. 104 Kanten blieben so
+    // offen. Solche Kanten werden jetzt von der Oberseite aus gesammelt: einmal
+    // gesehen heißt echter Rand, zweimal gesehen heißt mitten im Material.
+    const gefaechert = bin({ unitsX: 2, unitsY: 3, compartmentsX: 2, compartmentsY: 2 });
+    for (const p of [
+      { nx: 0, ny: 1, nz: 0, d: 0 },
+      { nx: 1, ny: 0, nz: 0, d: 0 },
+      { nx: 0, ny: 1, nz: 0, d: 21 },
+      { nx: 1, ny: 0, nz: 0, d: 21 },
+    ] as Plane[]) {
+      const r = splitMesh(gefaechert, p);
+      const wo = JSON.stringify(p);
+      expect(r.stats.openEdges, `${wo}: offene Kanten`).toBe(0);
+      expect(closureError(r.below), `${wo} unten`).toBeLessThan(1e-9);
+      expect(closureError(r.above), `${wo} oben`).toBeLessThan(1e-9);
+      expect(analyzeStl(toStl(r.below, 'binary')).watertight, wo).toBe(true);
+    }
+  });
+
   it('bleibt entweder dicht – oder sagt es', () => {
-    // Zwei Fälle bekommt die Deckflächen-Erzeugung noch nicht dicht: Netze mit
-    // Loch-Überbrückung an der Schnittstelle (Magnetlöcher) und Trennwände,
-    // die genau in der Ebene liegen. Beide sind in T15 festgehalten.
+    // Übrig bleibt ein Fall: Flächen, die über Brücken trianguliert sind. Die
+    // Magnetlöcher machen das an der Bodenfläche nötig, und die dabei
+    // entstehenden nullbreiten Schlitze hinterlassen beim Queren entartete
+    // Konturstücke – siehe T15 im Backlog.
     //
-    // Zusichern lässt sich hier deshalb nicht „immer dicht", wohl aber das,
-    // worauf sich ein Nutzer verlassen können muss: **Ein undichtes Ergebnis
-    // wird nie stillschweigend ausgeliefert.**
-    const schwierig: [string, Float64Array, Plane][] = [
-      ['Magnetlöcher', bin({ holes: 'magnet' }), { nx: 1, ny: 0, nz: 0, d: 2.7 }],
-      ['Trennwand in der Ebene', bin({ unitsX: 2, unitsY: 3, compartmentsX: 2, compartmentsY: 2 }), { nx: 0, ny: 1, nz: 0, d: 0 }],
-    ];
-    for (const [name, t, ebene] of schwierig) {
-      const r = splitMesh(t, ebene);
-      if (r.stats.openEdges === 0) {
-        expect(closureError(r.below), `${name}: dicht gemeldet, aber offen`).toBeLessThan(1e-9);
-      } else {
-        expect(r.stats.warnings.join(' '), `${name}: undicht ohne Warnung`).toContain('Kanten offen');
-      }
+    // Zusichern lässt sich hier nicht „immer dicht", wohl aber das, worauf sich
+    // ein Nutzer verlassen können muss: **Ein undichtes Ergebnis wird nie
+    // stillschweigend ausgeliefert.**
+    const r = splitMesh(bin({ holes: 'magnet' }), { nx: 1, ny: 0, nz: 0, d: 5 });
+    if (r.stats.openEdges === 0) {
+      expect(closureError(r.below), 'dicht gemeldet, aber offen').toBeLessThan(1e-9);
+    } else {
+      expect(r.stats.warnings.join(' '), 'undicht ohne Warnung').toContain('Kanten offen');
     }
   });
 
