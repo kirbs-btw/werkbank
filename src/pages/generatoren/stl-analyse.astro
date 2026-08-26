@@ -1,9 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import UpdatedAt from '../../components/UpdatedAt.astro';
 import { getGenerator } from '../../lib/generators';
-import { breadcrumbLd, faqLd } from '../../lib/schema';
-import { SITE } from '../../config/site';
+import { generatorAppLd, breadcrumbLd, faqLd } from '../../lib/schema';
 import { STL_MATERIALS } from '../../lib/stl';
 
 const gen = getGenerator('stl-analyse')!;
@@ -42,19 +42,7 @@ const FAQ = [
 ];
 
 const ld: object[] = [
-  {
-    '@context': 'https://schema.org',
-    '@type': 'WebApplication',
-    name: gen.title,
-    url: new URL(path, SITE.url).href,
-    description: gen.description,
-    applicationCategory: 'DesignApplication',
-    operatingSystem: 'Web',
-    inLanguage: 'de-DE',
-    isAccessibleForFree: true,
-    offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
-    publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
-  },
+  generatorAppLd(gen, path),
   breadcrumbLd(crumbs.map((c) => ({ name: c.name, path: c.href }))),
   faqLd(FAQ),
 ];
@@ -89,6 +77,7 @@ const labelCls = 'mb-1 flex items-center justify-between text-sm font-medium tex
         STL-Datei hierher ziehen und sofort Volumen, Oberfläche, Abmessungen, Materialbedarf,
         Gewicht und Kosten sehen – samt Prüfung, ob das Netz geschlossen ist.
       </p>
+      <UpdatedAt date={gen.updated} class="mt-2" />
     </header>
 
     <div

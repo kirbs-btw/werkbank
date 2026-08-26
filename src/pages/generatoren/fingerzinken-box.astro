@@ -1,9 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import UpdatedAt from '../../components/UpdatedAt.astro';
 import { getGenerator } from '../../lib/generators';
-import { breadcrumbLd, faqLd } from '../../lib/schema';
-import { SITE } from '../../config/site';
+import { generatorAppLd, breadcrumbLd, faqLd } from '../../lib/schema';
 import { buildBox, previewSvg, type BoxSpec } from '../../lib/fingerbox';
 
 const gen = getGenerator('fingerzinken-box')!;
@@ -42,19 +42,7 @@ const FAQ = [
 ];
 
 const ld: object[] = [
-  {
-    '@context': 'https://schema.org',
-    '@type': 'WebApplication',
-    name: gen.title,
-    url: new URL(path, SITE.url).href,
-    description: gen.description,
-    applicationCategory: 'DesignApplication',
-    operatingSystem: 'Web',
-    inLanguage: 'de-DE',
-    isAccessibleForFree: true,
-    offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
-    publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
-  },
+  generatorAppLd(gen, path),
   breadcrumbLd(crumbs.map((c) => ({ name: c.name, path: c.href }))),
   faqLd(FAQ),
 ];
@@ -95,6 +83,7 @@ const rowCls = 'flex items-baseline justify-between gap-4 border-b border-zinc-1
         Maße, Materialstärke und Schnittfuge eingeben – der Generator konstruiert alle Zuschnitte mit
         passgenauen Fingerzinken und exportiert sie als SVG oder DXF für Laser und CNC.
       </p>
+      <UpdatedAt date={gen.updated} class="mt-2" />
     </header>
 
     <div class="mt-8 grid gap-6 lg:grid-cols-[300px_1fr]">

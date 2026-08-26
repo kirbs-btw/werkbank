@@ -115,8 +115,8 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
 
 ### P2 – SEO
 
-- [ ] **S1 Sitemap-`lastmod` pro Seite** aus `tool.updated` statt global `new Date()` (ehrliche Signale).
-- [ ] **S2 `dateModified` in JSON-LD** + „Aktualisiert"-Datum menschenlesbar (de-DE) rendern.
+- [x] ~~**S1 Sitemap-`lastmod` pro Seite**~~ → `src/lib/lastmod.ts` + `serialize` in der Astro-Config (2026-08-26)
+- [x] ~~**S2 `dateModified` in JSON-LD** + menschenlesbares Datum~~ → `UpdatedAt.astro`, 162 Seiten (2026-08-26)
 - [ ] **S3 Content-Lücken schließen:** 13 Tools ohne `intro`, 5 ohne `howto`, 4 ohne `related`.
 - [ ] **S4 Per-Tool-OG-Bilder** zur Build-Zeit generieren (ohne externe Dienste).
 - [ ] **S5 Cross-Kategorie-`related`-Kuratierung** (z. B. Laser ↔ CNC ↔ Holz sinnvoll verweben).
@@ -261,6 +261,28 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
   Zusätzlich: `PLATE_JOIN` und `SOCKET_RELIEF` müssen sich unterscheiden, sonst fallen die
   Seitenmittelpunkte benachbarter Felder aufeinander – als Invariante mit eigenem Test festgehalten.
   Gegenseitige Links zwischen Bin- und Grundplatten-Generator. IndexNow-Ping: 4 URLs.
+
+- **2026-08-26 · Iteration 10 (S1 + S2):** Ehrliche Aktualitätssignale. Vorher trug **jede** der
+  172 URLs den Zeitstempel des letzten Builds – auch Rechner, die seit Juni unverändert sind. Wer
+  bei jedem Deploy behauptet, die ganze Seite sei neu, wird zu Recht ignoriert.
+  Jetzt liefert jede Seite ihr echtes Datum (`src/lib/lastmod.ts`): Rechner und Generatoren aus dem
+  `updated`-Feld, Kategorie- und Übersichtsseiten aus dem jüngsten Datum ihrer Einträge, alles
+  Übrige aus dem Seitenstart. Verteilung jetzt: 41 × 15.06., 117 × 16.06., 9 × 25.08., 5 × 26.08.
+  Dazu `dateModified` und `datePublished` im JSON-LD sowie ein sichtbares
+  `<time datetime="…">` in deutschem Format auf allen 162 Werkzeugseiten. Ein Test hält fest, dass
+  die drei Quellen (sichtbar, JSON-LD, Sitemap) **nicht auseinanderlaufen** – widersprüchliche
+  Signale wären schlimmer als gar keine.
+  Nebenbei: `updated` für alle 9 Generatoren ergänzt (Daten aus der Git-Historie, nicht geschätzt),
+  das auf jeder Generatorseite einzeln ausgeschriebene JSON-LD durch `generatorAppLd()` ersetzt und
+  9 dadurch verwaiste Importe entfernt. 18 neue Tests.
+  **Ein Test hat einen falschen Wert von mir gefunden:** `SITE_START` stand auf dem 16.06. (erster
+  Commit), 40 Rechner tragen aber den 15.06. als Verfassungsdatum. Auf das tatsächlich früheste
+  Inhaltsdatum korrigiert.
+  IndexNow-Ping bewusst nur 2 URLs – siehe Merksatz.
+
+  *Merksatz:* Nach reinen Metadaten-Änderungen nicht alle Seiten bei IndexNow melden. Das wäre
+  genau die Sorte Frische-Behauptung, die dieser Punkt abgeschafft hat. Gemeldet wird, was sich
+  inhaltlich geändert hat.
 
   *Merksatz:* Wo eine Spezifikation eine nulldicke Kante fordert, ist eine dokumentierte,
   minimale Abweichung besser als ein Modell, das sich nicht drucken lässt – aber sie gehört

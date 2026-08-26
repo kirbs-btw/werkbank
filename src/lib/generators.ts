@@ -9,6 +9,8 @@ export interface Generator {
   shortTitle?: string;
   description: string;
   keywords: string[];
+  /** ISO-Datum der letzten inhaltlichen Änderung (für Sitemap & JSON-LD). */
+  updated: string;
 }
 
 export const GENERATORS: Generator[] = [
@@ -27,6 +29,7 @@ export const GENERATORS: Generator[] = [
       'sperrholz biegen laser',
       'federscharnier lasercut',
     ],
+    updated: '2026-08-25',
   },
   {
     slug: 'gridfinity-baseplate',
@@ -42,6 +45,7 @@ export const GENERATORS: Generator[] = [
       'gridfinity baseplate maße',
       'grundplatte gridfinity erstellen',
     ],
+    updated: '2026-08-26',
   },
   {
     slug: 'gridfinity-generator',
@@ -58,6 +62,7 @@ export const GENERATORS: Generator[] = [
       'gridfinity bin mit fächern',
       'gridfinity maße spezifikation',
     ],
+    updated: '2026-08-25',
   },
   {
     slug: 'dxf-svg-konverter',
@@ -74,6 +79,7 @@ export const GENERATORS: Generator[] = [
       'dxf datei öffnen online',
       'vektor konverter cnc',
     ],
+    updated: '2026-08-25',
   },
   {
     slug: 'stl-analyse',
@@ -91,6 +97,7 @@ export const GENERATORS: Generator[] = [
       'stl wasserdicht prüfen',
       'filament verbrauch stl',
     ],
+    updated: '2026-08-25',
   },
   {
     slug: 'fingerzinken-box',
@@ -107,6 +114,7 @@ export const GENERATORS: Generator[] = [
       'fingerzinken berechnen',
       'holzkiste konstruieren online',
     ],
+    updated: '2026-08-25',
   },
   {
     slug: 'zuschnittoptimierung',
@@ -124,6 +132,7 @@ export const GENERATORS: Generator[] = [
       'plattenaufteilung rechner',
       'cutlist optimizer deutsch',
     ],
+    updated: '2026-08-26',
   },
   {
     slug: 'lochkreis',
@@ -138,6 +147,7 @@ export const GENERATORS: Generator[] = [
       'teilkreis bohrungen berechnen',
       'bolt circle generator',
     ],
+    updated: '2026-06-16',
   },
   {
     slug: 'zahnrad',
@@ -152,6 +162,7 @@ export const GENERATORS: Generator[] = [
       'stirnrad modul zähnezahl',
       'gear generator dxf',
     ],
+    updated: '2026-06-16',
   },
 ];
 

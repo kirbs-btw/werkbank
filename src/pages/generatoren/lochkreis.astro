@@ -1,9 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import UpdatedAt from '../../components/UpdatedAt.astro';
 import { getGenerator } from '../../lib/generators';
-import { breadcrumbLd } from '../../lib/schema';
-import { SITE } from '../../config/site';
+import { generatorAppLd, breadcrumbLd } from '../../lib/schema';
 
 const gen = getGenerator('lochkreis')!;
 const path = '/generatoren/lochkreis';
@@ -13,19 +13,7 @@ const crumbs = [
   { name: gen.shortTitle ?? gen.title, href: path },
 ];
 const ld: object[] = [
-  {
-    '@context': 'https://schema.org',
-    '@type': 'WebApplication',
-    name: gen.title,
-    url: new URL(path, SITE.url).href,
-    description: gen.description,
-    applicationCategory: 'DesignApplication',
-    operatingSystem: 'Web',
-    inLanguage: 'de-DE',
-    isAccessibleForFree: true,
-    offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
-    publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
-  },
+  generatorAppLd(gen, path),
   breadcrumbLd(crumbs.map((c) => ({ name: c.name, path: c.href }))),
 ];
 ---
@@ -36,6 +24,7 @@ const ld: object[] = [
     <header class="mt-4">
       <h1 class="text-3xl font-extrabold tracking-tight text-zinc-900">Lochkreis-Generator</h1>
       <p class="mt-2 text-lg text-zinc-600">{gen.description}</p>
+      <UpdatedAt date={gen.updated} class="mt-2" />
     </header>
 
     <div class="mt-8 grid gap-6 md:grid-cols-2">

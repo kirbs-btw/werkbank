@@ -1,0 +1,14 @@
+---
+import { formatDate } from '../lib/lastmod';
+
+interface Props {
+  /** ISO-Datum (YYYY-MM-DD). */
+  date: string;
+  class?: string;
+}
+const { date, class: extra = '' } = Astro.props;
+---
+
+<p class:list={['text-xs text-zinc-500', extra]}>
+  Aktualisiert am <time datetime={date}>{formatDate(date)}</time>
+</p>

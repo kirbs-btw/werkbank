@@ -1,9 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import UpdatedAt from '../../components/UpdatedAt.astro';
 import { getGenerator } from '../../lib/generators';
-import { breadcrumbLd, faqLd } from '../../lib/schema';
-import { SITE } from '../../config/site';
+import { generatorAppLd, breadcrumbLd, faqLd } from '../../lib/schema';
 import { optimizeStock, sheetSvg, type CutPart, type StockSpec } from '../../lib/cutlist';
 
 const gen = getGenerator('zuschnittoptimierung')!;
@@ -50,19 +50,7 @@ const FAQ = [
 ];
 
 const ld: object[] = [
-  {
-    '@context': 'https://schema.org',
-    '@type': 'WebApplication',
-    name: gen.title,
-    url: new URL(path, SITE.url).href,
-    description: gen.description,
-    applicationCategory: 'DesignApplication',
-    operatingSystem: 'Web',
-    inLanguage: 'de-DE',
-    isAccessibleForFree: true,
-    offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
-    publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url },
-  },
+  generatorAppLd(gen, path),
   breadcrumbLd(crumbs.map((c) => ({ name: c.name, path: c.href }))),
   faqLd(FAQ),
 ];
@@ -115,6 +103,7 @@ const thCls = 'pb-2 pr-2 text-left text-xs font-medium uppercase tracking-wide t
         Plattenformate und Teileliste eingeben – der Optimierer verteilt deine Zuschnitte mit
         minimalem Verschnitt und erstellt Schnittplan samt nummerierter Schnittliste.
       </p>
+      <UpdatedAt date={gen.updated} class="mt-2" />
     </header>
 
     <section data-no-print class="mt-8 grid gap-6 lg:grid-cols-[320px_1fr]">
