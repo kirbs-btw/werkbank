@@ -44,7 +44,8 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
       Impressions/Klicks bringt oder wo ein Ranking abrutscht, kommt vor geplanten Neubauten.
 4. **Implementieren** nach den Prinzipien oben. Bei neuen Tools: Keywords/Titel/Description aus den
    passenden Zeilen in `keywords/*.txt` übernehmen, interne Links von 1–2 bestehenden Tools setzen.
-5. **Verifizieren:** `npm test`, `npm run build` **und `npm run check`** müssen grün sein.
+5. **Verifizieren:** `npm test`, `npm run build`, `npm run check` **und `npm run linkcheck`**
+   müssen grün sein.
    Der Typcheck gehört seit Iteration 27 dazu, weil er Fehler sieht, die zur Laufzeit stumm
    bleiben: In Iteration 16 hatte er einen Test entlarvt, der 40 Minuten lang grün lief, ohne
    irgendetwas zu prüfen – die Schnittebene war falsch benannt und damit komplett `undefined`. Bei UI-Änderungen zusätzlich
@@ -168,7 +169,7 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 ### P3 – Qualität & Bugs
 
 - [x] ~~**Q1 `npm run check` komplett grün**~~ → eine gemeinsame Vite-Version statt zweier (2026-08-26)
-- [ ] **Q2 Interner Link-Check** über `dist/` (Script, findet 404s/Waisen).
+- [x] ~~**Q2 Interner Link-Check**~~ → `npm run linkcheck`, fand sofort einen toten Verweis (2026-08-27)
 - [ ] **Q3 A11y-Durchgang** der Kernseiten (Labels, Fokusreihenfolge, Kontraste).
 - [ ] **Q4 Umlaute reparieren:** ~20 Tool-Dateien nutzen transliterierte Umlaute im sichtbaren Text
       („Schaetze", „Fuellgrad", „beruecksichtigt"). Betrifft Titel, Beschreibungen, FAQ und teils
@@ -820,6 +821,30 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 
   **Merksatz:** Ein Cast ist eine Behauptung. Wo sich zwei Typpakete widersprechen, ist die Frage
   nicht, wie man den Prüfer überzeugt, sondern warum es zwei sind.
+
+- **2026-08-27 · Iteration 28 (Q2):** **`npm run linkcheck` prüft die fertige Seite auf tote
+  Verweise und verwaiste Seiten** – und fand beim ersten Lauf sofort einen: `/rechner/3d-druck-kosten`,
+  verlinkt von der STL-Transformieren-Seite. Den Slug hatte ich in Iteration 14 selbst erfunden;
+  es gibt ihn nicht. Weder Build noch Typcheck melden so etwas – der Link ist einfach da und führt
+  ins Leere.
+
+  Beim Korrigieren zeigte sich, dass auch der Satz drumherum nicht stimmte: Er versprach „aus dem
+  neuen Volumen wird direkt der Materialpreis". Der Transformierer liefert aber Volumen, und der
+  Preis braucht Gewicht. Der passende Rechner ist `modell-gewicht` – der nimmt genau ein
+  Modellvolumen in cm³ entgegen. Jetzt führt der Weg über beide Schritte, und der Text sagt das
+  auch. **Ein toter Link ist selten nur ein Tippfehler; meistens stimmt der Gedanke dahinter auch
+  nicht ganz.**
+
+  Die Prüflogik steht als reine Funktion in `src/lib/linkcheck.ts` und ist ohne Dateisystem
+  getestet; das Skript sammelt nur die Dateien ein. Ausgeführt wird es mit Nodes Type-Stripping –
+  so bleibt die Logik im getippten Teil des Repos, ohne dafür ein weiteres Werkzeug zu brauchen.
+
+  **`npm run linkcheck` ist ab sofort Teil des Prüfschritts**, zusammen mit Test, Build und
+  Typcheck. Stand danach: 177 Seiten, keine toten Verweise, keine Waisen. 11 neue Tests,
+  insgesamt 1015.
+
+  **Merksatz:** Verweise sind das Einzige an einer statischen Seite, das im Build niemand prüft.
+  Alles andere bricht laut – ein falscher `href` bricht still.
 
 ## Start-Prompt (Referenz)
 

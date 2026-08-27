@@ -9,7 +9,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "check": "astro check",
-    "test": "vitest run"
+    "test": "vitest run",
+    "linkcheck": "node --experimental-strip-types --disable-warning=ExperimentalWarning scripts/linkcheck.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.2.1",
