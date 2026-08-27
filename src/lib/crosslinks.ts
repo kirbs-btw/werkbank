@@ -94,6 +94,9 @@ export const CROSS_LINKS: CrossPair[] = [
 
   /* Lasergeschnittene Teile werden verschraubt – Schnittspalt trifft Lochmaß. */
   ['kerf-kompensation', 'durchgangsloch'],
+
+  /* Riementrieb: erst die Länge bestimmen, dann die Spannung prüfen. */
+  ['zahnriemen-laenge', 'riemenspannung-frequenz'],
 ];
 
 /** Nachschlagetabelle in beide Richtungen, einmal aufgebaut. */

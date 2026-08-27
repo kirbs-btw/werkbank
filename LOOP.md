@@ -140,6 +140,7 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
       Nutzerproblem: Das Brückenverfahren schafft in der gesamten Testmenge jeden Querschnitt,
       der zweite Weg greift nur, wo es das nicht tut. **Weiteres Feilen daran hat keinen
       messbaren Nutzen mehr – siehe E7.**
+- [x] ~~**T19 Zahnriemen-Länge & Achsabstand**~~ → `/rechner/zahnriemen-laenge` (2026-08-27)
 - [ ] **T8 OpenSEO anbinden** (siehe Abschnitt oben): MCP-Server in `.mcp.json` eintragen, Zugang
       testen, erste Ranking- und Keyword-Abfrage machen und das Ergebnis als neue P1/P2-Punkte
       eintragen. **Blockiert durch E5** (DataForSEO kostet Geld) – vorher nichts installieren.
@@ -906,6 +907,32 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 
   **Merksatz:** Beim Suchen nach Fehlern ist die Liste der Ausnahmen fast immer die falsche Seite.
   Wer „alles außer richtig" sucht, findet vor allem Richtiges.
+
+- **2026-08-27 · Iteration 31 (T19):** **Zahnriemen-Rechner** – Länge, Zähnezahl, Achsabstand
+  und Umschlingung. Zahnriemen gibt es nur in ganzen Zähnen; der Wunsch-Achsabstand führt deshalb
+  fast nie auf einen erhältlichen Riemen. Der Rechner rundet auf die nächste Zähnezahl und rechnet
+  zurück, wohin die Welle dann gehört – die Differenz ist der Weg, den der Spanner hergeben muss.
+
+  **Was ich bewusst nicht gebaut habe:** Erste Wahl wäre eine ISO-Passungstabelle gewesen (H7/g6
+  und Verwandte) – hohe Nachfrage, echter Nutzen. Deren Zahlenwerte hätte ich aber aus dem
+  Gedächtnis eintippen müssen, und ohne Netz gab es keine Quelle zum Gegenprüfen. Genau so ist in
+  Iteration 5 ein falsches Gridfinity-Maß entstanden. Also etwas, das sich **vollständig
+  herleiten** lässt: reine Geometrie, jede Zahl nachrechenbar.
+
+  Die Umkehrung – welcher Achsabstand gehört zu einer vorgegebenen Länge – hat keine geschlossene
+  Formel, weil der Umschlingungswinkel selbst vom Achsabstand abhängt. Sie läuft über eine
+  Intervallhalbierung, und ein Test prüft, dass sie exakt dorthin zurückfindet, wo die
+  Vorwärtsrechnung herkam. Dazu die Probe an einer Stelle, wo es eine geschlossene Formel gibt:
+  Bei gleich großen Scheiben ist die Länge genau 2a + z·p – die krummen Teilkreise heben sich weg.
+  16 neue Tests, insgesamt 1056.
+
+  **Zum zweiten Mal ohne Netz:** GitHub, Vercel und die eigene Seite sind aus dieser Umgebung nicht
+  erreichbar (DNS löst auf, Verbindung läuft ins Zeitlimit), während `example.com` und die
+  npm-Registry antworten – also eine selektive Sperre, kein Ausfall. Zwei Commits warten damit auf
+  den Push. Alles ist lokal geprüft: Tests, Build, Typcheck, Link-Check, A11y-Check.
+
+  **Merksatz:** Wenn die Quelle fehlt, wähle die Aufgabe, die keine braucht. Eine Tabelle aus dem
+  Gedächtnis ist keine Tabelle, sondern eine Behauptung mit Nachkommastellen.
 
 ## Start-Prompt (Referenz)
 
