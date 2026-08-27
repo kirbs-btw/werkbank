@@ -982,6 +982,25 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   Zahlen, die jeder Drucker-Nutzer kennt, sind mehr wert als eine Tabelle, die niemand nachprüfen
   kann.
 
+- **2026-08-27 · Iteration 34 (Gesamtprobe):** **Keine neue Funktion, sondern eine Kontrolle des
+  Gesamtstands.** Vier Commits gehen auf einmal live, sobald die Netzsperre fällt – bisher hatte
+  ich aber nur einzelne Seiten angesehen. Also neun Seiten quer durch alle Bauarten geprüft:
+  Startseite, Übersicht, zwei Kategorien, drei Rechner, ein Generator, die Fehlerseite.
+
+  Ergebnis: überall HTTP 200, genau eine Hauptüberschrift, ein Hauptbereich, richtiges Canonical,
+  **keine kaputte Kodierung**, keine Reste umschriebener Umlaute.
+
+  Ein Treffer erwies sich als Fehlalarm meiner eigenen Prüfung: Auf der Zahnriemen-Seite meldete
+  sie zwei Umschreibungen – es war der Slug `zahnriemen-laenge` in den JSON-LD-Daten. Slugs sind
+  bewusst ASCII; mein Muster hatte den Inhalt des Script-Elements mitgelesen.
+
+  Bewusst **keine fünfte Änderung** obendrauf: Vier ungetestet-live Commits sind schon mehr, als
+  mir lieb ist. Solange nichts ausgeliefert werden kann, ist Nachprüfen die nützlichere Arbeit als
+  Nachlegen.
+
+  **Merksatz:** Wer nicht ausliefern kann, sollte nicht weiterstapeln. Unausgelieferte Arbeit
+  altert und wird mit jedem Commit schwerer zu beurteilen, wenn sie endlich rausgeht.
+
 ## Start-Prompt (Referenz)
 
 ```
