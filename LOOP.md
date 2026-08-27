@@ -147,6 +147,30 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
       eintragen. **Blockiert durch E5** (DataForSEO kostet Geld) – vorher nichts installieren.
 - [x] ~~**T9 Gridfinity-Baseplate-Generator**~~ → `/generatoren/gridfinity-baseplate` (2026-08-25)
 
+#### Neuer Strang: Elektronik (Abdeckungsanalyse 2026-08-27)
+
+Die Maker-Nische ist durchgerechnet: Von 146 Keywords in `keywords/` sind nur noch 33 offen, und
+die verteilen sich auf **English** (E3) und **Commercial Intent** (E1) – beides Entscheidungen,
+keine Bauaufgaben. Der Zahnrad-Cluster sah zunächst nach Lücke aus, war aber ein Messfehler:
+`/generatoren/zahnrad` gibt es längst, meine Abdeckungsprüfung hatte nur `src/tools/` gelesen.
+
+Elektronik ist **derselbe Leserkreis**, nicht eine zweite Nische: Wer sich einen Drucker oder eine
+Fräse baut, rechnet auch Vorwiderstände, Netzteile und Grenzfrequenzen. Deshalb gleiche Domain,
+gleiche Machart – im Gegensatz zu Garten/MINT/Stochastik, die als Fremd-Nischen unter E2 bleiben.
+25 ungedeckte Keywords, nach Clustergröße:
+
+- [ ] **T21 NE555-Rechner** (5 KW): astabile und monostabile Beschaltung, Frequenz, Tastverhältnis,
+      Bauteilwahl aus der E-Reihe. Der Klassiker – und die vorhandenen Rechner im Netz sind
+      durchweg werbeverseucht.
+- [ ] **T22 Ohmsches Gesetz & Leistung** (4 KW): U/I/R/P, zwei beliebige Größen eingeben, die
+      anderen zwei fallen heraus. Einsteigerthema mit hohem Volumen.
+- [ ] **T23 Operationsverstärker** (4 KW): invertierend und nichtinvertierend, Verstärkung,
+      Widerstandspaare aus der E-Reihe.
+- [ ] **T24 RC/RL-Filter & Grenzfrequenz** (3 KW): Tief-/Hochpass, Zeitkonstante, Bode-Verlauf als
+      Diagramm.
+- [ ] **T25 Spannungsteiler** (3 KW): unbelastet und belastet – gerade der belastete Fall fehlt in
+      fast jedem Online-Rechner, obwohl er der praxisrelevante ist.
+
 ### Epic A – Mesh-Werkstatt im Browser
 
 Das größte ungelöste Problem im 3D-Druck-Alltag: **Das Modell passt nicht auf den Drucker.**
@@ -200,6 +224,12 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
       auf Auffindbarkeit und Bedienbarkeit. Alternativ: ein neues großes Werkzeug als T19 – dann
       bitte Richtung nennen.
       Ohne Antwort nimmt der Loop ab der nächsten Iteration P2.
+      **Stand 2026-08-27:** P2 und P3 sind inzwischen ebenfalls vollständig abgearbeitet. Statt den
+      Loop leerlaufen zu lassen, habe ich die Keyword-Recherche gegen den Bestand gerechnet und
+      **Elektronik als nächsten Strang gesetzt (T21–T25)** – gleiche Zielgruppe, gleiche Domain,
+      also keine strategische Weichenstellung, sondern der bestehende Auftrag „mehr nützliche
+      Werkzeuge". Garten, MINT und Stochastik wären dagegen echte Fremd-Nischen und bleiben E2.
+      Wenn dir eine andere Richtung lieber ist, sag Bescheid – sonst arbeite ich T21–T25 ab.
 - [ ] **E5 OpenSEO + DataForSEO:** OpenSEO selbst ist MIT-lizenziert und kostenlos, die Daten dahinter
       kommen von DataForSEO und werden pro Abfrage abgerechnet. Zu entscheiden: Budget je Monat,
       self-hosted oder Cloud, und wer die Zugangsdaten hinterlegt. Ohne diese Entscheidung bleibt T8
@@ -1000,6 +1030,23 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 
   **Merksatz:** Wer nicht ausliefern kann, sollte nicht weiterstapeln. Unausgelieferte Arbeit
   altert und wird mit jedem Commit schwerer zu beurteilen, wenn sie endlich rausgeht.
+
+  **Nachtrag, gleiche Iteration:** Die Netzsperre fiel beim erneuten Versuch – **alle fünf Commits
+  sind ausgeliefert** (A11y, Umlaute, Zahnriemen, Grenzfall, Schritte je mm). Live geprüft: beide
+  neuen Rechner antworten mit 200, richtiges Canonical, keine kaputte Kodierung, je drei JSON-LD-
+  Blöcke, beide in der Sitemap (176 Einträge). 27 URLs per IndexNow gemeldet, angenommen.
+
+  Im Browser nachgerechnet statt nur angeklickt:
+  - Schritte je mm: GT2/20 Zähne → **80 Schritte/mm**, 12,5 µm, 40 mm Weg je Umdrehung; auf
+    T8-Spindel umgeschaltet → **400 Schritte/mm**, 2,5 µm. Beides die Werte aus der Firmware.
+  - Zahnriemen-Grenzfall: 20/60 Zähne, 5 mm Teilung, 5 mm Achsabstand → alle abgeleiteten Werte
+    stehen auf 0, Hinweis „mindestens 63,66 mm". Die Teilkreise (31,83 / 95,49 mm) bleiben stehen –
+    richtig so, die hängen nicht vom Achsabstand ab.
+  - Nebenbei bestätigt: Die Teilen-URL nimmt nur Nicht-Vorgaben auf (`?z2=60&p=5&a=5`, z1=20 fehlt).
+
+  Ein zweiter Fehlalarm meiner eigenen Prüfung: Die Eingabefelder haben kein `id`, was nach einem
+  A11y-Fehler aussah. Sie stehen aber **innerhalb** ihres `<label>` und tragen `data-input="z1"` –
+  das ist gültig ausgezeichnet, und `a11ycheck` hat es zu Recht durchgelassen.
 
 ## Start-Prompt (Referenz)
 
