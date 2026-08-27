@@ -141,6 +141,7 @@ so tun, als lägen Daten vor. Keine Zahlen erfinden.
       der zweite Weg greift nur, wo es das nicht tut. **Weiteres Feilen daran hat keinen
       messbaren Nutzen mehr – siehe E7.**
 - [x] ~~**T19 Zahnriemen-Länge & Achsabstand**~~ → `/rechner/zahnriemen-laenge` (2026-08-27)
+- [x] ~~**T20 Schritte je mm für Achsantriebe**~~ → `/rechner/schritte-je-mm` (2026-08-27)
 - [ ] **T8 OpenSEO anbinden** (siehe Abschnitt oben): MCP-Server in `.mcp.json` eintragen, Zugang
       testen, erste Ranking- und Keyword-Abfrage machen und das Ergebnis als neue P1/P2-Punkte
       eintragen. **Blockiert durch E5** (DataForSEO kostet Geld) – vorher nichts installieren.
@@ -956,6 +957,30 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   **Merksatz:** Eine Ausgabe, die bei unmöglicher Eingabe trotzdem eine plausible Zahl zeigt, ist
   schlimmer als eine Fehlermeldung. Grenzfälle gehören nicht nur abgefangen, sondern auch
   ausgesprochen.
+
+- **2026-08-27 · Iteration 33 (T20):** **Rechner für Schritte je mm** – aus Motorschritten,
+  Mikroschritten und Antriebsdaten, dazu Auflösung und die Geschwindigkeit, an der die Steuerung
+  aussteigt.
+
+  Die Auswahl war wieder von der fehlenden Netzverbindung geprägt, diesmal produktiv: Gesucht war
+  eine Aufgabe, deren Ergebnis sich **gegen allgemein bekannte Werte** prüfen lässt, wenn schon
+  keine Quelle erreichbar ist. Genau das liefert dieser Rechner – GT2 mit 20 Zähnen, 1,8°-Motor
+  und 1/16 ergibt 80 Schritte/mm, eine T8-Spindel 400. Diese beiden Zahlen stehen in praktisch
+  jeder Drucker-Firmware; sie sind die Probe, die eine Tabelle aus dem Gedächtnis nicht hat.
+
+  Hübsch ist, dass sich beim Riemen die krummen Teilkreisdurchmesser wegkürzen: Der Weg je
+  Umdrehung ist schlicht Zähnezahl mal Teilung. Deshalb kommt die glatte 80 überhaupt zustande.
+
+  Auch dieser Rechner wurde im Browser durchgespielt, nicht nur im HTML – nachdem die
+  Nachprüfung in der vorigen Iteration einen echten Fehler zutage gefördert hatte. Diesmal ohne
+  Befund. 5 neue Tests, insgesamt 1061. Querverweis zum Zahnriemen-Rechner gesetzt.
+
+  **Vierter Commit ohne Netz.** GitHub bleibt aus dieser Umgebung gesperrt, während andere Hosts
+  antworten. Alles ist örtlich vollständig geprüft.
+
+  **Merksatz:** Wenn keine Quelle erreichbar ist, wähle eine Aufgabe mit bekanntem Ergebnis. Zwei
+  Zahlen, die jeder Drucker-Nutzer kennt, sind mehr wert als eine Tabelle, die niemand nachprüfen
+  kann.
 
 ## Start-Prompt (Referenz)
 

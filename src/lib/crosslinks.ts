@@ -97,6 +97,9 @@ export const CROSS_LINKS: CrossPair[] = [
 
   /* Riementrieb: erst die Länge bestimmen, dann die Spannung prüfen. */
   ['zahnriemen-laenge', 'riemenspannung-frequenz'],
+
+  /* Dieselbe Scheibe, zwei Fragen: Wie lang der Riemen, wie fein die Achse. */
+  ['schritte-je-mm', 'zahnriemen-laenge'],
 ];
 
 /** Nachschlagetabelle in beide Richtungen, einmal aufgebaut. */
