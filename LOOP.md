@@ -163,8 +163,7 @@ gleiche Machart – im Gegensatz zu Garten/MINT/Stochastik, die als Fremd-Nische
       Kategorie `elektronik`
 - [x] ~~**T22 Ohmsches Gesetz & Leistung**~~ → `/rechner/ohmsches-gesetz` (2026-08-27), dazu
       `src/lib/elektro.ts` als gemeinsame Grundlage der Kategorie
-- [ ] **T23 Operationsverstärker** (4 KW): invertierend und nichtinvertierend, Verstärkung,
-      Widerstandspaare aus der E-Reihe.
+- [x] ~~**T23 Operationsverstärker**~~ → `/rechner/operationsverstaerker` (2026-08-27)
 - [ ] **T24 RC/RL-Filter & Grenzfrequenz** (3 KW): Tief-/Hochpass, Zeitkonstante, Bode-Verlauf als
       Diagramm.
 - [ ] **T25 Spannungsteiler** (3 KW): unbelastet und belastet – gerade der belastete Fall fehlt in
@@ -1123,6 +1122,37 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   Prüfkette: 1126 Tests, 182 Seiten, `check` 0 Fehler, keine toten Verweise, keine A11y-Befunde.
   Im Browser alle sechs Kombinationen auf denselben Arbeitspunkt (12 V, 2 A, 6 Ω, 24 W) gebracht –
   jede liefert dieselben vier Zahlen.
+
+- **2026-08-27 · Iteration 37 (T23):** **Operationsverstärker live** unter
+  `/rechner/operationsverstaerker`. Drei Grundschaltungen: nichtinvertierend, invertierend,
+  Spannungsfolger. Verstärkung, dB, Ausgangsspannung, Eingangswiderstand, Grenzfrequenz.
+
+  **Der eigentliche Grund, den Rechner zu bauen, ist die Bandbreite.** Fast alle Rechner im Netz
+  teilen das Verstärkungs-Bandbreite-Produkt durch die *Signal*verstärkung. Richtig ist die
+  *Rausch*verstärkung 1 + Rf/R1 – und die ist beim invertierenden Verstärker eine andere Zahl.
+  Ein Inverter mit Vu = −1 hat Rauschverstärkung 2 und damit die **halbe** Grenzfrequenz: 500 kHz
+  statt 1 MHz bei einem 1-MHz-Baustein. Wer das übersieht, wundert sich, warum die Schaltung
+  langsamer ist als gerechnet. Der Rechner sagt es in der Hilfszeile ausdrücklich dazu.
+
+  Zwei weitere Stellen, an denen bewusst keine Zahl steht:
+  - **Eingangswiderstand** ist beim Inverter genau R1 (virtuelle Masse), bei den anderen beiden
+    Schaltungen steht dort „sehr hoch" statt einer erfundenen Zahl – der Wert hängt am Bauteil,
+    nicht an der Beschaltung, und reicht über Größenordnungen.
+  - **Übersteuerung**: Der Ausgang wird bei der Betriebsspannung gekappt und sagt, wie viel er
+    gebraucht hätte. Im FAQ steht dazu, dass reale Typen die Schiene gar nicht erreichen – ein
+    TL072 bleibt 1,5 V darunter.
+
+  **Die Browser-Probe hat wieder etwas gefunden**, diesmal keinen Rechenfehler, sondern einen
+  Erklärsatz am falschen Ort: Beim *nichtinvertierenden* Verstärker stand beim Eingangswiderstand
+  „Deshalb heißt der Spannungsfolger auch Impedanzwandler" – eine Erklärung zu einer Schaltung,
+  die der Leser gar nicht gewählt hat. Behoben, mit Test. Vierte Iteration in Folge, in der die
+  Browser-Probe etwas meldet, das keine Testsuite gesehen hat.
+
+  Nebenbei: Die Browser-Sitzung brach zweimal ab, wenn ich mehrere Schritte in einen langen
+  `async`-Promise packte. Mit je einem Schritt pro Aufruf lief es durch – für künftige Proben ist
+  das die robustere Machart.
+
+  Prüfkette: 1157 Tests, 183 Seiten, `check` 0 Fehler, keine toten Verweise, keine A11y-Befunde.
 
 ## Start-Prompt (Referenz)
 
