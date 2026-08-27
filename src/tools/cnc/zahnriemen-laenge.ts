@@ -104,14 +104,22 @@ export const tool: Tool = {
 
     const zuNah = a < minAbstand;
 
+    // Überlappen sich die Scheiben, gibt es keinen Riementrieb. Dann stehen
+    // *alle* abgeleiteten Werte auf null statt auf einer Zahl, die brauchbar
+    // aussieht – eine selbstbewusste Zähnezahl für eine unmögliche Anordnung
+    // wäre schlimmer als gar keine.
+    const hinweisZuNah = `Der Achsabstand muss mindestens ${minAbstand.toLocaleString('de-DE', { maximumFractionDigits: 2 })} mm betragen – sonst überlappen sich die Scheiben.`;
+
     return [
       {
         label: 'Riemen mit',
-        value: zaehneGerundet,
+        value: zuNah ? 0 : zaehneGerundet,
         unit: 'Zähnen',
         digits: 0,
         primary: true,
-        help: `entspricht ${lGerundet.toLocaleString('de-DE', { maximumFractionDigits: 1 })} mm Umfang – so werden Zahnriemen bestellt`,
+        help: zuNah
+          ? hinweisZuNah
+          : `entspricht ${lGerundet.toLocaleString('de-DE', { maximumFractionDigits: 1 })} mm Umfang – so werden Zahnriemen bestellt`,
       },
       {
         label: 'Achsabstand für diesen Riemen',
@@ -120,7 +128,7 @@ export const tool: Tool = {
         digits: 2,
         help: 'Auf dieses Maß einbauen. Die Differenz zum Wunschmaß muss der Spanner ausgleichen.',
       },
-      { label: 'Rechnerische Riemenlänge', value: l, unit: 'mm', digits: 2 },
+      { label: 'Rechnerische Riemenlänge', value: zuNah ? 0 : l, unit: 'mm', digits: 2 },
       { label: 'Teilkreis Scheibe 1', value: d1, unit: 'mm', digits: 2 },
       { label: 'Teilkreis Scheibe 2', value: d2, unit: 'mm', digits: 2 },
       {

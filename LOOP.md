@@ -934,6 +934,29 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   **Merksatz:** Wenn die Quelle fehlt, wähle die Aufgabe, die keine braucht. Eine Tabelle aus dem
   Gedächtnis ist keine Tabelle, sondern eine Behauptung mit Nachkommastellen.
 
+- **2026-08-27 · Iteration 32 (Nachprüfung):** **Kein Netz, also die ausstehende Arbeit im
+  Browser nachgeprüft** – und dabei einen Fehler gefunden, den kein Test hatte.
+
+  Zwei Commits warteten ungeprüft im Browser auf den Push. Statt weitere Arbeit aufzustapeln, habe
+  ich beide örtlich durchgespielt. Der Umlaut-Durchgang war sauber: keine Reste, keine kaputte
+  Kodierung, Umlaute richtig dargestellt.
+
+  Beim Zahnriemen-Rechner zeigte sich dagegen etwas, das im HTML nicht auffällt: Bei überlappenden
+  Scheiben standen Achsabstand und Umschlingung richtig auf null – **die Kopfzeile meldete aber
+  weiterhin selbstbewusst „Riemen mit 60 Zähnen"**. Für eine Anordnung, die es nicht geben kann,
+  ist das die schlechteste aller Ausgaben: eine Zahl, die brauchbar aussieht. Jetzt stehen alle
+  abgeleiteten Werte auf null, und der Hinweis nennt den kleinsten möglichen Achsabstand. Der Test
+  für den Grenzfall prüft das mit.
+
+  **Weiterhin kein Netz:** GitHub, Vercel und die eigene Seite antworten aus dieser Umgebung nicht,
+  während andere Hosts erreichbar sind. Drei Commits warten jetzt auf den Push; alle sind örtlich
+  vollständig geprüft – Tests, Build, Typcheck, Link-Check, A11y-Check – und der neue Rechner
+  zusätzlich im Browser.
+
+  **Merksatz:** Eine Ausgabe, die bei unmöglicher Eingabe trotzdem eine plausible Zahl zeigt, ist
+  schlimmer als eine Fehlermeldung. Grenzfälle gehören nicht nur abgefangen, sondern auch
+  ausgesprochen.
+
 ## Start-Prompt (Referenz)
 
 ```

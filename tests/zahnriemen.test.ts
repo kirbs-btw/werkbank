@@ -110,6 +110,10 @@ describe('Grenzfälle', () => {
     const r = rechne({ z1: 20, z2: 60, p: '5', a: 5 });
     expect(r.achsabstand).toBe(0);
     expect(r.umschlingung).toBe(0);
+    // Auch die Kopfzeile: Eine Zähnezahl für eine unmögliche Anordnung sieht
+    // brauchbar aus und ist es nicht.
+    expect(r.zaehne).toBe(0);
+    expect(r.laenge).toBe(0);
     expect(r.minAbstand).toBeGreaterThan(5);
   });
 
