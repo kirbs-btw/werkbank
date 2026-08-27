@@ -11,6 +11,7 @@ export type CategorySlug =
   | 'metall'
   | 'schrauben'
   | 'laser'
+  | 'elektronik'
   | 'generatoren';
 
 export interface NumberInput {

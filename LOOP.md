@@ -159,9 +159,8 @@ Fräse baut, rechnet auch Vorwiderstände, Netzteile und Grenzfrequenzen. Deshal
 gleiche Machart – im Gegensatz zu Garten/MINT/Stochastik, die als Fremd-Nischen unter E2 bleiben.
 25 ungedeckte Keywords, nach Clustergröße:
 
-- [ ] **T21 NE555-Rechner** (5 KW): astabile und monostabile Beschaltung, Frequenz, Tastverhältnis,
-      Bauteilwahl aus der E-Reihe. Der Klassiker – und die vorhandenen Rechner im Netz sind
-      durchweg werbeverseucht.
+- [x] ~~**T21 NE555-Rechner**~~ → `/rechner/ne555-rechner` (2026-08-27), zugleich die neue
+      Kategorie `elektronik`
 - [ ] **T22 Ohmsches Gesetz & Leistung** (4 KW): U/I/R/P, zwei beliebige Größen eingeben, die
       anderen zwei fallen heraus. Einsteigerthema mit hohem Volumen.
 - [ ] **T23 Operationsverstärker** (4 KW): invertierend und nichtinvertierend, Verstärkung,
@@ -230,6 +229,14 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
       also keine strategische Weichenstellung, sondern der bestehende Auftrag „mehr nützliche
       Werkzeuge". Garten, MINT und Stochastik wären dagegen echte Fremd-Nischen und bleiben E2.
       Wenn dir eine andere Richtung lieber ist, sag Bescheid – sonst arbeite ich T21–T25 ab.
+- [ ] **E8 Leiterquerschnitt-Rechner umsortieren?** `/rechner/strombelastbarkeit-leiterquerschnitt`
+      liegt unter **Metall & Blech** – offenkundig über das Kupfer gedacht, nicht über den Strom.
+      Sachlich gehört er nach Elektronik. Ich habe ihn **nicht verschoben**: Sein `related` zeigt auf
+      Draht-, Rundmaterial- und Rohrgewicht, er ist also bewusst als Metall-Rechner geschrieben, und
+      das Umsortieren von Bestandsinhalten ist keine Entscheidung, die ich nebenbei treffe. Die
+      Auffindbarkeit ist vorerst über eine Querverlinkung gelöst. Der Slug bliebe beim Verschieben
+      gleich, die URL also auch – es wäre ein billiger, umkehrbarer Schritt, wenn du ihn willst.
+
 - [ ] **E5 OpenSEO + DataForSEO:** OpenSEO selbst ist MIT-lizenziert und kostenlos, die Daten dahinter
       kommen von DataForSEO und werden pro Abfrage abgerechnet. Zu entscheiden: Budget je Monat,
       self-hosted oder Cloud, und wer die Zugangsdaten hinterlegt. Ohne diese Entscheidung bleibt T8
@@ -1047,6 +1054,38 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   Ein zweiter Fehlalarm meiner eigenen Prüfung: Die Eingabefelder haben kein `id`, was nach einem
   A11y-Fehler aussah. Sie stehen aber **innerhalb** ihres `<label>` und tragen `data-input="z1"` –
   das ist gültig ausgezeichnet, und `a11ycheck` hat es zu Recht durchgelassen.
+
+- **2026-08-27 · Iteration 35 (T21):** **NE555-Rechner live** unter `/rechner/ne555-rechner` – und
+  damit die **neue Kategorie Elektronik**. Drei Betriebsarten: astabil, astabil mit Diode über R2,
+  monostabil. Ausgegeben werden Frequenz, Periodendauer, High- und Low-Zeit, Tastverhältnis.
+
+  Der Kern ist unspektakulär (ln2 beim Oszillator, ln3 beim Monoflop), interessant sind die drei
+  Entscheidungen drumherum:
+
+  1. **Im Monoflop steht keine Frequenz.** Ein Monoflop schwingt nicht – eine Frequenz hinzuschreiben
+     wäre eine Zahl, die brauchbar aussieht und keine hat. Dieselbe Regel wie beim Zahnriemen-
+     Grenzfall, nur konsequenter umgesetzt: Statt Nullen auszugeben, fällt die Zeile ganz weg.
+  2. **Zeile „Mit E12-Bauteilen".** Jeder Rechner im Netz liefert 69,8 kΩ und lässt einen damit
+     stehen. Hier steht daneben, was mit 68 kΩ wirklich herauskommt. Gerundet wird logarithmisch,
+     nicht arithmetisch – die E-Reihe ist geometrisch gestuft, die Grenze zwischen 68 und 82 liegt
+     bei 74,7 und nicht bei 75.
+  3. **Der 50-%-Hinweis steht dauerhaft am Ergebnis**, nicht nur im FAQ. Dass das Tastverhältnis im
+     Standardaufbau nie unter 50 % kommt, ist *die* Stolperstelle des Bausteins; wer das erst nach
+     dem Löten merkt, hat umsonst gelötet.
+
+  **Die Querverlinkungs-Sperre aus S5 hat sofort zugeschlagen:** Die neue Kategorie war über keine
+  Verbindung erreichbar, der Test wurde rot. Das ist genau ihr Zweck – eine siebte Insel wäre sonst
+  unbemerkt entstanden. Zwei Paare ergänzt (Leiterquerschnitt, Stepper-Vref).
+
+  Dabei aufgefallen: Der Leiterquerschnitt-Rechner liegt unter *Metall*. Nicht verschoben, sondern
+  als **E8** notiert – Bestandsinhalte umsortiere ich nicht nebenbei.
+
+  Ein Test war zunächst rot, und zwar zu Recht am Test: Ich hatte auf „Pin 7" geprüft, das steht
+  aber auch im harmlosen „entlädt über R2 nach Pin 7". Jetzt prüft er auf „überlastet".
+
+  Prüfkette: 1091 Tests, 181 Seiten, `check` 0 Fehler, keine toten Verweise, keine A11y-Befunde.
+  Im Browser alle drei Betriebsarten durchgeschaltet: 1,03 Hz in der Vorgabe, 51,63 ms als Monoflop,
+  721,3 Hz mit Diode – letzteres deckungsgleich mit dem Testwert.
 
 ## Start-Prompt (Referenz)
 

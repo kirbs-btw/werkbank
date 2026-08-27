@@ -69,6 +69,15 @@ export const CATEGORIES: Category[] = [
     accent: 'brand',
   },
   {
+    slug: 'elektronik',
+    name: 'Elektronik',
+    tagline: 'Zeitglieder, Widerstände & Grundgesetze durchgerechnet.',
+    description:
+      'Elektronik-Rechner für die Werkstatt: NE555-Zeitglieder, Ohmsches Gesetz, Spannungsteiler, Filter und Verstärker – mit Bauteilwerten aus der E-Reihe.',
+    icon: 'M13 2L4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5z',
+    accent: 'brand',
+  },
+  {
     slug: 'generatoren',
     name: 'Generatoren',
     tagline: 'Schnittpläne, Bohrbilder & Zahnräder erzeugen.',

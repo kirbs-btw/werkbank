@@ -100,6 +100,13 @@ export const CROSS_LINKS: CrossPair[] = [
 
   /* Dieselbe Scheibe, zwei Fragen: Wie lang der Riemen, wie fein die Achse. */
   ['schritte-je-mm', 'zahnriemen-laenge'],
+
+  /* Elektronik hängt an der Werkstatt, nicht daneben: Wer eine Schaltung
+     aufbaut, muss sie auch verdrahten und den Treiber daneben einstellen.
+     Der Leiterquerschnitt liegt unter „Metall" – über das Kupfer gedacht,
+     nicht über den Strom. Siehe E8. */
+  ['ne555-rechner', 'strombelastbarkeit-leiterquerschnitt'],
+  ['ne555-rechner', 'stepper-vref-strom'],
 ];
 
 /** Nachschlagetabelle in beide Richtungen, einmal aufgebaut. */
