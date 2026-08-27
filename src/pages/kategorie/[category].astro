@@ -39,17 +39,22 @@ const crumbs = [
 
     {
       tools.length > 0 && (
-        <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {tools.map((t) => (
-            <ToolCard tool={t} />
-          ))}
+        <div class="mt-8">
+          <h2 class="sr-only">Rechner in dieser Kategorie</h2>
+          <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {tools.map((t) => (
+              <ToolCard tool={t} />
+            ))}
+          </div>
         </div>
       )
     }
 
     {
       generators.length > 0 && (
-        <div class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div class="mt-8">
+          <h2 class="sr-only">Generatoren in dieser Kategorie</h2>
+          <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {generators.map((g) => (
             <a
               href={`/generatoren/${g.slug}`}
@@ -66,6 +71,7 @@ const crumbs = [
               </span>
             </a>
           ))}
+          </div>
         </div>
       )
     }

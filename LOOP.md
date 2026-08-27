@@ -44,8 +44,8 @@ Eine Iteration = genau **ein** abgeschlossener Backlog-Punkt, gepusht auf `main`
       Impressions/Klicks bringt oder wo ein Ranking abrutscht, kommt vor geplanten Neubauten.
 4. **Implementieren** nach den Prinzipien oben. Bei neuen Tools: Keywords/Titel/Description aus den
    passenden Zeilen in `keywords/*.txt` übernehmen, interne Links von 1–2 bestehenden Tools setzen.
-5. **Verifizieren:** `npm test`, `npm run build`, `npm run check` **und `npm run linkcheck`**
-   müssen grün sein.
+5. **Verifizieren:** `npm test`, `npm run build`, `npm run check`, `npm run linkcheck`
+   **und `npm run a11ycheck`** müssen grün sein.
    Der Typcheck gehört seit Iteration 27 dazu, weil er Fehler sieht, die zur Laufzeit stumm
    bleiben: In Iteration 16 hatte er einen Test entlarvt, der 40 Minuten lang grün lief, ohne
    irgendetwas zu prüfen – die Schnittebene war falsch benannt und damit komplett `undefined`. Bei UI-Änderungen zusätzlich
@@ -170,7 +170,7 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 
 - [x] ~~**Q1 `npm run check` komplett grün**~~ → eine gemeinsame Vite-Version statt zweier (2026-08-26)
 - [x] ~~**Q2 Interner Link-Check**~~ → `npm run linkcheck`, fand sofort einen toten Verweis (2026-08-27)
-- [ ] **Q3 A11y-Durchgang** der Kernseiten (Labels, Fokusreihenfolge, Kontraste).
+- [x] ~~**Q3 A11y-Durchgang**~~ → `npm run a11ycheck` + Kontrastprüfung, 5 Befunde behoben (2026-08-27)
 - [ ] **Q4 Umlaute reparieren:** ~20 Tool-Dateien nutzen transliterierte Umlaute im sichtbaren Text
       („Schaetze", „Fuellgrad", „beruecksichtigt"). Betrifft Titel, Beschreibungen, FAQ und teils
       Ergebnis-Labels → schlechte Optik und schwächeres Keyword-Matching. Gefunden in Iteration 3;
@@ -845,6 +845,39 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 
   **Merksatz:** Verweise sind das Einzige an einer statischen Seite, das im Build niemand prüft.
   Alles andere bricht laut – ein falscher `href` bricht still.
+
+- **2026-08-27 · Iteration 29 (Q3):** **Fünf Barrieren gefunden und behoben**, dazu `npm run
+  a11ycheck` als bleibender Prüfschritt.
+
+  Das Grundgerüst war schon in Ordnung – Sprache, genau eine Hauptüberschrift, Hauptbereich,
+  Sprunglink, keine Bilder ohne Alternativtext. Die Befunde lagen darunter:
+
+  **Drei Eingabefelder ohne Beschriftung** – das Suchfeld auf `/rechner` und zwei Felder im
+  STL-Transformierer. Alle drei hatten einen Platzhalter oder ein `<span>` daneben; auf dem
+  Bildschirm sieht das völlig normal aus, mit Screenreader ist es ein namenloses Kästchen.
+
+  **Übersprungene Überschriftenebenen auf acht Seiten.** Auf den Kategorieseiten folgte auf die
+  `h1` direkt die `h3` der Karten – jetzt gibt es dazwischen eine Abschnittsüberschrift (nur für
+  Hilfsmittel sichtbar). Auf der 404-Seite kamen die Sprünge aus dem Fußbereich; dessen
+  Überschriften stehen jetzt auf `h2`, was ohnehin richtiger ist: Fußbereich-Abschnitte sind
+  Geschwister des Hauptinhalts, keine Unterpunkte.
+
+  **Zwei Kontrastfehler.** Der gefüllte Knopf – der prominenteste Bedienknopf der Seite – hatte
+  weiß auf `brand-600` nur **3,56:1**; nötig sind 4,5:1, und bei 14 px halbfett greift die
+  Ausnahme für große Schrift nicht. Jetzt `brand-700` mit 5,18:1. Beim Überfahren wurde er
+  bisher *heller* (`brand-500`, 2,80:1) – der Kontrast muss aber in jedem Zustand stimmen, also
+  geht er jetzt nach `brand-800` (7,31:1). Und der Formel-Kasten auf jeder Rechnerseite lag mit
+  `zinc-500` auf `zinc-100` bei **4,40:1**, knapp darunter – jetzt `zinc-600`.
+
+  Die Farben sind damit eine Spur satter als vorher. Das ist eine sichtbare Änderung am
+  Erscheinungsbild; ein Blick auf die Startseite zeigt, dass sie trägt.
+
+  Die Prüfung steht als reine Funktion in `src/lib/a11ycheck.ts`, samt Kontrastrechnung nach WCAG.
+  Was ein Browser braucht – Fokusreihenfolge, Verhalten mit Hilfsmitteln – deckt sie ausdrücklich
+  nicht ab; das steht auch so im Modulkopf. 21 neue Tests, insgesamt 1035.
+
+  **Merksatz:** Kontrast gilt für jeden Zustand, nicht nur für den ruhenden. Ein Knopf, der beim
+  Überfahren heller wird, wird beim Überfahren auch schlechter lesbar.
 
 ## Start-Prompt (Referenz)
 
