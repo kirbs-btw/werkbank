@@ -6,9 +6,9 @@ export const tool: Tool = {
   category: '3d-druck',
   title: 'Filament-Restmenge auf der Spule',
   shortTitle: 'Restfilament',
-  description: 'Berechne aus dem aktuellen Gewicht der Spule die verbleibende Filamentmenge in Gramm und die Restlaenge in Metern.',
+  description: 'Berechne aus dem aktuellen Gewicht der Spule die verbleibende Filamentmenge in Gramm und die Restlänge in Metern.',
   keywords: ['filament restmenge berechnen','wie viel filament auf spule','restlaenge filament rechner'],
-  formula: 'Restgewicht = Brutto - Leergewicht; Laenge = (Restgewicht/Dichte) / (PI x (d/20)^2)',
+  formula: 'Restgewicht = Brutto - Leergewicht; Länge = (Restgewicht/Dichte) / (PI x (d/20)^2)',
   inputs: [
     { type:'number', id:'brutto', label:'Aktuelles Gesamtgewicht', unit:'g', default:1000, min:0, step:1, help:'Spule inklusive Restfilament wiegen.' },
     { type:'number', id:'leer', label:'Leergewicht der Spule', unit:'g', default:230, min:0, step:1 },
@@ -25,23 +25,23 @@ export const tool: Tool = {
     const meter = laengeCm / 100;
     return [
       { label:'Restgewicht', value: rest, unit:'g', digits:0 },
-      { label:'Restlaenge', value: meter, unit:'m', digits:1, primary:true },
+      { label:'Restlänge', value: meter, unit:'m', digits:1, primary:true },
     ];
   },
-  intro: 'Wiege die ganze Spule, ziehe das Leergewicht ab und sieh, wie viel Filament fuer das naechste Projekt noch reicht.',
+  intro: 'Wiege die ganze Spule, ziehe das Leergewicht ab und sieh, wie viel Filament für das nächste Projekt noch reicht.',
   howto: [
-    'Komplette Spule auf einer Kuechenwaage wiegen und als Gesamtgewicht eintragen.',
-    'Leergewicht der Spule aus dem Datenblatt oder vom Aufdruck uebernehmen.',
-    'Durchmesser und Material auswaehlen.',
-    'Restgewicht und Restlaenge ablesen.',
+    'Komplette Spule auf einer Küchenwaage wiegen und als Gesamtgewicht eintragen.',
+    'Leergewicht der Spule aus dem Datenblatt oder vom Aufdruck übernehmen.',
+    'Durchmesser und Material auswählen.',
+    'Restgewicht und Restlänge ablesen.',
   ],
   faq: [
     { q:'Woher kenne ich das Leergewicht der Spule?', a:'Viele Hersteller drucken es auf die Spule; alternativ eine identische leere Spule wiegen.' },
-    { q:'Stimmt die Restlaenge exakt?', a:'Sie ist sehr genau, kleine Abweichungen entstehen durch Durchmessertoleranzen und Materialdichte.' },
+    { q:'Stimmt die Restlänge exakt?', a:'Sie ist sehr genau, kleine Abweichungen entstehen durch Durchmessertoleranzen und Materialdichte.' },
   ],
   related: ['modell-gewicht','filament-kosten'],
-  updated: '2026-06-15',
+  updated: '2026-08-27',
   examples: [
-    { values:{ brutto:1000, leer:230, durchmesser:'1.75', material:'1.24' }, expect:[ { label:'Restgewicht', value:770, tolerance:0.5 }, { label:'Restlaenge', value:258.2, tolerance:0.3 } ] },
+    { values:{ brutto:1000, leer:230, durchmesser:'1.75', material:'1.24' }, expect:[ { label:'Restgewicht', value:770, tolerance:0.5 }, { label:'Restlänge', value:258.2, tolerance:0.3 } ] },
   ],
 };

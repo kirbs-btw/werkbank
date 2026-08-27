@@ -6,13 +6,13 @@ export const tool: Tool = {
   category: 'metall',
   title: 'Flachstahl-Gewicht-Rechner',
   shortTitle: 'Flachstahl Gewicht',
-  description: 'Berechne das Gewicht von Flachstahl und Flachmaterial aus Breite, Dicke und Laenge fuer Stahl, Edelstahl, Alu, Messing oder Kupfer.',
+  description: 'Berechne das Gewicht von Flachstahl und Flachmaterial aus Breite, Dicke und Länge für Stahl, Edelstahl, Alu, Messing oder Kupfer.',
   keywords: ['flachstahl gewicht berechnen', 'flachmaterial gewicht rechner', 'gewicht flacheisen', 'kg pro meter flachstahl'],
-  formula: 'm = (Breite x Dicke x Laenge) / 1000 cm3 x Dichte / 1000 (Masse in mm)',
+  formula: 'm = (Breite x Dicke x Länge) / 1000 cm3 x Dichte / 1000 (Masse in mm)',
   inputs: [
     { type: 'number', id: 'breite', label: 'Breite', unit: 'mm', default: 40, min: 0, step: 1 },
     { type: 'number', id: 'dicke', label: 'Dicke', unit: 'mm', default: 10, min: 0, step: 0.5 },
-    { type: 'number', id: 'laenge', label: 'Laenge', unit: 'mm', default: 1000, min: 0, step: 1 },
+    { type: 'number', id: 'laenge', label: 'Länge', unit: 'mm', default: 1000, min: 0, step: 1 },
     {
       type: 'select', id: 'material', label: 'Material', default: '7.85',
       options: [
@@ -37,18 +37,18 @@ export const tool: Tool = {
       { label: 'Gewicht in Gramm', value: gewichtG, unit: 'g', digits: 1 },
     ];
   },
-  intro: 'Ermittle das Gewicht von Flachstahl und rechteckigem Vollmaterial fuer Kalkulation und Versand.',
+  intro: 'Ermittle das Gewicht von Flachstahl und rechteckigem Vollmaterial für Kalkulation und Versand.',
   howto: [
     'Breite des Flachstahls in mm eingeben.',
     'Dicke in mm eintragen.',
-    'Laenge in mm und Material auswaehlen.',
+    'Länge in mm und Material auswählen.',
   ],
   faq: [
     { q: 'Was ist der Unterschied zu Vierkant?', a: 'Flachstahl ist rechteckig mit unterschiedlicher Breite und Dicke, Vierkant ist quadratisch.' },
-    { q: 'Wie genau ist das Ergebnis?', a: 'Sehr genau bei massiven Profilen. Walztoleranzen koennen zu kleinen Abweichungen fuehren.' },
+    { q: 'Wie genau ist das Ergebnis?', a: 'Sehr genau bei massiven Profilen. Walztoleranzen können zu kleinen Abweichungen führen.' },
   ],
   related: ['vierkant-gewicht', 'rundmaterial-gewicht', 'rohr-gewicht'],
-  updated: '2026-06-15',
+  updated: '2026-08-27',
   examples: [
     {
       values: { breite: 40, dicke: 10, laenge: 1000, material: '7.85' },

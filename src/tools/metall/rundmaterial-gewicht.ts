@@ -6,12 +6,12 @@ export const tool: Tool = {
   category: 'metall',
   title: 'Rundstahl-Gewicht-Rechner',
   shortTitle: 'Rundstahl Gewicht',
-  description: 'Berechne das Gewicht von Rundstahl, Edelstahl, Alu, Messing oder Kupfer aus Durchmesser und Laenge. Schnell und genau.',
+  description: 'Berechne das Gewicht von Rundstahl, Edelstahl, Alu, Messing oder Kupfer aus Durchmesser und Länge. Schnell und genau.',
   keywords: ['rundstahl gewicht berechnen', 'gewicht rundmaterial rechner', 'gewicht runde welle stahl', 'kg pro meter rundstahl'],
   formula: 'm = PI/4 x (d/10)^2 x (L/10) x Dichte / 1000 (d, L in mm)',
   inputs: [
     { type: 'number', id: 'd', label: 'Durchmesser', unit: 'mm', default: 20, min: 0, step: 1 },
-    { type: 'number', id: 'laenge', label: 'Laenge', unit: 'mm', default: 1000, min: 0, step: 1 },
+    { type: 'number', id: 'laenge', label: 'Länge', unit: 'mm', default: 1000, min: 0, step: 1 },
     {
       type: 'select', id: 'material', label: 'Material', default: '7.85',
       options: [
@@ -35,18 +35,18 @@ export const tool: Tool = {
       { label: 'Gewicht in Gramm', value: gewichtG, unit: 'g', digits: 1 },
     ];
   },
-  intro: 'Ermittle das exakte Gewicht von Rundmaterial fuer Transport, Versand oder Materialkalkulation.',
+  intro: 'Ermittle das exakte Gewicht von Rundmaterial für Transport, Versand oder Materialkalkulation.',
   howto: [
     'Durchmesser des Rundmaterials in mm eingeben.',
-    'Laenge in mm eintragen.',
-    'Material auswaehlen, die Dichte wird automatisch gesetzt.',
+    'Länge in mm eintragen.',
+    'Material auswählen, die Dichte wird automatisch gesetzt.',
   ],
   faq: [
     { q: 'Welche Dichte hat Stahl?', a: 'Baustahl hat eine Dichte von etwa 7,85 g/cm3. Edelstahl liegt bei rund 7,9 g/cm3.' },
-    { q: 'Gilt die Formel auch fuer Wellen?', a: 'Ja, fuer jedes massive runde Vollmaterial wie Wellen, Bolzen oder Stangen.' },
+    { q: 'Gilt die Formel auch für Wellen?', a: 'Ja, für jedes massive runde Vollmaterial wie Wellen, Bolzen oder Stangen.' },
   ],
   related: ['rohr-gewicht', 'flachstahl-gewicht', 'vierkant-gewicht'],
-  updated: '2026-06-15',
+  updated: '2026-08-27',
   examples: [
     {
       values: { d: 20, laenge: 1000, material: '7.85' },

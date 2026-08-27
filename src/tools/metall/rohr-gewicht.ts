@@ -6,13 +6,13 @@ export const tool: Tool = {
   category: 'metall',
   title: 'Rohr-Gewicht-Rechner',
   shortTitle: 'Rohrgewicht',
-  description: 'Berechne das Gewicht von Rohren aus Aussendurchmesser, Wandstaerke und Laenge fuer Stahl, Edelstahl, Alu, Messing oder Kupfer.',
+  description: 'Berechne das Gewicht von Rohren aus Außendurchmesser, Wandstärke und Länge für Stahl, Edelstahl, Alu, Messing oder Kupfer.',
   keywords: ['rohr gewicht berechnen', 'stahlrohr gewicht rechner', 'gewicht rohr formel', 'kg pro meter rohr'],
   formula: 'm = PI/4 x ((D/10)^2 - (di/10)^2) x (L/10) x Dichte / 1000, di = D - 2 x Wand',
   inputs: [
-    { type: 'number', id: 'aussen', label: 'Aussendurchmesser', unit: 'mm', default: 30, min: 0, step: 1 },
-    { type: 'number', id: 'wand', label: 'Wandstaerke', unit: 'mm', default: 2, min: 0, step: 0.1 },
-    { type: 'number', id: 'laenge', label: 'Laenge', unit: 'mm', default: 1000, min: 0, step: 1 },
+    { type: 'number', id: 'aussen', label: 'Außendurchmesser', unit: 'mm', default: 30, min: 0, step: 1 },
+    { type: 'number', id: 'wand', label: 'Wandstärke', unit: 'mm', default: 2, min: 0, step: 0.1 },
+    { type: 'number', id: 'laenge', label: 'Länge', unit: 'mm', default: 1000, min: 0, step: 1 },
     {
       type: 'select', id: 'material', label: 'Material', default: '7.85',
       options: [
@@ -38,18 +38,18 @@ export const tool: Tool = {
       { label: 'Innendurchmesser', value: di, unit: 'mm', digits: 1 },
     ];
   },
-  intro: 'Ermittle das Gewicht von Rohren und Hohlprofilen schnell fuer Statik, Versand oder Materialbedarf.',
+  intro: 'Ermittle das Gewicht von Rohren und Hohlprofilen schnell für Statik, Versand oder Materialbedarf.',
   howto: [
-    'Aussendurchmesser des Rohrs in mm eingeben.',
-    'Wandstaerke in mm eintragen.',
-    'Laenge in mm und Material auswaehlen.',
+    'Außendurchmesser des Rohrs in mm eingeben.',
+    'Wandstärke in mm eintragen.',
+    'Länge in mm und Material auswählen.',
   ],
   faq: [
-    { q: 'Wie wird der Innendurchmesser berechnet?', a: 'Innendurchmesser = Aussendurchmesser minus zweimal die Wandstaerke.' },
-    { q: 'Gilt das auch fuer Edelstahlrohr?', a: 'Ja, waehle einfach Edelstahl mit Dichte 7,9 g/cm3 aus.' },
+    { q: 'Wie wird der Innendurchmesser berechnet?', a: 'Innendurchmesser = Außendurchmesser minus zweimal die Wandstärke.' },
+    { q: 'Gilt das auch für Edelstahlrohr?', a: 'Ja, wähle einfach Edelstahl mit Dichte 7,9 g/cm3 aus.' },
   ],
   related: ['rundmaterial-gewicht', 'flachstahl-gewicht', 'vierkant-gewicht'],
-  updated: '2026-06-15',
+  updated: '2026-08-27',
   examples: [
     {
       values: { aussen: 30, wand: 2, laenge: 1000, material: '7.85' },

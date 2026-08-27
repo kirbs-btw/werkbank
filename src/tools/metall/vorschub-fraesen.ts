@@ -4,14 +4,14 @@ import { num } from '../../lib/types';
 export const tool: Tool = {
   slug: 'vorschub-fraesen',
   category: 'metall',
-  title: 'Vorschub-Rechner Fraesen',
+  title: 'Vorschub-Rechner Fräsen',
   shortTitle: 'Vorschub Vf',
-  description: 'Berechne den Vorschub beim Fraesen aus Zahnvorschub, Zaehnezahl und Drehzahl. Ergibt Vorschubgeschwindigkeit Vf in mm/min.',
+  description: 'Berechne den Vorschub beim Fräsen aus Zahnvorschub, Zähnezahl und Drehzahl. Ergibt Vorschubgeschwindigkeit Vf in mm/min.',
   keywords: ['vorschub fraesen berechnen', 'vf vorschub rechner', 'zahnvorschub fraesen formel', 'vorschubgeschwindigkeit fraese'],
-  formula: 'Vf = fz x z x n  [Vf in mm/min, fz in mm/Zahn, z Zaehne, n in 1/min]',
+  formula: 'Vf = fz x z x n  [Vf in mm/min, fz in mm/Zahn, z Zähne, n in 1/min]',
   inputs: [
     { type: 'number', id: 'fz', label: 'Zahnvorschub fz', unit: 'mm/Zahn', default: 0.05, min: 0, step: 0.01 },
-    { type: 'number', id: 'z', label: 'Zaehnezahl', unit: 'Zaehne', default: 4, min: 1, step: 1 },
+    { type: 'number', id: 'z', label: 'Zähnezahl', unit: 'Zähne', default: 4, min: 1, step: 1 },
     { type: 'number', id: 'n', label: 'Drehzahl', unit: '1/min', default: 2000, min: 0, step: 10 },
   ],
   compute: (v) => {
@@ -25,18 +25,18 @@ export const tool: Tool = {
       { label: 'Vorschub pro Umdrehung', value: fu, unit: 'mm/U', digits: 3 },
     ];
   },
-  intro: 'Bestimme die richtige Vorschubgeschwindigkeit fuer deine Fraese aus Zahnvorschub, Zaehnezahl und Drehzahl.',
+  intro: 'Bestimme die richtige Vorschubgeschwindigkeit für deine Fräse aus Zahnvorschub, Zähnezahl und Drehzahl.',
   howto: [
     'Zahnvorschub fz aus der Werkzeug-Empfehlung in mm/Zahn eingeben.',
-    'Anzahl der Schneiden (Zaehne) des Fraesers eintragen.',
+    'Anzahl der Schneiden (Zähne) des Fräsers eintragen.',
     'Spindeldrehzahl in 1/min eingeben.',
   ],
   faq: [
-    { q: 'Was ist der Zahnvorschub fz?', a: 'Der Weg, den jeder Zahn pro Umdrehung abtraegt. Typisch 0,02 bis 0,2 mm/Zahn je nach Material und Fraeser.' },
+    { q: 'Was ist der Zahnvorschub fz?', a: 'Der Weg, den jeder Zahn pro Umdrehung abträgt. Typisch 0,02 bis 0,2 mm/Zahn je nach Material und Fräser.' },
     { q: 'Woher bekomme ich die Drehzahl?', a: 'Aus der Schnittgeschwindigkeit, zum Beispiel mit unserem Drehzahl-Rechner.' },
   ],
   related: ['drehzahl-schnittgeschwindigkeit'],
-  updated: '2026-06-15',
+  updated: '2026-08-27',
   examples: [
     {
       values: { fz: 0.05, z: 4, n: 2000 },

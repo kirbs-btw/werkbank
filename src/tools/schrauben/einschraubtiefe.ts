@@ -26,7 +26,7 @@ export const tool: Tool = {
         { value: 'aluminium', label: 'Aluminium (x1,4)' },
         { value: 'magnesium', label: 'Magnesium (x2,1)' },
       ],
-      help: 'Weichere Werkstoffe brauchen mehr tragende Gewindegaenge.',
+      help: 'Weichere Werkstoffe brauchen mehr tragende Gewindegänge.',
     },
   ],
   compute: (v) => {
@@ -39,19 +39,19 @@ export const tool: Tool = {
       { label: 'Empfohlene Bohrtiefe Sackloch', value: bohrtiefe, unit: 'mm', digits: 1, help: 'Inkl. Auslauf, ca. Einschraubtiefe plus 2 x d.' },
     ];
   },
-  intro: 'Damit ein Gewinde im Sackloch nicht ausreisst, muss die Schraube ausreichend tief greifen. Die noetige Tiefe haengt vom Werkstoff des Gewindes ab.',
+  intro: 'Damit ein Gewinde im Sackloch nicht ausreißt, muss die Schraube ausreichend tief greifen. Die nötige Tiefe hängt vom Werkstoff des Gewindes ab.',
   howto: [
     'Nenndurchmesser der Schraube eintragen.',
-    'Werkstoff des Gegengewindes waehlen.',
+    'Werkstoff des Gegengewindes wählen.',
     'Mindest-Einschraubtiefe ablesen.',
     'Sackloch entsprechend tiefer bohren (Auslauf einplanen).',
   ],
   faq: [
-    { q: 'Warum braucht Aluminium mehr Tiefe als Stahl?', a: 'Weichere Werkstoffe haben eine geringere Festigkeit. Mehr tragende Gewindegaenge verteilen die Last und verhindern das Ausreissen des Gewindes.' },
-    { q: 'Wieso ist die Bohrtiefe groesser als die Einschraubtiefe?', a: 'Gewinde- und Bohrerauslauf brauchen Platz. Als Faustregel rechnet man die Einschraubtiefe plus etwa zwei Durchmesser Reserve.' },
+    { q: 'Warum braucht Aluminium mehr Tiefe als Stahl?', a: 'Weichere Werkstoffe haben eine geringere Festigkeit. Mehr tragende Gewindegänge verteilen die Last und verhindern das Ausreißen des Gewindes.' },
+    { q: 'Wieso ist die Bohrtiefe größer als die Einschraubtiefe?', a: 'Gewinde- und Bohrerauslauf brauchen Platz. Als Faustregel rechnet man die Einschraubtiefe plus etwa zwei Durchmesser Reserve.' },
   ],
   related: ['kernlochbohrer', 'schraubenlaenge'],
-  updated: '2026-06-15',
+  updated: '2026-08-27',
   examples: [
     { values: { durchmesser: 8, werkstoff: 'aluminium' }, expect: [{ label: 'Mindest-Einschraubtiefe', value: 11.2, tolerance: 0.01 }] },
     { values: { durchmesser: 10, werkstoff: 'stahl' }, expect: [{ label: 'Mindest-Einschraubtiefe', value: 10, tolerance: 0.01 }] },

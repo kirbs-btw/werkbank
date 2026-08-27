@@ -21,7 +21,7 @@ ${MATERIALS.map(
     `<tr><td>${m.label}</td><td>${m.group} · ${GROUP_LABELS[m.group]}</td><td>${m.vc.hss[0]}–${m.vc.hss[1]}</td><td>${m.vc.vhm[0]}–${m.vc.vhm[1]}</td><td>${m.vc['vhm-tialn'][0]}–${m.vc['vhm-tialn'][1]}</td><td>${fmt(m.fzFactor * 10, 2)} mm</td><td>${m.kc11}</td></tr>`,
 ).join('')}
 </tbody></table></div>
-<p class="tabelle-fussnote">Schnittgeschwindigkeit v<sub>c</sub> in m/min, Zahnvorschub f<sub>z</sub> in mm/Zahn (skaliert mit dem Durchmesser), spezifische Schnittkraft k<sub>c1.1</sub> in N/mm². Richtwerte für den Einstieg – die konkreten Werte deines Werkzeugherstellers haben immer Vorrang.</p>`;
+<p class="tabelle-Fußnote">Schnittgeschwindigkeit v<sub>c</sub> in m/min, Zahnvorschub f<sub>z</sub> in mm/Zahn (skaliert mit dem Durchmesser), spezifische Schnittkraft k<sub>c1.1</sub> in N/mm². Richtwerte für den Einstieg – die konkreten Werte deines Werkzeugherstellers haben immer Vorrang.</p>`;
 
 export const tool: Tool = {
   slug: 'schnittdaten-rechner',
@@ -156,7 +156,7 @@ ${TABLE}`,
     },
   ],
   related: ['schnittgeschwindigkeit', 'mittlere-spanungsdicke', 'spindelleistung-fraesen', 'zeitspanvolumen'],
-  updated: '2026-08-25',
+  updated: '2026-08-27',
   examples: [
     {
       // Alu-Knetlegierung, VHM, Ø6 mm, 2 Schneiden, halber Eingriff, ohne Ausgleich

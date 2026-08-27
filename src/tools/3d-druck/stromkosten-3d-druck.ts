@@ -10,7 +10,7 @@ export const tool: Tool = {
   keywords: ['stromkosten 3d druck berechnen','stromverbrauch 3d drucker','3d druck kwh rechner'],
   formula: 'Verbrauch (kWh) = Leistung/1000 x Druckzeit; Kosten = Verbrauch x Strompreis',
   inputs: [
-    { type:'number', id:'leistung', label:'Leistungsaufnahme', unit:'W', default:120, min:0, step:5, help:'Mittlere Leistung waehrend des Drucks.' },
+    { type:'number', id:'leistung', label:'Leistungsaufnahme', unit:'W', default:120, min:0, step:5, help:'Mittlere Leistung während des Drucks.' },
     { type:'number', id:'druckzeit', label:'Druckzeit', unit:'h', default:8, min:0, step:0.25 },
     { type:'number', id:'strompreis', label:'Strompreis', unit:'EUR/kWh', default:0.35, min:0, step:0.01 },
   ],
@@ -26,16 +26,16 @@ export const tool: Tool = {
   intro: 'Strom ist neben dem Filament der zweite laufende Kostenfaktor. Mit Leistung und Druckzeit ermittelst du die Energiekosten je Druck.',
   howto: [
     'Mittlere Leistungsaufnahme des Druckers eintragen (Messsteckdose oder Datenblatt).',
-    'Druckzeit aus dem Slicer in Stunden uebernehmen.',
+    'Druckzeit aus dem Slicer in Stunden übernehmen.',
     'Aktuellen Strompreis pro kWh eingeben.',
     'Verbrauch und Stromkosten ablesen.',
   ],
   faq: [
-    { q:'Welche Leistung soll ich ansetzen?', a:'Den Mittelwert ueber den Druck; das beheizte Druckbett zieht zu Beginn am meisten, danach sinkt der Verbrauch.' },
+    { q:'Welche Leistung soll ich ansetzen?', a:'Den Mittelwert über den Druck; das beheizte Druckbett zieht zu Beginn am meisten, danach sinkt der Verbrauch.' },
     { q:'Ist das beheizte Bett enthalten?', a:'Ja, wenn du die gesamte Leistungsaufnahme inklusive Bett und Hotend ansetzt.' },
   ],
   related: ['filament-kosten','maschinenstundensatz-3d-druck','druckpreis-kalkulation'],
-  updated: '2026-06-15',
+  updated: '2026-08-27',
   examples: [
     { values:{ leistung:120, druckzeit:8, strompreis:0.35 }, expect:[ { label:'Stromverbrauch', value:0.96, tolerance:0.01 }, { label:'Stromkosten', value:0.34, tolerance:0.01 } ] },
   ],

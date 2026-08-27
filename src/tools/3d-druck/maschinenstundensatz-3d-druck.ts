@@ -6,7 +6,7 @@ export const tool: Tool = {
   category: '3d-druck',
   title: 'Maschinenstundensatz 3D-Drucker',
   shortTitle: 'Maschinensatz',
-  description: 'Berechne den Maschinenstundensatz deines 3D-Druckers aus Anschaffung, Wartung und Stromverbrauch als Basis fuer deine Preise.',
+  description: 'Berechne den Maschinenstundensatz deines 3D-Druckers aus Anschaffung, Wartung und Stromverbrauch als Basis für deine Preise.',
   keywords: ['maschinenstundensatz 3d drucker','stundensatz 3d druck berechnen','3d drucker betriebskosten pro stunde'],
   formula: 'Stundensatz = Anschaffung/Nutzungsdauer + Wartung/Drucke + (Leistung/1000) x Strompreis',
   inputs: [
@@ -29,19 +29,19 @@ export const tool: Tool = {
       { label:'Maschinenstundensatz', value: satz, unit:'EUR/h', digits:2, primary:true },
     ];
   },
-  intro: 'Der Maschinenstundensatz bildet die laufenden Kosten je Druckstunde ab und ist die Grundlage fuer eine saubere Auftragskalkulation.',
+  intro: 'Der Maschinenstundensatz bildet die laufenden Kosten je Druckstunde ab und ist die Grundlage für eine saubere Auftragskalkulation.',
   howto: [
     'Anschaffungskosten und die erwartete Lebensdauer in Druckstunden eintragen.',
-    'Jaehrliche Wartungskosten sowie die jaehrlichen Druckstunden angeben.',
+    'Jährliche Wartungskosten sowie die jährlichen Druckstunden angeben.',
     'Leistungsaufnahme des Druckers und deinen Strompreis eingeben.',
-    'Den Maschinenstundensatz in die Druckpreis-Kalkulation uebernehmen.',
+    'Den Maschinenstundensatz in die Druckpreis-Kalkulation übernehmen.',
   ],
   faq: [
-    { q:'Was zaehlt zu den Wartungskosten?', a:'Duesen, Druckbett, Riemen, Schmiermittel und Ersatzteile, die regelmaessig anfallen.' },
-    { q:'Warum ist der Satz so niedrig?', a:'Bei Hobbygeraeten dominieren die Stromkosten; teurere Profimaschinen erreichen deutlich hoehere Saetze.' },
+    { q:'Was zählt zu den Wartungskosten?', a:'Düsen, Druckbett, Riemen, Schmiermittel und Ersatzteile, die regelmäßig anfallen.' },
+    { q:'Warum ist der Satz so niedrig?', a:'Bei Hobbygeräten dominieren die Stromkosten; teurere Profimaschinen erreichen deutlich höhere Sätze.' },
   ],
   related: ['druckpreis-kalkulation','filament-kosten'],
-  updated: '2026-06-15',
+  updated: '2026-08-27',
   examples: [
     { values:{ anschaffung:500, nutzungsdauer:2000, wartung:50, druckstunden:500, leistung:120, strompreis:0.35 }, expect:[ { label:'Maschinenstundensatz', value:0.39, tolerance:0.01 } ] },
   ],

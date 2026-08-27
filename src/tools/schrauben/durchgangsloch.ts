@@ -16,7 +16,7 @@ export const tool: Tool = {
   category: 'schrauben',
   title: 'Durchgangsloch-Rechner (DIN EN 20273)',
   shortTitle: 'Durchgangsloch',
-  description: 'Ermittle den passenden Durchgangslochdurchmesser fuer metrische Schrauben (M3 bis M12) in den Reihen fein, mittel und grob.',
+  description: 'Ermittle den passenden Durchgangslochdurchmesser für metrische Schrauben (M3 bis M12) in den Reihen fein, mittel und grob.',
   keywords: ['durchgangsloch tabelle', 'durchgangsbohrung schraube', 'din en 20273 durchgangsloch', 'bohrung fuer m8 schraube'],
   formula: 'Lookup nach DIN EN 20273 (Reihen fein / mittel / grob)',
   inputs: [
@@ -42,18 +42,18 @@ export const tool: Tool = {
       { label: 'Durchgangsloch grob', value: row.grob, unit: 'mm', digits: 1 },
     ];
   },
-  intro: 'Soll eine Schraube frei durch ein Bauteil gefuehrt werden, braucht es ein Durchgangsloch. Die DIN EN 20273 gibt drei Reihen vor: fein, mittel und grob.',
+  intro: 'Soll eine Schraube frei durch ein Bauteil geführt werden, braucht es ein Durchgangsloch. Die DIN EN 20273 gibt drei Reihen vor: fein, mittel und grob.',
   howto: [
-    'Gewindegroesse der Schraube waehlen.',
-    'Passende Reihe waehlen: fein fuer praezise Passung, mittel als Standard, grob bei groben Toleranzen.',
-    'Lochdurchmesser ablesen und Bohrer auswaehlen.',
+    'Gewindegröße der Schraube wählen.',
+    'Passende Reihe wählen: fein für präzise Passung, mittel als Standard, grob bei groben Toleranzen.',
+    'Lochdurchmesser ablesen und Bohrer auswählen.',
   ],
   faq: [
-    { q: 'Welche Reihe nehme ich normalerweise?', a: 'Im Standardfall die mittlere Reihe. Die feine Reihe sorgt fuer praezisere Fuehrung, die grobe gibt mehr Spiel beim Ausrichten.' },
-    { q: 'Gilt das auch fuer Senkschrauben?', a: 'Das Durchgangsloch ist identisch, zusaetzlich muss bei Senkkopf der Senkungswinkel (meist 90 Grad) beruecksichtigt werden.' },
+    { q: 'Welche Reihe nehme ich normalerweise?', a: 'Im Standardfall die mittlere Reihe. Die feine Reihe sorgt für präzisere Führung, die grobe gibt mehr Spiel beim Ausrichten.' },
+    { q: 'Gilt das auch für Senkschrauben?', a: 'Das Durchgangsloch ist identisch, zusätzlich muss bei Senkkopf der Senkungswinkel (meist 90 Grad) berücksichtigt werden.' },
   ],
   related: ['kernlochbohrer'],
-  updated: '2026-06-15',
+  updated: '2026-08-27',
   examples: [
     { values: { gewinde: 'M8' }, expect: [{ label: 'Durchgangsloch mittel', value: 9.0, tolerance: 0.01 }] },
     { values: { gewinde: 'M6' }, expect: [{ label: 'Durchgangsloch fein', value: 6.4, tolerance: 0.01 }] },

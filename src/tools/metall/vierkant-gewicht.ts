@@ -6,12 +6,12 @@ export const tool: Tool = {
   category: 'metall',
   title: 'Vierkant-Vollmaterial-Gewicht',
   shortTitle: 'Vierkant Gewicht',
-  description: 'Berechne das Gewicht von Vierkant-Vollmaterial aus Kantenlaenge und Laenge fuer Stahl, Edelstahl, Alu, Messing oder Kupfer.',
+  description: 'Berechne das Gewicht von Vierkant-Vollmaterial aus Kantenlänge und Länge für Stahl, Edelstahl, Alu, Messing oder Kupfer.',
   keywords: ['vierkant gewicht berechnen', 'quadratstahl gewicht rechner', 'gewicht vierkantstahl', 'kg pro meter vierkant'],
-  formula: 'm = (a x a x Laenge) / 1000 cm3 x Dichte / 1000 (Masse in mm)',
+  formula: 'm = (a x a x Länge) / 1000 cm3 x Dichte / 1000 (Masse in mm)',
   inputs: [
-    { type: 'number', id: 'a', label: 'Kantenlaenge', unit: 'mm', default: 20, min: 0, step: 1 },
-    { type: 'number', id: 'laenge', label: 'Laenge', unit: 'mm', default: 1000, min: 0, step: 1 },
+    { type: 'number', id: 'a', label: 'Kantenlänge', unit: 'mm', default: 20, min: 0, step: 1 },
+    { type: 'number', id: 'laenge', label: 'Länge', unit: 'mm', default: 1000, min: 0, step: 1 },
     {
       type: 'select', id: 'material', label: 'Material', default: '7.85',
       options: [
@@ -35,18 +35,18 @@ export const tool: Tool = {
       { label: 'Gewicht in Gramm', value: gewichtG, unit: 'g', digits: 1 },
     ];
   },
-  intro: 'Ermittle das Gewicht von quadratischem Vollmaterial fuer Materialbedarf und Versandkosten.',
+  intro: 'Ermittle das Gewicht von quadratischem Vollmaterial für Materialbedarf und Versandkosten.',
   howto: [
-    'Kantenlaenge des Vierkants in mm eingeben.',
-    'Laenge in mm eintragen.',
-    'Material auswaehlen, die Dichte wird automatisch gesetzt.',
+    'Kantenlänge des Vierkants in mm eingeben.',
+    'Länge in mm eintragen.',
+    'Material auswählen, die Dichte wird automatisch gesetzt.',
   ],
   faq: [
-    { q: 'Gilt das fuer Vierkantrohr?', a: 'Nein, dies gilt nur fuer Vollmaterial. Fuer Hohlprofile nutze den Rohr-Rechner.' },
+    { q: 'Gilt das für Vierkantrohr?', a: 'Nein, dies gilt nur für Vollmaterial. Für Hohlprofile nutze den Rohr-Rechner.' },
     { q: 'Welche Dichte hat Aluminium?', a: 'Aluminium hat eine Dichte von etwa 2,70 g/cm3, deutlich leichter als Stahl.' },
   ],
   related: ['flachstahl-gewicht', 'rundmaterial-gewicht', 'rohr-gewicht'],
-  updated: '2026-06-15',
+  updated: '2026-08-27',
   examples: [
     {
       values: { a: 20, laenge: 1000, material: '7.85' },

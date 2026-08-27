@@ -12,7 +12,7 @@ export const tool: Tool = {
   inputs: [
     { type:'number', id:'alt', label:'Aktuelle E-Steps', unit:'Schritte/mm', default:93, min:0, step:0.01 },
     { type:'number', id:'soll', label:'Soll-Extrusion', unit:'mm', default:100, min:0, step:1, help:'Meist 100 mm vorgeschoben.' },
-    { type:'number', id:'gemessen', label:'Tatsaechlich extrudiert', unit:'mm', default:97, min:0.01, step:0.1 },
+    { type:'number', id:'gemessen', label:'Tatsächlich extrudiert', unit:'mm', default:97, min:0.01, step:0.1 },
   ],
   compute: (v) => {
     const alt = num(v.alt); const soll = num(v.soll); const gem = num(v.gemessen);
@@ -23,19 +23,19 @@ export const tool: Tool = {
       { label:'Abweichung', value: abw, unit:'%', digits:2 },
     ];
   },
-  intro: 'Markiere 100 mm Filament ueber dem Extruder, schiebe 100 mm vor und miss den Rest, um die E-Steps exakt einzustellen.',
+  intro: 'Markiere 100 mm Filament über dem Extruder, schiebe 100 mm vor und miss den Rest, um die E-Steps exakt einzustellen.',
   howto: [
     'Aktuellen E-Steps-Wert aus dem Drucker (M503) ablesen und eintragen.',
     'Soll-Extrusion eingeben (Standard 100 mm).',
-    'Markierung anbringen, vorschieben, Restmass messen und als tatsaechlich extrudiert eintragen.',
+    'Markierung anbringen, vorschieben, Restmaß messen und als tatsächlich extrudiert eintragen.',
     'Neuen Wert per M92 setzen und mit M500 speichern.',
   ],
   faq: [
-    { q:'Warum 100 mm vorschieben?', a:'Ein groesserer Vorschub verringert den Messfehler und liefert genauere E-Steps.' },
+    { q:'Warum 100 mm vorschieben?', a:'Ein größerer Vorschub verringert den Messfehler und liefert genauere E-Steps.' },
     { q:'Wie speichere ich den neuen Wert?', a:'Mit M92 E<Wert> setzen und mit M500 dauerhaft im EEPROM sichern.' },
   ],
   related: ['schwund-kompensation'],
-  updated: '2026-06-15',
+  updated: '2026-08-27',
   examples: [
     { values:{ alt:93, soll:100, gemessen:97 }, expect:[ { label:'Neue E-Steps', value:95.88, tolerance:0.01 }, { label:'Abweichung', value:3.09, tolerance:0.01 } ] },
   ],

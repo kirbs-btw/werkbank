@@ -6,7 +6,7 @@ export const tool: Tool = {
   category: 'schrauben',
   title: 'Kernlochbohrer-Rechner (metrisches Gewinde)',
   shortTitle: 'Kernlochbohrer',
-  description: 'Berechne den richtigen Kernlochbohrer fuer metrische Regelgewinde (M3 bis M16) aus Nenndurchmesser und Steigung.',
+  description: 'Berechne den richtigen Kernlochbohrer für metrische Regelgewinde (M3 bis M16) aus Nenndurchmesser und Steigung.',
   keywords: ['kernlochbohrer rechner', 'kernloch metrisches gewinde', 'vorbohrer gewindeschneiden tabelle', 'bohrer fuer gewinde m8'],
   formula: 'Kernloch = Nenndurchmesser d - Steigung P',
   inputs: [
@@ -37,17 +37,17 @@ export const tool: Tool = {
   },
   intro: 'Vor dem Gewindeschneiden muss ein Kernloch gebohrt werden. Der Bohrerdurchmesser ergibt sich beim Regelgewinde aus Nenndurchmesser minus Steigung.',
   howto: [
-    'Gewindegroesse aus der Liste waehlen.',
+    'Gewindegröße aus der Liste wählen.',
     'Steigung P und Kernlochdurchmesser ablesen.',
-    'Passenden Bohrer auswaehlen und Kernloch bohren.',
-    'Anschliessend mit dem Gewindeschneider das Gewinde schneiden.',
+    'Passenden Bohrer auswählen und Kernloch bohren.',
+    'Anschließend mit dem Gewindeschneider das Gewinde schneiden.',
   ],
   faq: [
-    { q: 'Gilt die Formel auch fuer Feingewinde?', a: 'Nein, hier wird das metrische Regelgewinde nach DIN 13 verwendet. Feingewinde haben eine kleinere Steigung und damit ein groesseres Kernloch.' },
-    { q: 'Warum nicht exakt der Kerndurchmesser?', a: 'Die Faustformel d minus P liefert ein leicht groesseres Kernloch, sodass das Gewinde sauber und mit weniger Kraft geschnitten werden kann.' },
+    { q: 'Gilt die Formel auch für Feingewinde?', a: 'Nein, hier wird das metrische Regelgewinde nach DIN 13 verwendet. Feingewinde haben eine kleinere Steigung und damit ein größeres Kernloch.' },
+    { q: 'Warum nicht exakt der Kerndurchmesser?', a: 'Die Faustformel d minus P liefert ein leicht größeres Kernloch, sodass das Gewinde sauber und mit weniger Kraft geschnitten werden kann.' },
   ],
   related: ['durchgangsloch'],
-  updated: '2026-06-15',
+  updated: '2026-08-27',
   examples: [
     { values: { gewinde: '8|1.25' }, expect: [{ label: 'Kernlochbohrer Durchmesser', value: 6.75, tolerance: 0.01 }] },
     { values: { gewinde: '6|1.0' }, expect: [{ label: 'Kernlochbohrer Durchmesser', value: 5.0, tolerance: 0.01 }] },

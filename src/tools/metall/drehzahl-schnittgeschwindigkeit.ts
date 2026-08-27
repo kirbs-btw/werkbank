@@ -6,7 +6,7 @@ export const tool: Tool = {
   category: 'metall',
   title: 'Drehzahl-Rechner (Schnittgeschwindigkeit)',
   shortTitle: 'Drehzahl Vc',
-  description: 'Berechne die optimale Drehzahl aus Schnittgeschwindigkeit und Durchmesser fuer Drehen, Fraesen und Bohren in Metall.',
+  description: 'Berechne die optimale Drehzahl aus Schnittgeschwindigkeit und Durchmesser für Drehen, Fräsen und Bohren in Metall.',
   keywords: ['drehzahl berechnen', 'schnittgeschwindigkeit drehzahl rechner', 'drehzahl fraesen formel', 'vc drehzahl bohren'],
   formula: 'n = (Vc x 1000) / (PI x d)  [n in 1/min, Vc in m/min, d in mm]',
   inputs: [
@@ -21,18 +21,18 @@ export const tool: Tool = {
       { label: 'Drehzahl', value: n, unit: '1/min', digits: 0, primary: true },
     ];
   },
-  intro: 'Bestimme die richtige Spindeldrehzahl fuer dein Werkstueck oder Werkzeug aus der empfohlenen Schnittgeschwindigkeit.',
+  intro: 'Bestimme die richtige Spindeldrehzahl für dein Werkstück oder Werkzeug aus der empfohlenen Schnittgeschwindigkeit.',
   howto: [
-    'Empfohlene Schnittgeschwindigkeit Vc fuer Material und Werkzeug eingeben.',
-    'Durchmesser des Werkstuecks (Drehen) oder des Werkzeugs (Fraesen/Bohren) in mm eintragen.',
+    'Empfohlene Schnittgeschwindigkeit Vc für Material und Werkzeug eingeben.',
+    'Durchmesser des Werkstücks (Drehen) oder des Werkzeugs (Fräsen/Bohren) in mm eintragen.',
     'Die ausgegebene Drehzahl an der Maschine einstellen.',
   ],
   faq: [
-    { q: 'Welche Schnittgeschwindigkeit fuer Stahl?', a: 'Mit HSS etwa 20 bis 40 m/min, mit Hartmetall 80 bis 200 m/min, je nach Stahlsorte.' },
-    { q: 'Welcher Durchmesser wird verwendet?', a: 'Beim Drehen der Werkstueckdurchmesser, beim Fraesen und Bohren der Werkzeugdurchmesser.' },
+    { q: 'Welche Schnittgeschwindigkeit für Stahl?', a: 'Mit HSS etwa 20 bis 40 m/min, mit Hartmetall 80 bis 200 m/min, je nach Stahlsorte.' },
+    { q: 'Welcher Durchmesser wird verwendet?', a: 'Beim Drehen der Werkstückdurchmesser, beim Fräsen und Bohren der Werkzeugdurchmesser.' },
   ],
   related: ['vorschub-fraesen'],
-  updated: '2026-06-15',
+  updated: '2026-08-27',
   examples: [
     {
       values: { vc: 100, d: 20 },

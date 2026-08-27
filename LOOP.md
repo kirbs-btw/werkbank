@@ -171,12 +171,7 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 - [x] ~~**Q1 `npm run check` komplett grün**~~ → eine gemeinsame Vite-Version statt zweier (2026-08-26)
 - [x] ~~**Q2 Interner Link-Check**~~ → `npm run linkcheck`, fand sofort einen toten Verweis (2026-08-27)
 - [x] ~~**Q3 A11y-Durchgang**~~ → `npm run a11ycheck` + Kontrastprüfung, 5 Befunde behoben (2026-08-27)
-- [ ] **Q4 Umlaute reparieren:** ~20 Tool-Dateien nutzen transliterierte Umlaute im sichtbaren Text
-      („Schaetze", „Fuellgrad", „beruecksichtigt"). Betrifft Titel, Beschreibungen, FAQ und teils
-      Ergebnis-Labels → schlechte Optik und schwächeres Keyword-Matching. Gefunden in Iteration 3;
-      `modell-gewicht.ts` ist bereits bereinigt. Liste: `grep -lE "Schaetz|Fuell|Naeher|beruecksicht|
-      Waende|Groesse|Laenge|Hoehe|koennen|muessen" src/tools/*/*.ts`. Achtung: Ergebnis-Labels werden
-      in `examples` per Label gematcht – beide Stellen gemeinsam ändern.
+- [x] ~~**Q4 Umlaute reparieren**~~ → 202 Ersetzungen in 21 Rechnern, Testsperre gesetzt (2026-08-27)
 
 ### Entscheidungs-Log (braucht Bastian – Loop setzt das NICHT um)
 
@@ -878,6 +873,39 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
 
   **Merksatz:** Kontrast gilt für jeden Zustand, nicht nur für den ruhenden. Ein Knopf, der beim
   Überfahren heller wird, wird beim Überfahren auch schlechter lesbar.
+
+- **2026-08-27 · Iteration 30 (Q4):** **202 umschriebene Umlaute in 21 Rechnern korrigiert** –
+  „fuer", „Laenge", „Gewindeueberstand", „Zaehnezahl". Das las sich nach Notlösung aus einer Zeit
+  ohne Umlaute auf der Tastatur und stand mitten im Text, den Leser und Suchmaschinen sehen.
+
+  Der Weg dahin war lehrreicher als das Ergebnis. Mein erster Ansatz – jedes Wort mit ae/oe/ue/ss
+  melden – lieferte **448 Treffer**, fast alles korrekte Wörter: „Durchmesser", „gemessen",
+  „bewusst", „Klasse". Umgekehrt wurde es brauchbar: nicht eine Liste der Ausnahmen, sondern eine
+  Liste der **tatsächlichen Umschreibungen**. Damit blieben 177 Fundstellen in genau 20 Rechnern –
+  und das deckte sich mit der Schätzung im Backlog.
+
+  Zwei Dinge mussten beim Ersetzen unangetastet bleiben, und beide hätten stillen Schaden
+  angerichtet: **Bezeichner** (`id: 'laenge'` ist richtig, seine Beschriftung „Länge" nicht) und
+  **Suchwörter** (wer transliteriert sucht, soll fündig werden). Deshalb werden `slug`, `id`,
+  `value` und `keywords` vor dem Ersetzen maskiert.
+
+  Drei Fälle habe ich nur durch Nachsehen richtig gemacht: **`ae`** ist beim Fräsen das
+  Formelzeichen der Eingriffsbreite, kein umschriebenes „ä". **„Kreissäge"** und **„Darrmasse"**
+  sind mit ss korrekt. Und **„Bettmasse"** meint im Aufheizrechner die *Masse* des Betts, nicht
+  dessen *Maße* – eine Zeile weiter hätte „Bettmaße" daraus einen Fehler gemacht.
+
+  Die 21 berührten Rechner haben ein neues `updated`-Datum, die übrigen 132 nicht. 3 neue Tests
+  sperren die Fehlerklasse: kein sichtbarer Text darf umschriebene Umlaute enthalten, Bezeichner
+  dürfen es weiterhin, und `ae` bleibt. Insgesamt 1038.
+
+  **Ohne Netz:** GitHub und die Live-Seite waren während dieser Iteration nicht erreichbar
+  (`curl` liefert 000, `git` bricht nach 75 s ab). Gesundheitscheck, Push und IndexNow konnten
+  deshalb nicht laufen. Die Arbeit ist lokal fertig und vollständig geprüft – Tests, Build,
+  Typcheck, Link-Check, A11y-Check alle grün – und **wartet als lokaler Commit auf den Push.**
+  Die nächste Iteration schiebt ihn nach.
+
+  **Merksatz:** Beim Suchen nach Fehlern ist die Liste der Ausnahmen fast immer die falsche Seite.
+  Wer „alles außer richtig" sucht, findet vor allem Richtiges.
 
 ## Start-Prompt (Referenz)
 
