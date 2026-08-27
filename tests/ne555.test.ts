@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { tool, e12 } from '../src/tools/elektronik/ne555-rechner';
+import { tool } from '../src/tools/elektronik/ne555-rechner';
+import { e12 } from '../src/lib/elektro';
 
 type Werte = Record<string, number | string>;
 const rechne = (v: Werte) => {

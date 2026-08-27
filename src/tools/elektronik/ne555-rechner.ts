@@ -1,38 +1,12 @@
 import type { Tool, ToolResult } from '../../lib/types';
 import { num } from '../../lib/types';
+import { e12, ohmText, stellen } from '../../lib/elektro';
 
 const LN2 = Math.LN2; // 0,6931… – Laden von ⅓ auf ⅔ der Betriebsspannung
 const LN3 = Math.log(3); // 1,0986… – Laden von 0 auf ⅔ beim Monoflop
 
-/** E12-Reihe, eine Dekade. Alle anderen Werte entstehen durch Zehnerpotenzen. */
-const E12 = [10, 12, 15, 18, 22, 27, 33, 39, 47, 56, 68, 82];
-
-/**
- * Nächster Wert der E12-Reihe.
- *
- * Verglichen wird der logarithmische Abstand, nicht der absolute: Die Reihe ist
- * geometrisch gestuft (jede Stufe rund 20 % mehr), deshalb ist der relative
- * Abstand das richtige Maß. Zwischen 68 und 82 liegt die Grenze bei 74,7 – nicht
- * bei 75.
- */
-export function e12(x: number): number {
-  if (!(x > 0)) return 0;
-  const dekade = Math.pow(10, Math.floor(Math.log10(x)));
-  const kandidaten = [...E12.map((v) => (v * dekade) / 10), 10 * dekade];
-  let beste = kandidaten[0];
-  for (const k of kandidaten) {
-    if (Math.abs(Math.log(k / x)) < Math.abs(Math.log(beste / x))) beste = k;
-  }
-  return beste;
-}
-
-/** Nachkommastellen nach Größenordnung – 0,002 Hz und 48 kHz im selben Feld. */
-const stellen = (x: number): number => (x >= 1000 ? 0 : x >= 100 ? 1 : x >= 1 ? 2 : 4);
-
-const ohm = (kOhm: number): string =>
-  kOhm >= 1000
-    ? `${(kOhm / 1000).toLocaleString('de-DE', { maximumFractionDigits: 2 })} MΩ`
-    : `${kOhm.toLocaleString('de-DE', { maximumFractionDigits: 2 })} kΩ`;
+/** Die Widerstände stehen hier in kΩ, `ohmText` erwartet Ohm. */
+const ohm = (kOhm: number): string => ohmText(kOhm * 1000);
 
 export const tool: Tool = {
   slug: 'ne555-rechner',

@@ -161,8 +161,8 @@ gleiche Machart – im Gegensatz zu Garten/MINT/Stochastik, die als Fremd-Nische
 
 - [x] ~~**T21 NE555-Rechner**~~ → `/rechner/ne555-rechner` (2026-08-27), zugleich die neue
       Kategorie `elektronik`
-- [ ] **T22 Ohmsches Gesetz & Leistung** (4 KW): U/I/R/P, zwei beliebige Größen eingeben, die
-      anderen zwei fallen heraus. Einsteigerthema mit hohem Volumen.
+- [x] ~~**T22 Ohmsches Gesetz & Leistung**~~ → `/rechner/ohmsches-gesetz` (2026-08-27), dazu
+      `src/lib/elektro.ts` als gemeinsame Grundlage der Kategorie
 - [ ] **T23 Operationsverstärker** (4 KW): invertierend und nichtinvertierend, Verstärkung,
       Widerstandspaare aus der E-Reihe.
 - [ ] **T24 RC/RL-Filter & Grenzfrequenz** (3 KW): Tief-/Hochpass, Zeitkonstante, Bode-Verlauf als
@@ -1086,6 +1086,43 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   Prüfkette: 1091 Tests, 181 Seiten, `check` 0 Fehler, keine toten Verweise, keine A11y-Befunde.
   Im Browser alle drei Betriebsarten durchgeschaltet: 1,03 Hz in der Vorgabe, 51,63 ms als Monoflop,
   721,3 Hz mit Diode – letzteres deckungsgleich mit dem Testwert.
+
+- **2026-08-27 · Iteration 36 (T22):** **Ohmsches Gesetz live** unter `/rechner/ohmsches-gesetz`.
+  Alle sechs Kombinationen aus U, I, R und P – zwei eingeben, zwei fallen heraus.
+
+  Vorweg **`src/lib/elektro.ts`** angelegt: E12- und E24-Reihe, Vorsatzeinheiten, Belastbarkeit.
+  Die E-Reihe steckte bis eben im NE555-Rechner; beim zweiten Gebrauch verschiebt man sie, statt
+  sie zu kopieren. Der NE555 zieht jetzt von dort und wurde dabei nebenbei besser: Sein
+  Widerstandstext schrieb bisher stur kΩ, jetzt kommen 500 Ω auch als 500 Ω heraus.
+
+  Drei Dinge, die den Rechner von einer Formelsammlung unterscheiden:
+
+  1. **Alle vier Größen stehen im Ergebnis**, auch die eingegebenen – als Gegenprobe gegen
+     Zehnerpotenz-Vertipper. Die eingegebenen sind als solche gekennzeichnet, hervorgehoben wird
+     nur die erste berechnete.
+  2. **Die Einheit schaltet mit**: 22,73 mA statt 0,0227 A, 4,7 kΩ statt 4700 Ω.
+  3. **Belastbarkeit mit Faktor 2 Reserve**, gerundet auf handelsübliche Klassen. Die Nennleistung
+     auf dem Bauteil gilt frei stehend bei 70 °C – im Gehäuse bleibt davon weniger übrig.
+
+  **Zwei Befunde, beide bei mir und nicht im Code:**
+
+  - Ein Test behauptete, E12 weiche nie mehr als 10 % ab. Stimmt nicht: Die Reihe ist gerundet und
+    dadurch nicht sauber geometrisch. Der ideale Faktor wäre ¹²√10 = 1,2115, der Schritt 12 → 15
+    macht aber 1,25 – der größte der Reihe. Schlimmster Fall ist der halbe Schritt, also
+    **√1,25 = 11,8 %**, erreicht bei x = 13,6. Schranke korrigiert und begründet.
+  - `astro check` fand einen Typfehler in meiner eigenen Testdatei, den vitest nicht sieht: eine
+    Objektliteral-Liste mit Union-Typ. Vitest transpiliert nur, es prüft keine Typen – deshalb
+    gehört `check` in die Kette.
+
+  **Und einen echten Textfehler fand erst der Browser:** Trifft der berechnete Widerstand die
+  E12-Reihe zufällig genau, stand dort der Widerspruch „150 Ω ist kaufbar, 150 Ω nicht". Das ist
+  kein Randfall – Lehrbuchbeispiele sind genau so gewählt, dass es aufgeht. Behoben, mit Test.
+  Damit hat die Browser-Probe in drei aufeinanderfolgenden Iterationen etwas gefunden, das keine
+  Testsuite gemeldet hat.
+
+  Prüfkette: 1126 Tests, 182 Seiten, `check` 0 Fehler, keine toten Verweise, keine A11y-Befunde.
+  Im Browser alle sechs Kombinationen auf denselben Arbeitspunkt (12 V, 2 A, 6 Ω, 24 W) gebracht –
+  jede liefert dieselben vier Zahlen.
 
 ## Start-Prompt (Referenz)
 
