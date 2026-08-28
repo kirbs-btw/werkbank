@@ -164,8 +164,10 @@ gleiche Machart – im Gegensatz zu Garten/MINT/Stochastik, die als Fremd-Nische
 - [x] ~~**T22 Ohmsches Gesetz & Leistung**~~ → `/rechner/ohmsches-gesetz` (2026-08-27), dazu
       `src/lib/elektro.ts` als gemeinsame Grundlage der Kategorie
 - [x] ~~**T23 Operationsverstärker**~~ → `/rechner/operationsverstaerker` (2026-08-27)
-- [ ] **T24 RC/RL-Filter & Grenzfrequenz** (3 KW): Tief-/Hochpass, Zeitkonstante, Bode-Verlauf als
-      Diagramm.
+- [x] ~~**T24 RC/RL-Filter & Grenzfrequenz**~~ → `/rechner/rc-filter` (2026-08-28). Ohne Bode-
+      Diagramm: Dämpfung und Phase stehen als Zahl für die eingegebene Signalfrequenz. Eine Kurve
+      wäre ein eigener Bauteil-Strang (SVG-Diagramme gibt es auf der Seite bisher nicht) – bei
+      Bedarf als eigener Punkt nachtragen.
 - [ ] **T25 Spannungsteiler** (3 KW): unbelastet und belastet – gerade der belastete Fall fehlt in
       fast jedem Online-Rechner, obwohl er der praxisrelevante ist.
 
@@ -1153,6 +1155,45 @@ Alles im Browser, ohne Upload, ohne Bibliothek von der Stange.
   das die robustere Machart.
 
   Prüfkette: 1157 Tests, 183 Seiten, `check` 0 Fehler, keine toten Verweise, keine A11y-Befunde.
+
+- **2026-08-28 · Iteration 38 (T24):** **RC/RL-Filter live** unter `/rechner/rc-filter`. Vier
+  Arten (RC und RL, je Tief- und Hochpass): Grenzfrequenz, Zeitkonstante, Dämpfung und Phasenlage
+  bei der Signalfrequenz, Anstiegszeit.
+
+  **Drei Rundungsfehler, die üblicherweise unbemerkt bleiben – hier stehen die genauen Werte:**
+
+  1. **Anstiegszeit.** Ich hatte zuerst `2,2 · τ` gerechnet und in der Hilfe auf `0,35/fg`
+     verwiesen. Das sind zwei verschiedene gerundete Zahlen für dieselbe Größe (2,2000 gegen
+     2,1991), und beide sind falsch: Exakt ist **ln(9)·τ = 2,1972·τ**, weil die Ladekurve von
+     10 % auf 90 % genau ln(9) Zeitkonstanten braucht. Der eigene Test hat den Widerspruch
+     aufgedeckt.
+  2. **Die 3 dB** sind 3,0103 dB – definiert ist 1/√2 der Amplitude.
+  3. **Der Faktor 2π** ist die häufigste Fehlerquelle überhaupt: τ = 1 ms sind nicht 1000 Hz,
+     sondern 159 Hz. Steht so im FAQ.
+
+  **Derselbe Fehler zum zweiten Mal – und die Lehre daraus:** Die Zeile „Mit E12-Widerstand"
+  schrieb bei einem Widerstand, der schon auf der Reihe liegt, **„mit 10 kΩ statt 10 kΩ"**. Genau
+  der Widerspruch, den ich zwei Iterationen zuvor im Ohmschen Gesetz behoben hatte – die Lehre war
+  aber in *einer Datei* geblieben, statt in die Bibliothek zu wandern. Jetzt gibt es
+  **`kaufbar()` in `elektro.ts`**, beide Rechner benutzen sie, und ein Test hält es fest.
+
+  Beim Schreiben dieses Tests kam **ein dritter Fall** heraus, den die erste Fassung noch
+  durchgelassen hätte: Bei 1000,9 Ω sind Rechen- und Reihenwert rechnerisch verschieden, werden
+  aber **beide als „1 kΩ" angezeigt**. Der Widerspruch entsteht bei der Darstellung, nicht bei der
+  Zahl – `kaufbar()` vergleicht deshalb die angezeigten Texte, nicht die Zahlen.
+
+  **Merksatz:** Wenn derselbe Fehler zweimal an verschiedenen Stellen auftritt, gehört die
+  Korrektur nicht in die zweite Stelle, sondern in die Mitte.
+
+  **Zur Prüfmethode:** Die Browser-Probe brach zweimal ab (Seite fiel beim Auswerten auf
+  `about:blank`). Nach dem zweiten Fehlschlag habe ich sie aufgegeben und stattdessen die
+  Ergebniszeilen durch `formatResult` der Seite gerendert – also genau das, was der Leser sieht,
+  ohne Browser. **Diese Probe hat den E12-Widerspruch gefunden**, den 25 grüne Tests übersahen.
+  Als Ersatz für die Browser-Probe ist das die zuverlässigere Machart, weil sie nichts hat, was
+  abstürzen kann.
+
+  Prüfkette: 1192 Tests, 184 Seiten, `check` 0 Fehler und 0 Warnungen, keine toten Verweise,
+  keine A11y-Befunde.
 
 ## Start-Prompt (Referenz)
 

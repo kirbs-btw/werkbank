@@ -81,3 +81,24 @@ export function ohmText(r: number): string {
   const s = skaliere(r, 'Ω');
   return `${s.value.toLocaleString('de-DE', { maximumFractionDigits: 2 })} ${s.unit}`;
 }
+
+/**
+ * Satzbaustein für eine „so ist es kaufbar"-Zeile.
+ *
+ * Nennt zwei Werte nur dann, wenn sie sich unterscheiden. Fehlt diese
+ * Unterscheidung, steht dort „10 kΩ statt 10 kΩ" – und das ist kein Randfall:
+ * Lehrbuch- und Vorgabewerte sind gerade so gewählt, dass sie in der Reihe
+ * liegen. Derselbe Widerspruch ist in zwei Rechnern unabhängig voneinander
+ * entstanden, deshalb steht er jetzt an einer Stelle.
+ */
+export function kaufbar(ist: number, gerundet: number): string {
+  const ziel = ohmText(gerundet);
+  // Verglichen werden die *angezeigten* Texte, nicht die Zahlen. 1000,9 Ω und
+  // 1000 Ω sind rechnerisch verschieden, stehen aber beide als „1 kΩ" da – ein
+  // Zahlenvergleich hätte hier „1 kΩ statt 1 kΩ" durchgelassen. Der Satz
+  // beschreibt ohnehin den gerundeten Wert, und der liegt tatsächlich auf der
+  // Reihe.
+  return ziel === ohmText(ist)
+    ? `${ziel} steht genau so in der E12-Reihe`
+    : `${ziel} statt ${ohmText(ist)}`;
+}

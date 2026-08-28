@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  E12, E24, eReihe, e12, e24, skaliere, stellen, belastbarkeit, ohmText, LEISTUNGSKLASSEN,
+  E12, E24, eReihe, e12, e24, skaliere, stellen, belastbarkeit, ohmText, kaufbar, LEISTUNGSKLASSEN,
 } from '../src/lib/elektro';
 import { tool } from '../src/tools/elektronik/ohmsches-gesetz';
 
@@ -87,6 +87,37 @@ describe('Vorsatzeinheiten', () => {
     expect(ohmText(4700)).toBe('4,7 kΩ');
     expect(ohmText(220)).toBe('220 Ω');
     expect(ohmText(1_000_000)).toBe('1 MΩ');
+  });
+});
+
+describe('Kaufbare Werte', () => {
+  it('nennt zwei Werte nur, wenn sie sich unterscheiden', () => {
+    expect(kaufbar(250, 270)).toBe('270 Ω statt 250 Ω');
+    expect(kaufbar(150, 150)).toBe('150 Ω steht genau so in der E12-Reihe');
+  });
+
+  it('behauptet nie „X statt X"', () => {
+    // Genau dieser Widerspruch ist unabhängig voneinander in zwei Rechnern
+    // entstanden – im Ohmschen Gesetz und im Filter-Rechner. Deshalb steht die
+    // Unterscheidung jetzt an einer Stelle und wird hier festgehalten.
+    //
+    // Der feine Schritt ist Absicht: Bei 1000,9 Ω unterscheiden sich Rechen-
+    // und Reihenwert zwar rechnerisch, werden aber beide als „1 kΩ" angezeigt.
+    // Ein Zahlenvergleich hätte das durchgelassen – deshalb entscheidet der
+    // angezeigte Text.
+    let mitStatt = 0;
+    for (let x = 1; x < 3000; x += 0.7) {
+      const teile = kaufbar(x, e12(x)).match(/^(.+?) statt (.+)$/);
+      if (teile) {
+        mitStatt++;
+        expect(teile[1], `x=${x}`).not.toBe(teile[2]);
+      }
+    }
+    expect(mitStatt).toBeGreaterThan(1000); // sonst prüft die Schleife nichts
+  });
+
+  it('kommt mit null und negativen Werten zurecht', () => {
+    for (const x of [0, -5]) expect(typeof kaufbar(x, e12(x))).toBe('string');
   });
 });
 
@@ -206,12 +237,12 @@ describe('Ohmsches Gesetz', () => {
     // „150 Ω ist kaufbar, 150 Ω nicht". Gefunden in der Browser-Probe.
     const genau = rechne({ gegeben: 'ui', u: 3, i: 0.02 }).roh
       .find((x) => x.label === 'Nächster E12-Wert')?.help ?? '';
-    expect(genau).toContain('genau so in der E12-Reihe');
-    expect(genau).not.toContain('nicht');
+    expect(genau).toContain('150 Ω steht genau so in der E12-Reihe');
+    expect(genau).not.toContain('statt');
 
     const krumm = rechne({ gegeben: 'ui', u: 5, i: 0.02 }).roh
       .find((x) => x.label === 'Nächster E12-Wert')?.help ?? '';
-    expect(krumm).toContain('270 Ω ist kaufbar, 250 Ω nicht');
+    expect(krumm).toContain('270 Ω statt 250 Ω');
   });
 
   it('nennt die Belastbarkeit mit Reserve', () => {

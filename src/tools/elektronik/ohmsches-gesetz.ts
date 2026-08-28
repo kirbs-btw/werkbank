@@ -1,6 +1,6 @@
 import type { Tool, ToolResult } from '../../lib/types';
 import { num } from '../../lib/types';
-import { belastbarkeit, e12, ohmText, skaliere, stellen } from '../../lib/elektro';
+import { belastbarkeit, e12, kaufbar, skaliere, stellen } from '../../lib/elektro';
 
 /** Welche zwei Größen der Nutzer vorgibt. Die anderen zwei folgen daraus. */
 type Modus = 'ui' | 'ur' | 'up' | 'ir' | 'ip' | 'rp';
@@ -131,17 +131,16 @@ export const tool: Tool = {
       const rE12 = e12(r);
       const s = skaliere(rE12, 'Ω');
       // Trifft der Rechenwert die Reihe zufällig genau, darf hier nicht
-      // „150 Ω ist kaufbar, 150 Ω nicht" stehen. Passiert öfter als gedacht:
-      // Die Lehrbuchbeispiele sind genau so gewählt, dass es aufgeht.
-      const passtGenau = Math.abs(rE12 / r - 1) < 1e-9;
+      // „150 Ω statt 150 Ω" stehen. Passiert öfter als gedacht: Die Lehrbuch-
+      // beispiele sind genau so gewählt, dass es aufgeht. Die Unterscheidung
+      // steckt in `kaufbar` – derselbe Fehler war unabhängig davon auch im
+      // Filter-Rechner entstanden.
       ergebnisse.push({
         label: 'Nächster E12-Wert',
         value: s.value,
         unit: s.unit,
         digits: stellen(s.value),
-        help: passtGenau
-          ? 'Der Rechenwert steht genau so in der E12-Reihe – direkt kaufbar.'
-          : `${ohmText(rE12)} ist kaufbar, ${ohmText(r)} nicht – damit fließen dann ${alsText(u / rE12, 'A')}.`,
+        help: `${kaufbar(r, rE12)} – damit fließen ${alsText(u / rE12, 'A')}.`,
       });
     }
 
